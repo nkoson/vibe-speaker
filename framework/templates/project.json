@@ -1,0 +1,28 @@
+{
+ "slug": "forte-style-three-way",
+ "created": "2026-09-14",
+ "brief": {
+  "request": "Passive three-way approaching the published performance of the reference, similar size, budget of parts about 1500 EUR per pair.",
+  "reference_product": "Manufacturer Model",
+  "topology_constraints": ["one integrated cabinet", "internal passive crossover", "single speaker-cable input with optional bi-amp links"],
+  "size_limits_mm": {"max_width": 450, "max_depth": 450, "max_height": 1000},
+  "must_not_change": ["passive only", "no DSP"]
+ },
+ "objectives": [
+  {"name": "sensitivity_db_2v83_1m", "target": 99, "tolerance": 1.0, "direction": "at_least", "basis": "reference published figure"},
+  {"name": "f6_hz", "target": 38, "tolerance": 3, "direction": "at_most", "basis": "reference published -3 dB minus judgement"},
+  {"name": "impedance_min_ohm", "target": 6.4, "tolerance": 0.4, "direction": "at_least", "basis": "8 ohm nominal, amplifier friendly"},
+  {"name": "ripple_200_10000_db", "target": 6, "tolerance": 1, "direction": "at_most", "basis": "smooth direct sound"},
+  {"name": "max_spl_db_1m", "target": 110, "tolerance": 2, "direction": "at_least", "basis": "reference continuous rating"}
+ ],
+ "limits": {
+  "iterations": 3,
+  "candidates_per_iteration": 3,
+  "finalists_for_detailed_analysis": 1,
+  "drive_voltage_rms_for_stress": 28.3,
+  "assumed_tolerances": {"C": 0.05, "L": 0.03, "R": 0.02}
+ },
+ "listening": {"distance_m": 3.0, "ear_height_m": 1.0, "floor_reflection": 0.7},
+ "state": {"phase": "research", "iteration": 0, "candidates": [], "selected": null},
+ "log": []
+}

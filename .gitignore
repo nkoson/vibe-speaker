@@ -1,0 +1,20 @@
+# Project-local Python, toolchain and caches created by framework/bootstrap.py
+.speaker-*/
+
+# Design projects and example outputs
+framework/projects/
+framework/simulations/examples/out/
+
+# Python artifacts
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Host files
+.DS_Store
+
+# Local git identity override, pulled in through include.path in .git/config
+.gitconfig.local
+
+# Planning documents
+docs/plans/

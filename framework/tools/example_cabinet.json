@@ -1,0 +1,23 @@
+{
+ "name": "example_cabinet",
+ "material": "18 mm MDF",
+ "outer": {"width_mm": 600, "depth_mm": 500, "height_mm": 950},
+ "panel_thickness_mm": 18,
+ "partitions": [{"name": "bass_top", "z_mm": 636}],
+ "chamber_names": ["bass", "upper"],
+ "braces": [{"z_mm": 218, "rim_mm": 60, "thickness_mm": 18}, {"z_mm": 438, "rim_mm": 60, "thickness_mm": 18}],
+ "front_cutouts": [
+  {"name": "woofer", "shape": "circle", "x_mm": 300, "z_mm": 380, "diameter_mm": 356},
+  {"name": "horn", "shape": "rect", "x_mm": 300, "z_mm": 740, "width_mm": 261, "height_mm": 261},
+  {"name": "ribbon", "shape": "rect", "x_mm": 300, "z_mm": 900, "width_mm": 60, "height_mm": 90}
+ ],
+ "rear_cutouts": [
+  {"name": "port 1", "shape": "circle", "x_mm": 150, "z_mm": 250, "diameter_mm": 106},
+  {"name": "port 2", "shape": "circle", "x_mm": 450, "z_mm": 250, "diameter_mm": 106},
+  {"name": "terminal cup", "shape": "rect", "x_mm": 300, "z_mm": 120, "width_mm": 110, "height_mm": 80}
+ ],
+ "ports": [{"x_mm": 150, "z_mm": 250, "od_mm": 106, "length_mm": 197}, {"x_mm": 450, "z_mm": 250, "od_mm": 106, "length_mm": 197}],
+ "lining_mm": 50,
+ "lining_solid_fraction": 0.15,
+ "driver_displacements": [{"name": "woofer", "z_mm": 380, "displacement_l": 3.0}]
+}

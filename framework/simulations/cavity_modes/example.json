@@ -1,0 +1,13 @@
+{
+ "cavity": {"width_mm": 564, "depth_mm": 464, "height_mm": 600, "wall_thickness_mm": 18,
+            "braces": [{"z_mm": 200, "rim_mm": 60, "thickness_mm": 18}, {"z_mm": 420, "rim_mm": 60, "thickness_mm": 18}],
+            "lining": {"thickness_mm": 50, "flow_resistivity_pas_m2": 10000}, "unlined_background_q": 30},
+ "driver": {"ts": {"fs_hz": 35, "vas_l": 248.9, "qms": 6.0, "qes": 0.34, "re_ohm": 5.1, "le_mh": 0.72, "sd_cm2": 857},
+            "position": {"x_mm": 282, "z_mm": 360}},
+ "outlet": {"type": "port", "face": "rear", "positions": [{"x_mm": 150, "z_mm": 120}, {"x_mm": 414, "z_mm": 120}],
+            "inner_diameter_mm": 100, "outer_diameter_mm": 106, "length_mm": 197, "qp": 20},
+ "enclosure": {"net_volume_l": 150, "tuning_hz": 34, "ql": 10},
+ "drive": {"voltage_rms": 2.83},
+ "method": {"kind": "fvm", "mesh_mm": [40, 30], "max_mode_hz": 1500, "include_braces": true, "include_port_tubes": true},
+ "field_sections": {"frequencies_hz": [50, 100, 300, 600, 1000]}
+}

@@ -1,0 +1,16 @@
+{
+ "frequencies": {"min_hz": 30, "max_hz": 20000, "points": 500},
+ "analysis": {"smoothing_octaves": 0.1667, "sensitivity_band_hz": [500, 10000], "ripple_bands_hz": [[100, 16000], [200, 8000]],
+              "reference_band_hz": [150, 300], "cutoff_thresholds_db": [-3, -6, -10], "band_tolerance_db": 3, "upper_reference_hz": 16000,
+              "lfx": {"sound_power_curve": "sound_power", "listening_window_curve": "listening_window"}},
+ "curves": [
+  {"name": "candidate", "curve": "on_axis", "file": "../examples/out/whole_speaker.json", "frequency_path": "results.f_hz", "path": "results.on_axis.spl_db"},
+  {"name": "reference_published", "points": [[35, 90], [50, 96], [80, 98], [150, 99], [300, 99], [600, 98.5], [1000, 99], [2000, 99.5], [4000, 99], [8000, 98], [12000, 97], [16000, 95], [20000, 91]]},
+  {"name": "sound_power", "curve": "sound_power", "file": "../examples/out/spinorama.json", "frequency_path": "results.f_hz", "path": "results.curves.sound_power"},
+  {"name": "listening_window", "curve": "listening_window", "file": "../examples/out/spinorama.json", "frequency_path": "results.f_hz", "path": "results.curves.listening_window"}
+ ],
+ "comparisons": [
+  {"a": "candidate", "b": "reference_published", "band_hz": [40, 16000], "align": "none", "within_db": [1, 2, 3]},
+  {"a": "candidate", "b": "reference_published", "band_hz": [40, 16000], "align": "mean_in_band", "within_db": [1, 2, 3]}
+ ]
+}

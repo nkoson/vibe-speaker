@@ -1,0 +1,13 @@
+{
+ "driver": {
+  "id": "keele_1977_example_12_inch",
+  "ts": {"fs_hz": 45, "vas_l": 140, "qes": 0.216, "qms": 6.0, "re_ohm": 5.6, "le_mh": 3.2,
+         "sd_cm2": 500, "xmax_mm": 3.3, "xmax_standard": "geometric", "bl_tm": 15.0}
+ },
+ "cutoff_hz": 50,
+ "front_cavity_l": 1.1,
+ "mouth": {"width_mm": 900, "height_mm": 900},
+ "coverage": {"horizontal_deg": 90, "vertical_deg": 45, "mouth_width_mm": 900, "mouth_height_mm": 900},
+ "os_waveguide": {"throat_radius_mm": 12.7, "half_angle_deg": 30,
+                  "axial_positions_mm": [0, 10, 20, 30, 40, 60, 80, 100, 140, 180]}
+}

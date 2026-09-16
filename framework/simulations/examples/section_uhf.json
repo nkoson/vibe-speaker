@@ -1,0 +1,9 @@
+{
+ "name": "uhf",
+ "frequencies": {"min_hz": 10, "max_hz": 40000, "points": 800},
+ "acoustic": {"kind": "bandwidth_prior", "sensitivity_db_2v83_1m": 94, "lower_hz": 1500, "upper_hz": 40000},
+ "impedance": {"kind": "ribbon", "r_ohm": 8.0, "parallel_l_mh": 1.3},
+ "directivity": {"kind": "rectangular", "width_mm": 9.5, "height_mm": 70},
+ "acoustic_depth_mm": 15,
+ "analysis": {"sensitivity_band_hz": [5000, 20000]}
+}

@@ -1,0 +1,12 @@
+{
+ "frequencies": {"min_hz": 100, "max_hz": 20000, "points": 600},
+ "horn": {
+  "flare": "exponential",
+  "throat_area_cm2": 5.07,
+  "mouth_area_cm2": 1350,
+  "length_mm": 330,
+  "cutoff_hz": 500,
+  "throat_intensity_w_m2": 2000,
+  "coverage": {"horizontal_deg": 90, "vertical_deg": 40, "mouth_width_mm": 450, "mouth_height_mm": 300}
+ }
+}

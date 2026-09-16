@@ -1,0 +1,15 @@
+{
+ "driver": {
+  "id": "faital_15pr400_8",
+  "ts": {"fs_hz": 35, "vas_l": 248.9, "qms": 6.0, "qes": 0.34, "re_ohm": 5.1, "le_mh": 0.72, "sd_cm2": 857,
+         "xmax_mm": 5.75, "xmax_standard": "geometric",
+         "displacement_limits": {"xbl_mm": 6.4, "xc_mm": 7.1, "xl_mm": 5.2}}
+ },
+ "enclosure": {"type": "aperiodic", "net_volume_l": 90, "tuning_hz": 40, "ql": 10, "qp": 20,
+               "internal_dimensions_mm": [600, 400, 420],
+               "port": {"diameter_mm": 100, "count": 1, "edge_radius_mm": 22},
+               "rav_sweep_pa_s_per_m3": [0, 200, 600, 2000, 20000]},
+ "drive": {"voltages_rms": [2.83], "series_resistance_ohm": 0.05, "space": "half"},
+ "frequencies": {"min_hz": 10, "max_hz": 1500, "points": 480},
+ "analysis": {"reference_band_hz": [150, 300], "cutoff_thresholds_db": [-3, -6, -10], "stress_band_hz": [20, 300], "kp": 3.0}
+}

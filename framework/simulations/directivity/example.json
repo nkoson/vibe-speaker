@@ -1,0 +1,13 @@
+{
+ "frequencies": {"min_hz": 200, "max_hz": 20000, "points": 120},
+ "horizontal_angles_deg": [0, 15, 30, 45, 60, 75, 90],
+ "vertical_angles_deg": [0, 15, 30, 45, 60],
+ "sources": [
+  {"name": "15 inch cone", "directivity": {"kind": "piston", "sd_cm2": 857}},
+  {"name": "90x50 horn", "directivity": {"kind": "gaussian", "horizontal_deg": 90, "vertical_deg": 50}},
+  {"name": "60 degree OS waveguide, 1 inch throat", "directivity": {"kind": "gaussian", "horizontal_deg": 60, "vertical_deg": 60},
+   "os_waveguide": {"throat_radius_mm": 12.7, "half_angle_deg": 30, "axial_positions_mm": [0, 10, 20, 30, 50, 70, 100]}},
+  {"name": "tabulated horn", "directivity": {"kind": "beamwidth_table", "points": [[800, 120, 90], [1500, 95, 60], [4000, 90, 50], [12000, 70, 40]]}},
+  {"name": "ribbon", "directivity": {"kind": "rectangular", "width_mm": 9.5, "height_mm": 70}}
+ ]
+}

@@ -1,0 +1,18 @@
+{
+ "driver": {
+  "id": "faital_15pr400_8",
+  "ts": {"fs_hz": 35, "vas_l": 248.9, "qms": 6.0, "qes": 0.34, "re_ohm": 5.1, "le_mh": 0.72, "sd_cm2": 857,
+         "xmax_mm": 5.75, "xmax_standard": "geometric",
+         "mms_g": 85.2, "bl_tm": 16.7,
+         "displacement_limits": {"xbl_mm": 6.4, "xc_mm": 7.1, "xl_mm": 5.2}}
+ },
+ "enclosure": {"type": "vented", "net_volume_l": 150, "tuning_hz": 34, "ql": 10, "qp": 20,
+               "internal_dimensions_mm": [700, 420, 520],
+               "port": {"diameter_mm": 100, "count": 2, "throat_diameter_mm": 100, "flare_radius_mm": 300,
+                        "length_mm": 229, "edge_radius_mm": 22}},
+ "alignment": [{"target": "B4", "ql_values": [5, 7, 10]}, {"target": "BL4", "ql": 7}, {"target": "QB3", "ql": 7, "a2": 4.0}],
+ "drive": {"voltages_rms": [2.83, 28.3], "series_resistance_ohm": 0.05, "space": "half"},
+ "frequencies": {"min_hz": 10, "max_hz": 1500, "points": 480},
+ "analysis": {"reference_band_hz": [150, 300], "cutoff_thresholds_db": [-3, -6, -10], "stress_band_hz": [20, 300], "kp": 3.0},
+ "limits": {"max_port_air_speed_ms": 17, "power_w": 400, "nominal_impedance_ohm": 8}
+}

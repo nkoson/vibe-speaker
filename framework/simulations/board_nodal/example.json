@@ -1,0 +1,42 @@
+{
+ "frequencies": {"min_hz": 10, "max_hz": 40000, "points": 500},
+ "tolerances": {"draws": 8, "seed": 9919, "C": 0.05, "L": 0.03, "R": 0.02},
+ "components": [
+  {"id": "L1", "type": "L", "value_mh": 2.2, "dcr_ohm": 0.25, "nodes": ["LF_IN+", "n1"], "rating": {"current_rms_a": 8}},
+  {"id": "C1", "type": "C", "value_uf": 47, "esr_ohm": 0.01, "nodes": ["n1", "LF_IN-"], "rating": {"voltage_rms": 70}},
+  {"id": "L2", "type": "L", "value_mh": 1.0, "nodes": ["n1", "n2"]},
+  {"id": "C2", "type": "C", "value_uf": 33, "nodes": ["n2", "LF_IN-"]},
+  {"id": "C3", "type": "C", "value_uf": 22, "nodes": ["MH_IN+", "m1"]},
+  {"id": "L3", "type": "L", "value_mh": 1.8, "nodes": ["m1", "MH_IN-"]},
+  {"id": "C4", "type": "C", "value_uf": 15, "nodes": ["m1", "m2"]},
+  {"id": "L4", "type": "L", "value_mh": 0.68, "nodes": ["m2", "MH_IN-"]},
+  {"id": "Rs", "type": "R", "value_ohm": 6.8, "nodes": ["m2", "m3"], "rating": {"power_w": 20}},
+  {"id": "Rp", "type": "R", "value_ohm": 4.7, "nodes": ["m3", "MH_IN-"], "rating": {"power_w": 20}},
+  {"id": "C6", "type": "C", "value_uf": 1.5, "nodes": ["MH_IN+", "u1"]},
+  {"id": "L6", "type": "L", "value_mh": 0.12, "nodes": ["u1", "MH_IN-"]},
+  {"id": "C7", "type": "C", "value_uf": 1.0, "nodes": ["u1", "u2"]},
+  {"id": "L7", "type": "L", "value_mh": 0.047, "nodes": ["u2", "MH_IN-"]}
+ ],
+ "wires": [
+  {"id": "w_wf_plus", "from": "n2", "to": "WF+", "resistance_ohm": 0.012},
+  {"id": "w_wf_minus", "from": "LF_IN-", "to": "WF-", "resistance_ohm": 0.012},
+  {"id": "w_mf_plus", "from": "m3", "to": "MF-", "resistance_ohm": 0.02},
+  {"id": "w_mf_minus", "from": "MH_IN-", "to": "MF+", "resistance_ohm": 0.02},
+  {"id": "w_uhf_plus", "from": "u2", "to": "UHF+", "resistance_ohm": 0.02},
+  {"id": "w_uhf_minus", "from": "MH_IN-", "to": "UHF-", "resistance_ohm": 0.02}
+ ],
+ "sources": [
+  {"id": "LF", "plus": "LF_IN+", "minus": "LF_IN-", "voltage_rms": 2.83},
+  {"id": "MH", "plus": "MH_IN+", "minus": "MH_IN-", "voltage_rms": 2.83}
+ ],
+ "loads": [
+  {"id": "lf", "plus": "WF+", "minus": "WF-", "impedance": {"file": "../examples/out/section_lf.json", "path": "results.z_ohm"}},
+  {"id": "mf", "plus": "MF+", "minus": "MF-", "impedance": {"file": "../examples/out/section_mf.json", "path": "results.z_ohm"}},
+  {"id": "uhf", "plus": "UHF+", "minus": "UHF-", "impedance": {"file": "../examples/out/section_uhf.json", "path": "results.z_ohm"}}
+ ],
+ "modes": [
+  {"id": "linked_single_amplifier", "links": [["LF_IN+", "MH_IN+"], ["LF_IN-", "MH_IN-"]], "active_sources": ["LF"]},
+  {"id": "biamp_lf_only", "links": [], "active_sources": ["LF"]},
+  {"id": "biamp_mh_only", "links": [], "active_sources": ["MH"]}
+ ]
+}

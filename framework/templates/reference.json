@@ -1,0 +1,29 @@
+{
+ "product": "Manufacturer Model",
+ "researched": "2026-09-14",
+ "sources": [
+  {"url": "https://manufacturer.example/model", "kind": "manufacturer page", "retrieved": "2026-09-14", "notes": "published specifications"},
+  {"url": "https://review.example/measurements", "kind": "independent measurement", "retrieved": "2026-09-14", "notes": "on-axis and impedance plots digitized"}
+ ],
+ "published": {
+  "sensitivity_db_2v83_1m": {"value": 99, "condition": "manufacturer, half space assumed", "source": 0},
+  "frequency_response": {"low_hz": 38, "high_hz": 20000, "tolerance_db": 3, "source": 0},
+  "nominal_impedance_ohm": {"value": 8, "source": 0},
+  "power_handling_w": {"continuous": 100, "peak": 400, "source": 0},
+  "crossover_hz": {"values": [650, 5200], "source": 0},
+  "dimensions_mm": {"width": 419, "depth": 330, "height": 914, "source": 0},
+  "mass_kg": {"value": 32.7, "source": 0},
+  "drivers": {"woofer": "12 inch fiber composite cone", "midrange": "1.75 inch titanium compression driver on tractrix horn", "tweeter": "1 inch compression driver on horn", "passive_radiator": "15 inch", "source": 0}
+ },
+ "digitized_curves": {
+  "on_axis_spl": {"voltage_rms": 2.83, "distance_m": 1.0, "smoothing": "1/6 octave", "reading_uncertainty_db": 1.0, "source": 1,
+                  "points": [[40, 92], [60, 97], [100, 99], [200, 99], [500, 98], [1000, 99], [2000, 99], [5000, 98], [10000, 97], [16000, 94]]},
+  "impedance": {"source": 1, "points_hz_ohm": [[20, 12], [40, 6.5], [100, 9], [1000, 8], [5000, 7], [20000, 9]]}
+ },
+ "design_reading": {
+  "alignment": "large passive radiator tuned around 35 Hz",
+  "directivity": "horn loaded midrange and tweeter, controlled from about 700 Hz upward",
+  "what_to_match": ["sensitivity", "bass extension in a similar volume", "horn-like directivity above 700 Hz", "8 ohm friendly load"],
+  "what_not_to_copy": ["proprietary drivers", "exact cosmetics"]
+ }
+}

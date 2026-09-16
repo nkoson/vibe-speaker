@@ -1,0 +1,26 @@
+{
+ "frequencies": {"min_hz": 20, "max_hz": 20000, "points": 600},
+ "input_voltage_rms": 2.83,
+ "observer": {"distance_m": 3.0, "ear_height_m": 1.0},
+ "cabinet": {"depth_mm": 500, "floor_offset_mm": 0, "baffle_width_mm": 600},
+ "options": {"rear_wall": "standard", "double_90_degree_weight": false},
+ "analysis": {"directivity_index_band_hz": [500, 10000]},
+ "sections": [
+  {"name": "lf", "source": {"file": "../examples/out/section_lf.json"},
+   "transfer": {"file": "../examples/out/crossover_network.json", "path": "results.sections.0.transfer"},
+   "baffle": {"file": "../examples/out/baffle_diffraction.json", "path": "results.sources.0.baffle_factor"},
+   "position": {"x_mm": 0, "z_mm": 380},
+   "rear_radiation": {"kind": "shadowed_monopole", "floor_db": -18, "order": 1},
+   "rear_outlets": [{"pressure": {"file": "../examples/out/lf_box.json", "path": "results.curves.0.outlet_pressure_pa"}, "voltage_rms": 2.83,
+                     "positions": [{"x_mm": -150, "z_mm": 250}, {"x_mm": 150, "z_mm": 250}], "face": "rear",
+                     "rear_radiation": {"kind": "shadowed_monopole", "floor_db": -18, "order": 1}}]},
+  {"name": "mf", "source": {"file": "../examples/out/section_mf.json"},
+   "transfer": {"file": "../examples/out/crossover_network.json", "path": "results.sections.1.transfer"},
+   "position": {"x_mm": 0, "z_mm": 700},
+   "rear_radiation": {"kind": "shadowed_monopole", "floor_db": -25, "order": 1}},
+  {"name": "uhf", "source": {"file": "../examples/out/section_uhf.json"},
+   "transfer": {"file": "../examples/out/crossover_network.json", "path": "results.sections.2.transfer"},
+   "position": {"x_mm": 0, "z_mm": 880},
+   "rear_radiation": {"kind": "shadowed_monopole", "floor_db": -30, "order": 1}}
+ ]
+}

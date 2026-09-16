@@ -1,0 +1,11 @@
+{
+ "material": {"name": "mdf", "thickness_mm": 18, "poisson_ratio": 0.3,
+              "treatments": ["none", "bostik_2", "roofing_felt_2_steel"]},
+ "auto_bays": {"inside_width_mm": 564, "inside_depth_mm": 464, "inside_height_mm": 600, "brace_z_mm": [200, 420], "brace_thickness_mm": 18},
+ "panels": [{"name": "front_between_cutouts", "a_mm": 564, "b_mm": 180, "count": 1, "note": "solid strip of the front panel between woofer and horn"}],
+ "pressure": {"file": "../examples/out/cavity_modes.json", "frequency_path": "results.f_hz", "path": "results.pressure_envelope_rms_pa", "scale": 10.0},
+ "audibility": {"cone": {"file": "../examples/out/lf_box.json", "frequency_path": "results.f_hz",
+                         "excursion_path": "results.curves.1.excursion_peak_mm", "sd_cm2": 857}},
+ "frequencies": {"min_hz": 20, "max_hz": 1500, "points": 121},
+ "mode_order": 7
+}

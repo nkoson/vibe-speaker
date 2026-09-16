@@ -1,0 +1,53 @@
+# Loudspeaker design framework (LLM-driven)
+
+A passive loudspeaker design workflow in which the language model designs, judges and documents, and small standalone Python applications compute the physics.
+
+```
+framework/
+  README.md                  this file
+  bootstrap.py               creates .speaker-venv from ../requirements.txt and verifies the apps
+  skills/                    the design process as skills for the agent
+    speaker-design/          orchestrator: project lifecycle, research, iteration, selection
+    speaker-designer/        how to build and refine a candidate with the simulations
+    speaker-evaluator/       how to score, compare and send candidates back for refinement
+    speaker-documentation/   how to write the final construction and performance documents
+    speaker-learnings/       consult past learnings, write the postmortem, distill new learnings
+  learnings/                 one advice file per learning from past projects, with INDEX.md
+  references/                engineering principles with their sources: cabinet geometry and materials,
+                             baffle and driver placement, passive radiators, alternative loadings, horn
+                             and waveguide design, arrays, target response, crossover design
+  simulations/               standalone simulation apps, one folder each, documented next to the code
+    README.md                inventory, conventions and data flow
+    _common/                 shared physics and JSON plumbing
+    examples/                a runnable example chain (outputs land in examples/out, ignored by git)
+  tools/                     plotting, cabinet drawing and cut list, schematic and board netlist, PDF assembly
+  templates/                 JSON and Markdown templates for project files
+  tests/                     pytest suite that runs the example chain and checks invariants
+  projects/                  design projects created by the skills (ignored by git)
+```
+
+## How the pieces fit
+
+1. The user describes a speaker and a reference product. The `speaker-design` skill creates `framework/projects/<slug>/` with the brief, the iteration limit and the tolerances the user cares about.
+2. The agent researches the reference and an extensive inventory of candidate drivers, horns, radiators and crossover stock from primary sources, saving each part as JSON in the project's inventory.
+3. Following `speaker-designer`, the agent builds candidates: it writes parameter files, runs the simulation apps, reads the result documents and iterates on alignment, cabinet, crossover and placement.
+4. Following `speaker-evaluator`, the agent scores every candidate from the result documents against the brief, the reference and the other candidates, and writes refinement requests.
+5. Design and evaluation alternate until the iteration limit is reached. The best candidate is selected with a written justification.
+6. Following `speaker-documentation`, the agent produces the construction package as one PDF (with its Markdown sources and images kept beside it): cabinet drawings and cut list, crossover schematic, connection table and parts list, simulated performance with plots, and a two-sided comparison with the reference.
+
+7. Every run ends with a postmortem in the project folder; its transferable findings are distilled into `framework/learnings/` as advice that the next project reads at its start.
+
+The skills point into `framework/references/` at the decisions the engineering governs, and into `framework/learnings/` at the decisions where earlier projects went wrong. A reference states what is true of loudspeakers and cites where it is written down; a learning states what happened in one project. Neither is enforced by code and neither supplies a project's objectives.
+
+Simulations report; the model decides. No Python code in this folder marks a result as blocked, failed or viable, and no learning is enforced by code.
+
+## Running
+
+`python3 framework/bootstrap.py --tests` creates `.speaker-venv` in the repository root, installs numpy, scipy, matplotlib, reportlab, pypdfium2 and pytest, runs the example chain and the tests. Then use `.speaker-venv/bin/python` for everything.
+
+```
+.speaker-venv/bin/python framework/simulations/examples/run_examples.py
+.speaker-venv/bin/python -m pytest framework/tests -q
+```
+
+The skills are linked into `.claude/skills/` for Claude Code and `.agents/skills/` for other agent hosts; `AGENTS.md` at the repository root is the generic entry point.

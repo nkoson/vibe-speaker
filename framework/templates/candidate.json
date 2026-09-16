@@ -1,0 +1,32 @@
+{
+ "id": "c01",
+ "iteration": 1,
+ "parent": null,
+ "created": "2026-09-14",
+ "intent": "Vented 15 inch with 90x50 horn and ribbon; lowest cost route to the reference sensitivity.",
+ "parts": {
+  "woofer": "faital_15pr400_8",
+  "midrange": "bc_de991tn_8",
+  "horn": "rcf_hf950",
+  "tweeter": "fountek_neo_cd3",
+  "passive_radiator": null
+ },
+ "enclosure": {"type": "vented", "net_volume_l": 150, "tuning_hz": 34, "ql": 10, "qp": 20, "port": {"diameter_mm": 100, "count": 2, "length_mm": 197}},
+ "cabinet": {"outer": {"width_mm": 600, "depth_mm": 500, "height_mm": 950}, "panel_thickness_mm": 18, "material": "18 mm MDF",
+             "partitions": [{"name": "bass_top", "z_mm": 636}], "braces": [{"z_mm": 218, "rim_mm": 60}, {"z_mm": 438, "rim_mm": 60}],
+             "lining_mm": 50},
+ "placement": {
+  "lf": {"x_mm": 0, "z_mm": 380, "depth_mm": 70},
+  "mf": {"x_mm": 0, "z_mm": 740, "depth_mm": 180},
+  "uhf": {"x_mm": 0, "z_mm": 900, "depth_mm": 15, "tilt_deg": 0},
+  "ports": [{"x_mm": -150, "z_mm": 250}, {"x_mm": 150, "z_mm": 250}]
+ },
+ "crossover": {"file": "sim/crossover_network.json", "targets_hz": [600, 8000], "polarity": [1, -1, 1]},
+ "simulation_files": {
+  "lf_box": "sim/lf_box.json", "sections": ["sim/section_lf.json", "sim/section_mf.json", "sim/section_uhf.json"], "baffle": "sim/baffle.json",
+  "crossover_fit": "sim/crossover_fit.json", "crossover_network": "sim/crossover_network.json", "whole_speaker": "sim/whole_speaker.json",
+  "cavity_modes": "sim/cavity_modes.json", "plate_structure": "sim/plate_structure.json", "board_nodal": null, "response_metrics": "sim/response_metrics.json"
+ },
+ "designer_notes": "Port air speed at 28.3 V reaches 19 m/s peak at 28 Hz; consider 3 ports or a flared pair in the next round.",
+ "estimated_cost": {"amount": 1420, "currency": "EUR", "basis": "inventory prices, pair, drivers and crossover parts only"}
+}

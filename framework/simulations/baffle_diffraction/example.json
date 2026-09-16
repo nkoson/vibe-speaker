@@ -1,0 +1,12 @@
+{
+ "frequencies": {"min_hz": 20, "max_hz": 20000, "points": 400},
+ "baffle": {"width_mm": 600, "height_mm": 950, "edge_radius_mm": 19},
+ "observer_distance_m": 3.0,
+ "sources": [
+  {"name": "woofer", "model": "edge_diffraction", "x_mm": 300, "z_mm": 380, "sd_cm2": 857},
+  {"name": "horn", "model": "edge_diffraction", "x_mm": 300, "z_mm": 700, "radius_mm": 120},
+  {"name": "tweeter", "model": "edge_diffraction", "x_mm": 300, "z_mm": 880, "radius_mm": 15, "edge_radius_mm": 6,
+   "recess": {"setback_mm": 20, "opening_width_mm": 60, "opening_height_mm": 90}},
+  {"name": "woofer shelf surrogate", "model": "shelf", "sd_cm2": 857}
+ ]
+}

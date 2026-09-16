@@ -1,0 +1,11 @@
+{
+ "frequencies": {"min_hz": 15, "max_hz": 1000, "points": 400},
+ "model": "equivalence",
+ "baffle": {"path_mm": 500},
+ "cavity": {"depth_mm": 350},
+ "angles_deg": [0, 15, 30, 45, 60, 75, 90],
+ "driver": {"sd_cm2": 530, "xmax_mm": 9.0},
+ "target": {"spl_db_at_1m": 96, "space": "full", "frequencies_hz": [20, 25, 31.5, 40, 50, 63, 80, 100]},
+ "cardioid": {"spacing_mm": 300, "upper_hz": 400, "lower_hz": 100,
+              "angles_deg": [0, 30, 45, 60, 90, 120, 135, 150, 180]}
+}

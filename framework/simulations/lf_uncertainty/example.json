@@ -1,0 +1,9 @@
+{
+ "driver": {"ts": {"fs_hz": 35, "vas_l": 248.9, "qms": 6.0, "qes": 0.34, "re_ohm": 5.1, "le_mh": 0.72, "sd_cm2": 857}},
+ "enclosure": {"type": "vented", "net_volume_l": 150, "tuning_hz": 34, "ql": 10, "qp": 20, "port": {"diameter_mm": 100, "count": 2}},
+ "drive": {"voltage_rms": 28.3},
+ "draws": 64,
+ "seed": 7,
+ "spreads": {"fs_hz": 0.05, "qes": 0.10, "vas_l": 0.10, "net_volume_l": 0.03, "tuning_hz_abs": 1.0, "ql_range": [7, 20]},
+ "analysis": {"reference_band_hz": [150, 300], "stress_band_hz": [20, 300], "cutoff_thresholds_db": [-6, -10], "percentiles": [5, 50, 95]}
+}

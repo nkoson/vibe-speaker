@@ -1,0 +1,51 @@
+{
+ "frequencies": {"min_hz": 10, "max_hz": 40000, "points": 800},
+ "input_voltage_rms": 2.83,
+ "max_nfev": 120,
+ "max_objective_calls": 3000,
+ "polarity_trials": 4,
+ "target": {"spl_db": "auto", "band_hz": [150, 16000], "min_input_impedance_ohm": 5.0, "impedance_weight": 1.0,
+            "weights": [{"band_hz": [300, 8000], "weight": 2.0}], "vertical_angles_deg": [0]},
+ "system": {
+  "observer": {"distance_m": 3.0, "ear_height_m": 1.0},
+  "cabinet": {"depth_mm": 500, "floor_offset_mm": 0},
+  "sections": [
+   {"name": "lf", "source": {"file": "../examples/out/section_lf.json"},
+    "baffle": {"file": "../examples/out/baffle_diffraction.json", "path": "results.sources.0.baffle_factor"},
+    "position": {"x_mm": 0, "z_mm": 380}},
+   {"name": "mf", "source": {"file": "../examples/out/section_mf.json"}, "position": {"x_mm": 0, "z_mm": 700}},
+   {"name": "uhf", "source": {"file": "../examples/out/section_uhf.json"}, "position": {"x_mm": 0, "z_mm": 880}}
+  ]
+ },
+ "sections": [
+  {"name": "lf", "polarity": 1, "wire_loop_ohm": 0.03, "source": {"file": "../examples/out/section_lf.json"},
+   "passband_hz": [40, 400], "compensation_audit": {"crossover_hz": 566, "octaves": 1.0},
+   "elements": [
+    {"id": "L1", "position": "series", "type": "L", "value_mh": 2.2, "dcr_ohm": 0.25, "fit": {"min": 0.8, "max": 6.8}},
+    {"id": "C1", "position": "shunt", "type": "C", "value_uf": 47, "fit": {"min": 10, "max": 150}},
+    {"id": "L2", "position": "series", "type": "L", "value_mh": 1.0, "fit": {"min": 0.3, "max": 3.3}},
+    {"id": "C2", "position": "shunt", "type": "C", "value_uf": 33, "fit": {"min": 10, "max": 150}},
+    {"id": "zobel", "position": "shunt", "role": "compensation", "type": "series",
+     "parts": [{"id": "Rz", "type": "R", "value_ohm": 6.8}, {"id": "Cz", "type": "C", "value_uf": 33}]}
+   ]},
+  {"name": "mf", "polarity": -1, "wire_loop_ohm": 0.05, "source": {"file": "../examples/out/section_mf.json"},
+   "passband_hz": [800, 6000], "compensation_audit": {"crossover_hz": [566, 8700], "octaves": 1.0},
+   "elements": [
+    {"id": "C3", "position": "series", "type": "C", "value_uf": 22, "fit": {"min": 6.8, "max": 100}},
+    {"id": "L3", "position": "shunt", "type": "L", "value_mh": 1.8, "fit": {"min": 0.5, "max": 6.8}},
+    {"id": "C4", "position": "series", "type": "C", "value_uf": 15, "fit": {"min": 4.7, "max": 68}},
+    {"id": "L4", "position": "shunt", "type": "L", "value_mh": 0.68, "fit": {"min": 0.2, "max": 3.3}},
+    {"id": "L5", "position": "series", "type": "L", "value_mh": 0.10, "fit": {"min": 0.03, "max": 0.5}},
+    {"id": "C5", "position": "shunt", "type": "C", "value_uf": 1.5, "fit": {"min": 0.47, "max": 6.8}},
+    {"id": "Rs", "position": "series", "type": "R", "value_ohm": 6.8, "fit": {"min": 1.0, "max": 22}},
+    {"id": "Rp", "position": "shunt", "type": "R", "value_ohm": 4.7, "fit": {"min": 2.2, "max": 47}}
+   ]},
+  {"name": "uhf", "polarity": 1, "wire_loop_ohm": 0.05, "source": {"file": "../examples/out/section_uhf.json"},
+   "elements": [
+    {"id": "C6", "position": "series", "type": "C", "value_uf": 1.5, "fit": {"min": 0.47, "max": 6.8}},
+    {"id": "L6", "position": "shunt", "type": "L", "value_mh": 0.12, "fit": {"min": 0.03, "max": 0.5}},
+    {"id": "C7", "position": "series", "type": "C", "value_uf": 1.0, "fit": {"min": 0.33, "max": 4.7}},
+    {"id": "L7", "position": "shunt", "type": "L", "value_mh": 0.047, "fit": {"min": 0.015, "max": 0.22}}
+   ]}
+ ]
+}

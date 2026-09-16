@@ -1,0 +1,63 @@
+{
+ "_comment": "Self-contained crossover_network parameter file for schematic.py. The loads are inline resistive models so the file needs no result files from the example chain. The banks and arrays have leaves without ids of their own, which is the case the netlist writer has to give unique component ids.",
+ "frequencies": {"min_hz": 10, "max_hz": 40000, "points": 800},
+ "input_voltage_rms": 2.83,
+ "sections": [
+  {
+   "name": "lf", "polarity": 1, "wire_loop_ohm": 0.05,
+   "load": {"kind": "resistive", "r_ohm": 4.0},
+   "elements": [
+    {"id": "L1", "position": "series", "type": "L", "value_mh": 1.5, "dcr_ohm": 0.305,
+     "part": "Jantzen air core 14 AWG"},
+    {"id": "C1", "position": "shunt", "type": "parallel", "parts": [
+      {"type": "C", "value_uf": 33, "part": "Jantzen Standard Z", "rating": {"voltage_v": 400}},
+      {"type": "C", "value_uf": 2, "part": "Jantzen Cross Cap", "rating": {"voltage_v": 400}}
+    ]},
+    {"id": "Zlf", "position": "shunt", "type": "series", "parts": [
+      {"type": "R", "value_ohm": 3.3, "part": "Mundorf MResist R25", "rating": {"power_w": 25}},
+      {"type": "C", "value_uf": 22, "part": "Jantzen Standard Z", "rating": {"voltage_v": 400}}
+    ]}
+   ]
+  },
+  {
+   "name": "mf", "polarity": -1, "wire_loop_ohm": 0.05,
+   "load": {"kind": "resistive", "r_ohm": 6.5},
+   "elements": [
+    {"id": "C2", "position": "series", "type": "parallel", "parts": [
+      {"type": "C", "value_uf": 22, "part": "Jantzen Standard Z", "rating": {"voltage_v": 400}},
+      {"type": "C", "value_uf": 2.2, "part": "Jantzen Standard Z", "rating": {"voltage_v": 400}},
+      {"type": "C", "value_uf": 1.5, "part": "Jantzen Cross Cap", "rating": {"voltage_v": 400}}
+    ]},
+    {"id": "L2", "position": "shunt", "type": "L", "value_mh": 8.2, "dcr_ohm": 0.21,
+     "part": "Mundorf VS180 I-core"},
+    {"id": "Rs2", "position": "series", "type": "series", "parts": [
+      {"type": "R", "value_ohm": 3.3, "part": "Mundorf MResist R25", "rating": {"power_w": 25}},
+      {"type": "R", "value_ohm": 3.3, "part": "Mundorf MResist R25", "rating": {"power_w": 25}},
+      {"type": "R", "value_ohm": 3.3, "part": "Mundorf MResist R25", "rating": {"power_w": 25}}
+    ]},
+    {"id": "Rp2", "position": "shunt", "type": "R", "value_ohm": 15,
+     "part": "Mundorf MResist R25", "rating": {"power_w": 25}}
+   ]
+  },
+  {
+   "name": "hf", "polarity": -1, "wire_loop_ohm": 0.05,
+   "load": {"kind": "resonant", "re_ohm": 6.5, "le_mh": 0.035, "peak_r_ohm": 14, "peak_hz": 425, "peak_q": 1.2},
+   "elements": [
+    {"id": "C4", "position": "series", "type": "parallel", "parts": [
+      {"type": "C", "value_uf": 6.8, "part": "Jantzen Standard Z", "rating": {"voltage_v": 400}},
+      {"type": "C", "value_uf": 2.2, "part": "Jantzen Standard Z", "rating": {"voltage_v": 400}}
+    ]},
+    {"id": "L4", "position": "shunt", "type": "L", "value_mh": 2.7, "dcr_ohm": 0.437,
+     "part": "Jantzen air core 14 AWG"},
+    {"id": "Rs3", "position": "series", "type": "parallel", "parts": [
+      {"type": "R", "value_ohm": 1.2, "part": "Mundorf MResist MOX MR10", "rating": {"power_w": 10}},
+      {"type": "R", "value_ohm": 1.5, "part": "Mundorf MResist MOX MR10", "rating": {"power_w": 10}}
+    ]},
+    {"id": "Rp3", "position": "shunt", "type": "series", "parts": [
+      {"type": "R", "value_ohm": 22, "part": "Mundorf MResist R25", "rating": {"power_w": 25}},
+      {"type": "R", "value_ohm": 18, "part": "Mundorf MResist R25", "rating": {"power_w": 25}}
+    ]}
+   ]
+  }
+ ]
+}

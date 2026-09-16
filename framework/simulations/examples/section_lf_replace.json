@@ -1,0 +1,18 @@
+{
+ "name": "lf_replace",
+ "frequencies": {"min_hz": 10, "max_hz": 40000, "points": 800},
+ "acoustic": {
+  "kind": "lf_box",
+  "reference": {"file": "out/lf_box.json", "path": "results.curves.0.cone_pressure_pa"},
+  "published_shape": {
+   "mode": "replace",
+   "source": "manufacturer datasheet plot, digitized; the same curve as section_lf.json",
+   "points": [[100, 99], [300, 99], [800, 100], [1500, 101], [2500, 98], [4000, 92], [6000, 84]]
+  },
+  "blend_band_hz": [150, 300]
+ },
+ "impedance": {"kind": "reference", "reference": {"file": "out/lf_box.json", "path": "results.curves.0.z_ohm"}},
+ "directivity": {"kind": "piston", "sd_cm2": 857},
+ "acoustic_depth_mm": 70,
+ "analysis": {"sensitivity_band_hz": [200, 800]}
+}

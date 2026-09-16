@@ -1,0 +1,14 @@
+{
+ "name": "mf_horn",
+ "frequencies": {"min_hz": 10, "max_hz": 40000, "points": 800},
+ "acoustic": {
+  "kind": "published_curve",
+  "voltage_rms": 2.83, "distance_m": 1.0,
+  "source": "manufacturer datasheet plot on the 90x50 horn, digitized",
+  "points": [[300, 96], [400, 104], [500, 108], [700, 110], [1000, 110], [2000, 109], [4000, 108], [8000, 105], [12000, 102], [16000, 97], [20000, 92]]
+ },
+ "impedance": {"kind": "resonant", "re_ohm": 6.0, "le_mh": 0.08, "peak_r_ohm": 12, "peak_hz": 650, "peak_q": 2.0},
+ "directivity": {"kind": "gaussian", "horizontal_deg": 90, "vertical_deg": 50},
+ "acoustic_depth_mm": 180,
+ "analysis": {"sensitivity_band_hz": [1000, 8000]}
+}

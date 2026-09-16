@@ -1,0 +1,47 @@
+{
+ "frequencies": {"min_hz": 10, "max_hz": 40000, "points": 800},
+ "input_voltage_rms": 2.83,
+ "tolerances": {"draws": 16, "seed": 9919, "C": 0.05, "L": 0.03, "R": 0.02},
+ "thermal": {"coil_temperatures_c": [20, 100], "reference_c": 20},
+ "power_split_band_hz": [20, 20000],
+ "sections": [
+  {
+   "name": "lf", "polarity": 1, "wire_loop_ohm": 0.03, "re_ohm": 5.1,
+   "passband_hz": [40, 400], "compensation_audit": {"crossover_hz": 566, "octaves": 1.0},
+   "source": {"file": "../examples/out/section_lf.json"},
+   "elements": [
+    {"id": "L1", "position": "series", "type": "L", "value_mh": 2.2, "dcr_ohm": 0.25, "core": "air", "saturation_current_a": 20, "part": "Jantzen air core 1.4 mm", "rating": {"current_rms_a": 10}},
+    {"id": "C1", "position": "shunt", "type": "C", "value_uf": 47, "part": "Jantzen Cross-Cap", "rating": {"voltage_v": 400}},
+    {"id": "L2", "position": "series", "type": "L", "value_mh": 1.0, "core": "iron", "part": "generic iron-core coil, catalogue listing"},
+    {"id": "C2", "position": "shunt", "type": "C", "value_uf": 33},
+    {"id": "zobel", "position": "shunt", "role": "compensation", "type": "series", "parts": [{"id": "Rz", "type": "R", "value_ohm": 6.8}, {"id": "Cz", "type": "C", "value_uf": 33}]}
+   ]
+  },
+  {
+   "name": "mf", "polarity": -1, "wire_loop_ohm": 0.05, "re_ohm": 6.0,
+   "passband_hz": [800, 6000], "compensation_audit": {"crossover_hz": [566, 8700], "octaves": 1.0},
+   "source": {"file": "../examples/out/section_mf.json"},
+   "elements": [
+    {"id": "C3", "position": "series", "type": "C", "value_uf": 22},
+    {"id": "L3", "position": "shunt", "type": "L", "value_mh": 1.8},
+    {"id": "C4", "position": "series", "type": "C", "value_uf": 15},
+    {"id": "L4", "position": "shunt", "type": "L", "value_mh": 0.68},
+    {"id": "L5", "position": "series", "type": "L", "value_mh": 0.10},
+    {"id": "C5", "position": "shunt", "type": "C", "value_uf": 1.5},
+    {"id": "Rs", "position": "series", "type": "R", "value_ohm": 6.8, "part": "Mundorf MResist", "rating": {"power_w": 20}},
+    {"id": "Rp", "position": "shunt", "type": "R", "value_ohm": 4.7, "part": "Mundorf MResist", "rating": {"power_w": 20}}
+   ]
+  },
+  {
+   "name": "uhf", "polarity": 1, "wire_loop_ohm": 0.05,
+   "passband_hz": [10000, 20000], "compensation_audit": {"crossover_hz": 8700, "octaves": 1.0},
+   "source": {"file": "../examples/out/section_uhf.json"},
+   "elements": [
+    {"id": "C6", "position": "series", "type": "C", "value_uf": 1.5},
+    {"id": "L6", "position": "shunt", "type": "L", "value_mh": 0.12},
+    {"id": "C7", "position": "series", "type": "C", "value_uf": 1.0},
+    {"id": "L7", "position": "shunt", "type": "L", "value_mh": 0.047}
+   ]
+  }
+ ]
+}
