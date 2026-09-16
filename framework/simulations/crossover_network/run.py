@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _common import cli, acoustics, networks, thermal  # noqa: E402
 
 NAME = "crossover_network"
-VERSION = "1.3"
+VERSION = "1.4"
 NOTES = [
     "Exact complex series/shunt ladder recursion per section against the supplied load impedance; sections are parallel at the input terminals.",
     "Coil DCR defaults to 0.10 + 0.16 sqrt(L_mH) ohm and capacitor ESR to 0.01 ohm when not stated; replace them with the chosen parts' data.",
@@ -19,6 +19,7 @@ NOTES = [
     "A hot driver takes a larger share of the terminal voltage, so the electrical transfer usually rises with temperature while the driver's own sensitivity falls with Bl/Re. The two effects are reported separately: this transfer change, and lf_box's thermal_scenario.compression_db. Read them together, not apart.",
     "Insertion loss is reported against the same ladder with coil DCR, capacitor ESR and the wire loop removed, which separates what the real parts cost from the attenuation the topology was asked for.",
     "Stress figures are per PHYSICAL PART. A composite element's voltage and current are distributed to its members - a series group shares current and divides voltage, a parallel group shares voltage and divides current - so each resistor, capacitor and coil of a bank, a Zobel or a notch carries its own dissipation and its own current, and the leaf powers sum to the group's power exactly. components[] is therefore per part and component_curves[] per element group.",
+    "The efficiency block divides the real power the amplifier delivers between the drivers and the network, pink weighted so the share is not dominated by the top of the band. It is a reading of the network that was designed and not a target: what share is acceptable follows from the level budget, the pad depths and the compensation audit, which is why those figures are reported beside it.",
     "Component values are treated as linear at every level. Core saturation and its distortion are not modelled, and for cored coils no saturation figure exists to model: the supplier states it has not measured power handling or saturation points at all. The rating is therefore reported as 'not published', the core's failure mode is named where the core is known - ferrite saturates earlier and collapses abruptly, powder later and more softly - and the fallback is the vendor's frequency rule, ferromagnetic cores below about 1.2 kHz and air cores above.",
 ]
 VALIDITY = [
@@ -106,11 +107,19 @@ def compute(params, base_dir):
         note="computed at a flat drive voltage, which is not programme material. For sizing per-branch current ratings the "
              "equal-power frequency between the low band and everything above it lies between 250 and 350 Hz on typical "
              "programme; that figure belongs to the programme, not to this network.")
+    to_drivers = sum(row["load_power_w"] for row in rows)
+    efficiency = networks.power_efficiency(f, total_power, to_drivers, dissipation,
+                                           sections=list(zip(sections, [row["load_power_w"] for row in rows])),
+                                           band_hz=split_band)
+    parts = networks.part_counts(rows)
     results = dict(f_hz=f, input_voltage_rms=voltage, sections=rows, input_z_ohm=total_z, input_current_rms_a=voltage / zmag,
-                   total_component_dissipation_w=dissipation, power_split=power_split,
+                   total_component_dissipation_w=dissipation, total_driver_power_w=to_drivers, power_split=power_split,
+                   efficiency=efficiency, parts=parts,
                    statistics=dict(input_z_min_ohm=float(zmag[audible].min()), input_z_min_hz=float(f[audible][np.argmin(zmag[audible])]),
                                    input_z_max_ohm=float(zmag[audible].max()), input_z_max_hz=float(f[audible][np.argmax(zmag[audible])]),
                                    max_total_component_dissipation_w=float(dissipation.max()),
+                                   to_drivers_fraction=efficiency["to_drivers_fraction"], network_loss_db=efficiency["loss_db"],
+                                   part_count=parts["total"],
                                    component_count=int(sum(len(row["components"]) for row in rows))))
     if all("acoustic_pressure_per_input_volt_pa" in row for row in rows):
         colocated = sum(row["acoustic_pressure_per_input_volt_pa"] for row in rows)

@@ -15,7 +15,7 @@ References are not learnings. A learning in `framework/learnings/` says what hap
 | [crossover-design](crossover-design.md) | Choosing a topology, fitting values, quantizing to stock, reading dissipation or impedance, or judging a crossover result |
 | [baffle-and-driver-placement](baffle-and-driver-placement.md) | Choosing the baffle size, placing the drivers on it, setting the crossover frequencies that spacing has to survive, or judging an off-axis result |
 | [passive-radiators](passive-radiators.md) | Choosing, sizing, tuning or placing a passive radiator, or reading a passive-radiator alignment |
-| [target-response](target-response.md) | Setting the target a crossover is fitted to, or judging whether a predicted response is a good one |
+| [target-response](target-response.md) | Setting the target a crossover is fitted to, judging whether a predicted response is a good one, or checking an objective against what comparable speakers measure |
 | [alternative-loadings](alternative-loadings.md) | Considering bandpass, isobaric, aperiodic or cardioid loading, or judging a claim made for one |
 | [horn-and-waveguide-design](horn-and-waveguide-design.md) | Sizing a horn throat, rear cavity or mouth, or deciding whether a horn model can answer the question |
 | [arrays-and-directivity-control](arrays-and-directivity-control.md) | Arraying several sources of the same passband - a line array, a column, a stacked pair or an MTM |
@@ -42,8 +42,12 @@ power-handling clauses.
 **Established but unverified.** Crossover component values, compensation and notch networks, baffle
 step and diffraction magnitudes, the CTA-2034-A curve-assembly geometry, measurement practice, horn
 directivity, transmission lines and dipoles, the bandpass equivalent-circuit derivations, the
-constraints recorded for ribbons, coaxials and full-range drivers, and the terminal and connector
-conventions in `cabinet-geometry.md`. These rest on single sources -
+constraints recorded for ribbons, coaxials and full-range drivers, the terminal and connector
+conventions in `cabinet-geometry.md`, and the capacitor-class specifications and class-expectation
+figures in `crossover-design.md` section 7 and `target-response.md` section 9 - the component numbers
+are read from manufacturer datasheets at first hand, but they are two parts standing for two classes,
+and the measurement corpus behind the class comparison is third-party data of mixed vintage.
+These rest on single sources -
 often self-published, vendor documentation or patent specifications - and each is flagged where it is
 stated. Use them, cite them, and do not treat them as settled. The **preference predictors** have
 moved out of this category: they were read in Harman's own patent and agree with what was previously

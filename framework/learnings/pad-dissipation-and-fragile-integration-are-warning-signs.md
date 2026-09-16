@@ -56,6 +56,17 @@ write it into the parameter file so the schematic and the wiring table carry it 
 
 When pads seem unexpectedly deep for the raw driver sensitivity, consider examining voltage on both sides of the filter and pad. Compare the same input voltage and frequency-coincident total heat before and after substitutions. Keep per-body rating, cabinet heat, parasitic inductance and measured ambient temperature as separate checks.
 
+A seventh project showed the limit of splitting as an answer. The three hot positions were rebuilt as
+four-body banks of the exact resistance, which brought per-body dissipation inside half-rating
+practice at a provisional voltage ceiling and left the total heat, the cost and the board area where
+they were. Reading the same result files for power rather than stress put a number on what the splitting
+had not touched: 63 percent of the amplifier's pink-weighted power stayed in the network, and the
+single largest contributor was not a pad at all but an impedance-compensation branch diverting about
+two thirds of the woofer branch's current around the driver. Splitting answers heat per body; it does
+not answer heat, and the two questions are worth separating before parts are multiplied. See
+[the-crossover-is-a-bill-of-materials](the-crossover-is-a-bill-of-materials.md), and note that
+`crossover_network` now reports the loss and the physical part count directly.
+
 Consider checking a part's own dissipation rather than its group's before sizing an array from it.
 Per-part `I^2 R` and power conservation across the group are both cheap to verify - the members of a
 series group share its current and those of a parallel group share its voltage, and the leaf powers

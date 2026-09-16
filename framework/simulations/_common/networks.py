@@ -151,6 +151,82 @@ def insertion_loss(f, load, elements, transfer, band_hz=None):
                      "contribution is 20 log10(R / Z + 1) against the impedance it works into.")
 
 
+OCTAVE_BAND_EDGES_HZ = [(22.1, 44.2), (44.2, 88.4), (88.4, 176.8), (176.8, 353.6), (353.6, 707.1),
+                        (707.1, 1414.2), (1414.2, 2828.4), (2828.4, 5656.9), (5656.9, 11313.7), (11313.7, 22627.4)]
+
+
+def _weighted_share(f, numerator, denominator, inside):
+    """Share of denominator taken by numerator, weighted for equal energy per octave (1/f)."""
+    if not np.any(inside):
+        return None
+    weight = 1.0 / f[inside]
+    bottom = float(np.trapezoid(denominator[inside] * weight, f[inside]))
+    if bottom <= 0:
+        return None
+    return float(np.trapezoid(numerator[inside] * weight, f[inside]) / bottom)
+
+
+def power_efficiency(f, input_power_w, driver_power_w, component_power_w, sections=None, band_hz=(20.0, 20000.0)):
+    """How the amplifier's power divides between the drivers and the network that feeds them.
+
+    Every figure is a share of the real power the amplifier delivers, at the flat drive voltage the
+    run was given. The weighting is pink - equal energy per octave - because a share integrated
+    against a flat voltage over-counts the top of the band relative to any programme material. The
+    result is a reading of the network that was designed, not a target: what share is acceptable is
+    the level budget's answer and the designer's, and the figure means nothing without the pad
+    depths and the compensation audit beside it.
+    """
+    f = np.asarray(f, float)
+    inside = (f >= band_hz[0]) & (f <= band_hz[1])
+    to_drivers = np.asarray(driver_power_w, float)
+    to_components = np.asarray(component_power_w, float)
+    total = np.asarray(input_power_w, float)
+    share = _weighted_share(f, to_drivers, total, inside)
+    bands = []
+    for lo, hi in OCTAVE_BAND_EDGES_HZ:
+        sel = (f >= lo) & (f <= hi) & inside
+        value = _weighted_share(f, to_drivers, total, sel)
+        if value is not None:
+            bands.append(dict(band_hz=[lo, hi], to_drivers_fraction=value, to_components_fraction=1 - value,
+                              loss_db=float(-10 * np.log10(max(value, 1e-12)))))
+    rows = []
+    for section, power in (sections or []):
+        passband = section.get("passband_hz") or list(band_hz)
+        sel = (f >= passband[0]) & (f <= passband[1])
+        value = _weighted_share(f, np.asarray(power, float), total, sel)
+        rows.append(dict(name=section.get("name"), band_hz=list(passband), to_driver_fraction=value,
+                         loss_db=None if value is None else float(-10 * np.log10(max(value, 1e-12)))))
+    with np.errstate(divide="ignore", invalid="ignore"):
+        curve = np.where(total > 0, to_drivers / total, np.nan)
+    return dict(band_hz=list(band_hz), weighting="pink, equal energy per octave",
+                to_drivers_fraction=share, to_components_fraction=None if share is None else 1 - share,
+                loss_db=None if share is None else float(-10 * np.log10(max(share, 1e-12))),
+                octave_bands=bands, sections=rows, fraction_to_drivers=curve,
+                note="a reading, not a target. Power reaching a driver is not sound: a direct radiator turns about one "
+                     "percent of it into acoustic output and the rest into voice-coil heat, so this figure compares the "
+                     "network against the drivers it feeds and nothing else. Read it with the pad depths of the level "
+                     "budget, the compensation audit and insertion_loss: attenuation a sensitivity mismatch forces is not "
+                     "the same finding as current diverted around a driver to flatten its impedance, and only the level "
+                     "budget says which one this is.")
+
+
+def part_counts(sections):
+    """Physical bodies per section and per type, wiring and other parasitics excluded."""
+    totals = {}
+    rows = []
+    for row in sections:
+        counts = {}
+        for part in row.get("components", []):
+            if part.get("parasitic"):
+                continue
+            counts[part["type"]] = counts.get(part["type"], 0) + 1
+            totals[part["type"]] = totals.get(part["type"], 0) + 1
+        rows.append(dict(name=row.get("name"), total=int(sum(counts.values())), by_type=counts))
+    return dict(total=int(sum(totals.values())), by_type=totals, sections=rows,
+                note="one count per physical part that has to be bought, held and wired, which is what a bank of four "
+                     "resistors costs and a single body does not. Wiring resistance is excluded.")
+
+
 # The manufacturer's own answer about cored-coil saturation, which is that the measurement has not
 # been taken: "We have not done any measurements for power handling and saturation points for our
 # induction coils." That is a settled finding, not a search still to be done, so the field is
@@ -318,6 +394,8 @@ def leaf_summary(elements, states, f, scale=None):
     for e, st in zip(elements, states):
         for leaf, leaf_state in leaf_states(e, st, f, scale):
             row = dict(id=leaf.get("id") or e.get("id"), type=leaf["type"], position=e["position"])
+            if e.get("parasitic") or leaf.get("parasitic"):
+                row["parasitic"] = True
             for key in ("value_mh", "value_uf", "value_ohm", "dcr_ohm", "esr_ohm"):
                 if key in leaf:
                     row[key] = leaf[key]

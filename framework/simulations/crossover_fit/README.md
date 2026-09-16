@@ -24,6 +24,8 @@ python framework/simulations/crossover_fit/run.py --input params.json --out resu
 | `max_nfev` | Least-squares iterations per polarity trial, default 150 |
 | `max_objective_calls` | Hard cap on objective evaluations, default 4000 |
 | `polarity_trials` | 1 keeps the declared polarities; larger values try upper-section sign combinations (up to 2^(N-1)) |
+| `ablation` | `true`, or `{max_nfev, max_objective_calls, elements[]}`. Removes one element at a time and refits the rest. Off by default |
+| `stock` | `{"C": [...uF], "L": [...mH], "R": [...ohm]}`, or `stock` on an individual leaf. Enables the quantization report. Off by default |
 
 ## Output (`results`)
 
@@ -32,6 +34,23 @@ python framework/simulations/crossover_fit/run.py --input params.json --out resu
 - `attempts[]`: per polarity trial the cost, in-band RMS error and solver message; `selected_polarity`.
 - `target_spl_db`, `start_spl_db` on `fit_f_hz`; `on_axis_spl_db`, per-section `transfer` and `spl_db`, `input_z_ohm` on `f_hz`.
 - `statistics`: in-band RMS error and ripple after the fit, input impedance minimum, objective calls used, variable count.
+- `fitted_efficiency` and `fitted_parts`: what the fitted network loses and how many bodies it asks for, on the same definitions `crossover_network` uses, so both are visible while the topology can still change rather than after it is quantized.
+- `ablation` when requested: `reference` (the fitted network's own error) and one `trials[]` row per element with `delta_rms_db` — what the rest of the network cannot recover once that element is gone.
+- `quantization` when stock lists are given: each fitted value snapped to the nearest stock value with its error, the whole-network error and impedance minimum after snapping, and `sections` ready to paste.
+
+## Asking what an element is worth
+
+`ablation` removes one element at a time — a series element shorted, a shunt element opened, which is what leaving the part out of the build does — and refits every remaining free value before scoring. So `delta_rms_db` is not "how much does this element change the response" but "how much of its job can the rest of the network take over", which is the question that decides whether to buy it. Trials are sorted cheapest removal first.
+
+A small or negative delta says the element is earning little **on axis, against this target, in this design**. It says nothing about impedance, component stress, off-axis behaviour or tolerance robustness: `input_z_min_ohm` is reported per trial for the first of those, and the rest need `crossover_network` and `whole_speaker` on the variant. Nothing is removed for you, and there is no threshold at which the app suggests removing anything — a part that buys 0.2 dB may be worth keeping in one design and not in another, and that judgement is the designer's.
+
+The pass costs roughly one fit per element. The call budget defaults to `max_nfev × (variables + 2)` because a finite-difference jacobian costs one call per free value; when a trial reports a budget status its number is a floor on the achievable error, not a converged result.
+
+## Quantizing to stock
+
+Values are **not** constrained to the stock grid during the search: a fit pinned to a grid hides which direction a value wanted to move, and `values_at_bound` becomes unreadable. Instead the fit runs free and `quantization` snaps each value afterwards to the nearest stock value in log space, then evaluates the snapped network as a whole, because the errors interact and are not the sum of the individual snap errors.
+
+A large `error_percent` on a small value is the usual sign that the stock list does not carry what this topology wants — a tweeter coil of 0.015 mH against a grid starting at 0.1 mH is a topology finding, not a rounding detail. Rerun `crossover_network` on `quantization.sections` with the real DCR and ESR of the parts before treating any of it as the design.
 
 The fit searches the topology and bounds you give it against the source files you built; it does not know whether either is sensible. `framework/references/crossover-design.md` lists what to settle before fitting (the level budget, impedance compensation, the acoustic target) and what to check in a fitted network before accepting it.
 

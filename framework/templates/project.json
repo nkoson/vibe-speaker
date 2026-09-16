@@ -9,12 +9,23 @@
   "must_not_change": ["passive only", "no DSP"]
  },
  "objectives": [
-  {"name": "sensitivity_db_2v83_1m", "target": 99, "tolerance": 1.0, "direction": "at_least", "basis": "reference published figure"},
-  {"name": "f6_hz", "target": 38, "tolerance": 3, "direction": "at_most", "basis": "reference published -3 dB minus judgement"},
-  {"name": "impedance_min_ohm", "target": 6.4, "tolerance": 0.4, "direction": "at_least", "basis": "8 ohm nominal, amplifier friendly"},
-  {"name": "ripple_200_10000_db", "target": 6, "tolerance": 1, "direction": "at_most", "basis": "smooth direct sound"},
+  {"name": "sensitivity_db_2v83_1m", "target": 99, "tolerance": 1.0, "direction": "at_least", "basis": "reference published figure",
+   "reference_value": "99 dB claimed by the maker; independent measurement reads 96.5 dB on the same convention",
+   "class_note": "2.83 V is 1 W at 8 ohm and 2 W at 4 ohm, so this figure is only comparable at a stated impedance. Check it against lf_box efficiency.ceiling for this volume and cutoff before iteration 1"},
+  {"name": "f6_hz", "target": 38, "tolerance": 3, "direction": "at_most", "basis": "reference published -3 dB minus judgement",
+   "reference_value": "38 Hz published, condition not stated",
+   "class_note": "bound to sensitivity and volume by the efficiency law; the three cannot be set independently"},
+  {"name": "impedance_min_ohm", "target": 6.4, "tolerance": 0.4, "direction": "at_least", "basis": "8 ohm nominal, amplifier friendly",
+   "reference_value": "fill from the reference's measured minimum, not from its nominal label",
+   "class_note": "IEC 60268-5 allows 80 percent of nominal, and published measurements of comparable speakers often read lower. Every Zobel, notch and pad the level budget forces will move this"},
+  {"name": "ripple_200_10000_db", "target": 6, "tolerance": 1, "direction": "at_most", "basis": "smooth direct sound",
+   "class_note": "published flatness figures across the measurement corpora span roughly +/-1 to +/-6 dB; see target-response.md section 9"},
   {"name": "max_spl_db_1m", "target": 110, "tolerance": 2, "direction": "at_least", "basis": "reference continuous rating"}
  ],
+ "objective_review": {
+  "comment": "written before iteration 1 and never used to change a target. reference_value and class_note above say what comparable speakers measure for each statistic; this says which objectives pull against each other and what the conflict will cost. Nothing here blocks a design: a target beyond the class may be the point of it.",
+  "conflicts": ["example: the sensitivity and extension targets sit within 1 dB of the lossless ceiling for the stated volume, and the impedance-minimum target is stricter than the reference product measures; expect the level budget to spend the difference in pad depth, parts and heat"]
+ },
  "limits": {
   "iterations": 3,
   "candidates_per_iteration": 3,

@@ -16,6 +16,7 @@ One line per learning: phase, situation, file. Open the files whose situation ma
 | design | Choosing the system level and the upper drivers for a bass-critical brief | [establish-the-bass-envelope-before-system-sensitivity](establish-the-bass-envelope-before-system-sensitivity.md) |
 | design | Setting level and stock losses against bass output and amplifier loading | [set-the-fit-target-from-the-woofer-not-the-optimizer](set-the-fit-target-from-the-woofer-not-the-optimizer.md) |
 | design | Deep pads, resonant voltage gain or performance confined to nominal acoustic depths | [pad-dissipation-and-fragile-integration-are-warning-signs](pad-dissipation-and-fragile-integration-are-warning-signs.md) |
+| design | A crossover is being designed, quantized to stock, or read after a fit | [the-crossover-is-a-bill-of-materials](the-crossover-is-a-bill-of-materials.md) |
 | design | Setting the bounds of a crossover fit, or reading a fit with values resting on their bounds | [bound-the-fit-to-values-you-can-buy](bound-the-fit-to-values-you-can-buy.md) |
 | design | Freezing compact hardware, brace joints, wiring, motion and net-volume envelopes | [include-hardware-in-cabinet-envelope](include-hardware-in-cabinet-envelope.md) |
 | evaluation | Comparing bass extension between candidates or with a box-only figure | [keep-system-and-box-cutoffs-separate](keep-system-and-box-cutoffs-separate.md) |

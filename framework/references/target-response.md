@@ -227,6 +227,49 @@ Third-octave smoothing hides narrow resonances and diffraction ripple, so a desi
 bands is not automatically smooth at the resolution the NBD metric in section 7 uses. The two views
 are complementary: the standards bound the worst case, the preference model ranks what is left.
 
+## 9. Judging a target against what comparable speakers actually measure
+
+A target is a choice, and the useful question about it is not whether it is desirable but whether
+anything of this size and price does it. Three of the numbers a brief most often fixes — sensitivity,
+extension and impedance minimum — are bound to each other and to the box, so a set of them can be
+individually reasonable and jointly impossible:
+
+- **Sensitivity against extension and volume** is settled arithmetic, not practice. `driver-selection.md`
+  section 1 and `enclosure-alignments.md` section 3 give the efficiency law and the lossless ceiling a
+  volume and a cutoff imply, and real systems land 2 to 3 dB under that ceiling. A sensitivity target
+  above it is a finding about the driver complement before it is a design problem, and `lf_box` reports
+  the margin directly.
+- **Sensitivity is quoted per volt, not per watt.** The convention is 2.83 V at 1 m, which is 1 W into
+  8 ohm but 2 W into 4 ohm, so the same speaker gains about 3 dB on the label by halving its
+  impedance. Two products' sensitivity figures are comparable only at the same impedance, and a
+  sensitivity target paired with an impedance target is one constraint, not two.
+- **Impedance minima below the nominal rating are normal, not a fault.** The convention behind a
+  nominal rating, in IEC 60268-5, is that the modulus does not fall below 80 percent of it — about
+  6.4 ohm for an 8 ohm speaker and 3.2 for a 4 ohm one — and published measurements of well-regarded
+  speakers routinely show less. Phase makes it worse than the modulus says: Benjamin's analysis of
+  amplifier dissipation into reactive loads, which Stereophile publishes as equivalent peak
+  dissipation resistance, gives an effective load that can be a fraction of the modulus at the same
+  frequency. A design whose minimum is judged only against its own nominal label is being judged
+  against a convention, not against what it will actually be asked to drive.
+
+**Where to look.** The reference product's own independent measurements come first, because the brief
+usually names it, and the framework already requires them to be researched and digitized. Beyond that,
+published measurement corpora let a target be checked against a class rather than against an ideal:
+spinorama.org aggregates CTA-2034-A measurements of on the order of a thousand speakers from Audio
+Science Review, Erin's Audio Corner, Princeton 3D3A and others, with per-speaker flatness, bass
+extension, sensitivity and tonality figures. Flatness figures there span roughly +/-1 to +/-6 dB
+across the corpus, which is the spread any ripple target should be set against. These are third-party
+measurements of different vintages under different rigs, so they bound expectations rather than
+certify any one number.
+
+**How to use the comparison.** State, beside each objective, what the reference product and the class
+measure for the same statistic, and whether the objective is inside that range, at its edge or beyond
+it. An objective stricter than anything comparable is not forbidden and may be exactly the point of
+the design — but it is then a deliberate ambition with a cost attached, usually paid in parts, heat
+or size, and it should be recorded as one rather than inherited from a template. Nothing here is a
+limit, and no target is disqualified by this section: the point is that the comparison is on the page
+when the objective is set, not discovered in the evaluation.
+
 **Reaching a level at all.** The amplifier arithmetic that goes with a target SPL is
 `dBW = Lreq - Lsens + 20 log10(D2 / Dref) + HR`, with at least 3 dB of headroom, and it assumes the
 driver is not already in thermal or excursion compression at that power — which, per
@@ -243,6 +286,9 @@ driver is not already in thermal or excursion compression at that power — whic
 - ANSI/CTA-2034-A, *Standard Method of Measurement for In-Home Loudspeakers*, Consumer Technology Association, 2015 (revised as ANSI/CTA-2034-B, 2024) — the definitions of the listening window, early reflections, sound power, directivity index and predicted in-room response. <https://webstore.ansi.org/standards/cea/cea20342015ansi>
 - Devantier, A., "Characterizing the Amplitude Response of Loudspeaker Systems", AES 113th Convention, preprint 5638, 2002 — the measurement set the standard is built on.
 - Aubert, P., *spinorama* - an open-source reimplementation of the CTA-2034-A curve computations and the Olive predictors, the source of every computational detail in section 7 including the two flagged discrepancies against the standard text. <https://github.com/pierreaubert/spinorama>
+- Aubert, P., *spinorama.org* - a published database aggregating CTA-2034-A measurements of on the order of a thousand loudspeakers from Audio Science Review, Erin's Audio Corner, Princeton 3D3A and other measurers, with per-speaker flatness, bass extension, sensitivity and tonality figures. Used in section 9 as the corpus a target is compared against. Third-party measurements of different vintages on different rigs; it bounds expectations for a class and certifies no individual figure. <https://www.spinorama.org/>
+- IEC 60268-5, *Sound system equipment - Part 5: Loudspeakers* - the nominal-impedance convention quoted in section 9, that the modulus does not fall below 80 percent of the rated value. Quoted from the same clause `crossover-design.md` cites; the standard itself is paywalled and the body was not read here.
+- Benjamin, E., "Audio Power Amplifiers for Loudspeaker Loads", *Journal of the Audio Engineering Society*, vol. 42, no. 9, p. 670, 1994 - the analysis of amplifier dissipation into reactive loads that equivalent peak dissipation resistance comes from, published as a measurement by Stereophile since 2007. Abstract read; the body and the Stereophile article were not, so section 9 quotes no figure from either.
 - EBU Tech 3276, *Listening conditions for the assessment of sound programme material: monophonic and two-channel stereophonic*, European Broadcasting Union - the monitor acceptance envelope in section 8. <https://tech.ebu.ch/docs/tech/tech3276.pdf>
 - ITU-R BS.1116-3, *Methods for the subjective assessment of small impairments in audio systems*, International Telecommunication Union, 2015 - the same envelope with its two disagreements, plus the listening-room requirements. <https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1116-3-201502-I!!PDF-E.pdf>
 - In this repository: `simulations/whole_speaker/README.md` for the angle sets and window statistics, `simulations/response_metrics/README.md` for the slope, deviation and band statistics, and `simulations/crossover_fit/README.md` for the target and weighting inputs.
