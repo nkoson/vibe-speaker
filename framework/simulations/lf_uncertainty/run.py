@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _common import cli, acoustics  # noqa: E402
 
 NAME = "lf_uncertainty"
-VERSION = "1.1"
+VERSION = "1.2"
 NOTES = [
     "Each draw perturbs the stated parameters independently with uniform distributions of the given half-width; the spreads are your assumptions, not measured production yield.",
     "Same linear lumped model as lf_box; percentiles describe the model's sensitivity to the inputs, nothing else.",
@@ -47,6 +47,30 @@ VALIDITY = [
 ]
 
 
+def summarize_samples(rows, percentiles):
+    """Describe every outcome; cutoff percentiles exclude unresolved/censored draws explicitly."""
+    summary = {}
+    for key in rows[0]:
+        if key.endswith("_bound"):
+            continue
+        bound_key = key[:-3] + "_bound" if key.endswith("_hz") else None
+        is_cutoff = bound_key in rows[0] if bound_key else False
+        values = [row[key] for row in rows
+                  if isinstance(row[key], (int, float)) and np.isfinite(row[key])
+                  and (not is_cutoff or row[bound_key] == "resolved")]
+        if not values and not is_cutoff:
+            continue
+        item = {f"p{p}": float(np.percentile(values, p)) if values else None for p in percentiles}
+        item.update(total_draws=len(rows), resolved_draws=len(values))
+        if is_cutoff:
+            counts = {bound: sum(row[bound_key] == bound for row in rows)
+                      for bound in ("resolved", "left_censored", "no_sustained_pass")}
+            item.update(bound_counts=counts, unresolved_draws=len(rows) - counts["resolved"],
+                        percentile_basis="resolved cutoffs only; conditional, not an all-draw robustness claim")
+        summary[key] = item
+    return summary
+
+
 def compute(params, base_dir):
     ts = dict(cli.require(params, "driver", "ts"))
     enclosure = dict(cli.require(params, "enclosure"))
@@ -55,6 +79,8 @@ def compute(params, base_dir):
     series_r = float(drive.get("series_resistance_ohm", 0.0))
     f = cli.frequency_grid(params.get("frequencies"), 10.0, 1500.0, 300)
     draws = int(params.get("draws", 128))
+    if draws < 1:
+        raise cli.InputError("draws must be at least 1")
     rng = np.random.default_rng(int(params.get("seed", 1)))
     spreads = dict(DEFAULT_SPREADS, **(params.get("spreads") or {}))
     analysis = params.get("analysis") or {}
@@ -96,12 +122,7 @@ def compute(params, base_dir):
         rows.append(row)
         spl_stack.append(r["spl_db"])
     spl_stack = np.array(spl_stack)
-    summary = {}
-    for key in rows[0]:
-        values = np.array([row[key] for row in rows if isinstance(row[key], (int, float)) and row[key] is not None], float)
-        if len(values):
-            summary[key] = {f"p{p}": float(np.percentile(values, p)) for p in percentiles}
-            summary[key]["resolved_draws"] = int(len(values))
+    summary = summarize_samples(rows, percentiles)
     derived = {}
     for key, published in (("mms_g", nominal["elements"]["mms"] * 1000), ("qts", nominal["elements"]["qts"])):
         values = np.array([row[key] for row in rows], float)

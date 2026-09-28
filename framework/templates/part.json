@@ -13,6 +13,7 @@
  "nominal_impedance_ohm": 8,
  "power_w": {"aes": 400, "program": 800},
  "frequency_range_hz": [40, 3500],
+ "source_audit": {"graph_anchors": [], "test_horn_or_baffle": null, "phase_provenance": "unknown until sourced", "chosen_level_basis": null, "level_basis_derivation": null},
  "published_response": {"voltage_rms": 2.83, "distance_m": 1.0, "condition": "manufacturer, infinite baffle", "reading_uncertainty_db": 1.0,
                         "points": [[50, 92], [100, 99], [300, 99], [800, 100], [1500, 101], [2500, 98], [4000, 92]]},
  "mechanical": {"overall_diameter_mm": 393, "cutout_mm": 356, "depth_mm": 165, "displacement_l": 3.0, "mass_kg": 3.6, "bolt_holes": 8, "bolt_circle_mm": 372},

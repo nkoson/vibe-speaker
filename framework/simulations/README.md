@@ -82,3 +82,11 @@ Thermal behaviour is the one exception, and a narrow one: `thermal_power` models
 **No source consulted states the decibel or degree error between a simulated and a measured response, for any tool.** That was searched for deliberately, and the shape of the absence is informative: numerical accuracy against the governing equation is published and excellent, while agreement with measurement is reported qualitatively even in review literature. The two are different quantities and must never be substituted for one another. Every result here therefore carries no error bar from the literature, only the model's declared assumptions and the validity band in its own document. Record the version and re-run anything produced by a version later found wrong.
 
 **Alignment tables exist for sealed and vented boxes and for nothing else.** The bandpass, isobaric, aperiodic and cardioid loadings are solved as equivalent circuits for the geometry given; no tabulated alignment family was obtained for any of them, and no result document may imply one was used.
+
+## Reliable project execution
+
+For loops and project helpers use `.speaker-venv/bin/python framework/tools/run_simulation.py <app> --input <name>.params.json --out <folder> --name <name>`, or import its `run_simulation` function. It runs without a cache, removes the old destination, checks exit status and document identity/status, and includes stderr on failure. The example chain uses the same helper. Input and output filenames must differ.
+
+The shared app CLI also invalidates the old output before loading input and publishes JSON atomically. Invalid input produces `input_error`; an unexpected crash leaves no result to mistake for the old computation. Never accept output after a nonzero exit, even if a file exists. Run dependent apps in order and stop the project chain on failure. Do not launch concurrent writers for the same result path.
+
+A custom cache must include transitive file contents and model code in its key. A cold replay of the frozen chain remains part of selection verification. Actual-source numerical invariants are in `framework/templates/simulation-audit.md`; they establish consistency, not measured accuracy.

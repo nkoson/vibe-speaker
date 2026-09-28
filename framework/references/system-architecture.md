@@ -1,7 +1,7 @@
 ---
 id: system-architecture
 applies_when: Deciding how many sections a design needs, where the crossover frequencies go, how much acoustic offset the geometry implies, and what directivity the section boundaries have to deliver
-updated: 2026-09-15
+updated: 2026-09-28
 ---
 
 # How many sections, and where the crossovers go
@@ -182,8 +182,7 @@ where the `ka` question is answered numerically for a chosen radius. `whole_spea
 at their positions and depths, so lobe tilt, the vertical window and the path differences between
 pairs are in its output; `results.path_differences` reports each pair in millimetres and
 microseconds. Nothing computes the section count, the crossover frequency or the `ka` ceiling for
-you, and nothing here produces a directivity index, so a DI claim against section 7 cannot currently
-be made from these results — say so rather than implying one. See `simulations/directivity/README.md`
+you. `spinorama` can compute a directivity index from its declared orbit and rear-radiation priors. A partial `whole_speaker` angular family alone does not establish that index. See `simulations/directivity/README.md`
 and `simulations/whole_speaker/README.md`.
 
 ## 10. Making an architecture claim
@@ -195,6 +194,10 @@ excursion, the smallest achievable centre-to-centre spacing to its neighbour and
 with the lobe tilt it produces. The section count is what is left when those intervals have to cover
 the band. A design that cannot cover the band with the sections it has is a finding about the driver
 complement, and the crossover will not repair it.
+
+## 11. Spacing screens versus a specified listening window
+
+The `c/(2d)` and `c/d` quantities screen geometry; neither predicts a null at a particular small angle without branch levels and relative phase. Use the phase equation in section 3 at the requested window angles and inspect the full coherent response. Repeat the check for refinement requests, not just the original architecture. If coincident geometry is proposed as a remedy, verify its usable top octave and relative acoustic delay separately. This is application of the two-source equation, not a new geometric acceptance threshold.
 
 ## Sources
 

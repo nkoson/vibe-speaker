@@ -4,36 +4,97 @@
  "brief": {
   "request": "Passive three-way approaching the published performance of the reference, similar size, budget of parts about 1500 EUR per pair.",
   "reference_product": "Manufacturer Model",
-  "topology_constraints": ["one integrated cabinet", "internal passive crossover", "single speaker-cable input with optional bi-amp links"],
-  "size_limits_mm": {"max_width": 450, "max_depth": 450, "max_height": 1000},
-  "must_not_change": ["passive only", "no DSP"]
+  "topology_constraints": [
+   "one integrated cabinet",
+   "internal passive crossover",
+   "single speaker-cable input with optional bi-amp links"
+  ],
+  "size_limits_mm": {
+   "max_width": 450,
+   "max_depth": 450,
+   "max_height": 1000
+  },
+  "must_not_change": [
+   "passive only",
+   "no DSP"
+  ]
  },
  "objectives": [
-  {"name": "sensitivity_db_2v83_1m", "target": 99, "tolerance": 1.0, "direction": "at_least", "basis": "reference published figure",
-   "reference_value": "99 dB claimed by the maker; independent measurement reads 96.5 dB on the same convention",
-   "class_note": "2.83 V is 1 W at 8 ohm and 2 W at 4 ohm, so this figure is only comparable at a stated impedance. Check it against lf_box efficiency.ceiling for this volume and cutoff before iteration 1"},
-  {"name": "f6_hz", "target": 38, "tolerance": 3, "direction": "at_most", "basis": "reference published -3 dB minus judgement",
+  {
+   "name": "sensitivity_db_2v83_1m",
+   "target": 99,
+   "tolerance": 1.0,
+   "direction": "at_least",
+   "basis": "Example target only; replace with a stated comparable sensitivity convention",
+   "reference_value": "Fill only from a source with known voltage/power, distance, band, weighting and environment; do not assume the maker and independent figures are comparable.",
+   "class_note": "2.83 V is 1 W at 8 ohm and 2 W at 4 ohm, so this figure is only comparable at a stated impedance. Check it against lf_box efficiency.ceiling for this volume and cutoff before iteration 1"
+  },
+  {
+   "name": "f6_hz",
+   "target": 38,
+   "tolerance": 3,
+   "direction": "at_most",
+   "basis": "Example system sustained -6 dB target relative to a declared system reference band; do not relabel a published -3 dB figure",
    "reference_value": "38 Hz published, condition not stated",
-   "class_note": "bound to sensitivity and volume by the efficiency law; the three cannot be set independently"},
-  {"name": "impedance_min_ohm", "target": 6.4, "tolerance": 0.4, "direction": "at_least", "basis": "8 ohm nominal, amplifier friendly",
+   "class_note": "bound to sensitivity and volume by the efficiency law; the three cannot be set independently"
+  },
+  {
+   "name": "impedance_min_ohm",
+   "target": 6.4,
+   "tolerance": 0.4,
+   "direction": "at_least",
+   "basis": "8 ohm nominal, amplifier friendly",
    "reference_value": "fill from the reference's measured minimum, not from its nominal label",
-   "class_note": "IEC 60268-5 allows 80 percent of nominal, and published measurements of comparable speakers often read lower. Every Zobel, notch and pad the level budget forces will move this"},
-  {"name": "ripple_200_10000_db", "target": 6, "tolerance": 1, "direction": "at_most", "basis": "smooth direct sound",
-   "class_note": "published flatness figures across the measurement corpora span roughly +/-1 to +/-6 dB; see target-response.md section 9"},
-  {"name": "max_spl_db_1m", "target": 110, "tolerance": 2, "direction": "at_least", "basis": "reference continuous rating"}
+   "class_note": "IEC 60268-5 allows 80 percent of nominal, and published measurements of comparable speakers often read lower. Every Zobel, notch and pad the level budget forces will move this"
+  },
+  {
+   "name": "ripple_200_10000_db",
+   "target": 6,
+   "tolerance": 1,
+   "direction": "at_most",
+   "basis": "smooth direct sound",
+   "class_note": "published flatness figures across the measurement corpora span roughly +/-1 to +/-6 dB; see target-response.md section 9"
+  },
+  {
+   "name": "max_spl_db_1m",
+   "target": 110,
+   "tolerance": 2,
+   "direction": "at_least",
+   "basis": "reference continuous rating"
+  }
  ],
  "objective_review": {
-  "comment": "written before iteration 1 and never used to change a target. reference_value and class_note above say what comparable speakers measure for each statistic; this says which objectives pull against each other and what the conflict will cost. Nothing here blocks a design: a target beyond the class may be the point of it.",
-  "conflicts": ["example: the sensitivity and extension targets sit within 1 dB of the lossless ceiling for the stated volume, and the impedance-minimum target is stricter than the reference product measures; expect the level budget to spend the difference in pad depth, parts and heat"]
+  "comment": "Example only: replace priorities, targets and all reference claims from the actual brief and research. Record comparisons and conflicts without changing the user's targets.",
+  "conflicts": [
+   "example: the sensitivity and extension targets sit within 1 dB of the lossless ceiling for the stated volume, and the impedance-minimum target is stricter than the reference product measures; expect the level budget to spend the difference in pad depth, parts and heat"
+  ],
+  "central_objectives": [
+   "sensitivity_db_2v83_1m",
+   "f6_hz"
+  ]
  },
  "limits": {
   "iterations": 3,
   "candidates_per_iteration": 3,
   "finalists_for_detailed_analysis": 1,
   "drive_voltage_rms_for_stress": 28.3,
-  "assumed_tolerances": {"C": 0.05, "L": 0.03, "R": 0.02}
+  "assumed_tolerances": {
+   "C": 0.05,
+   "L": 0.03,
+   "R": 0.02
+  }
  },
- "listening": {"distance_m": 3.0, "ear_height_m": 1.0, "floor_reflection": 0.7},
- "state": {"phase": "research", "iteration": 0, "candidates": [], "selected": null},
- "log": []
+ "listening": {
+  "distance_m": 3.0,
+  "ear_height_m": 1.0,
+  "floor_reflection": 0.7
+ },
+ "state": {
+  "phase": "research",
+  "iteration": 0,
+  "candidates": [],
+  "selected": null
+ },
+ "log": [],
+ "corrections": []
 }

@@ -51,3 +51,5 @@ Simulations report; the model decides. No Python code in this folder marks a res
 ```
 
 The skills are linked into `.claude/skills/` for Claude Code and `.agents/skills/` for other agent hosts; `AGENTS.md` at the repository root is the generic entry point.
+
+Incorporated project findings are tracked in [the improvement plan](plans/incorporate-learnings-2026-09-28.md). `learnings/` may have no active records after verified incorporation; its index and authoring format remain for future findings.

@@ -125,7 +125,8 @@ def compensation_audit(f, raw_z, compensated_z, spec, declared=True):
                      "effective_resistance_change_fraction measures." if declared else
                      "no element of this section carries \"role\": \"compensation\", so these figures describe the bare driver. "
                      "Textbook filter alignments are derived for a resistive termination, and sensitivity to the load grows "
-                     "with filter order, which is why compensation is treated as mandatory at second order and above.")
+                     "with filter order. Compare compensation with fitting directly into the complex load; filter order "
+                     "alone does not require a compensation branch.")
 
 
 def insertion_loss(f, load, elements, transfer, band_hz=None):

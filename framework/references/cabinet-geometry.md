@@ -1,7 +1,7 @@
 ---
 id: cabinet-geometry
 applies_when: Sizing or placing anything inside or on a cabinet - drivers, horns, ports, braces, boards, terminals - and before claiming that something does or does not fit
-updated: 2026-09-15
+updated: 2026-09-28
 ---
 
 # Cabinet geometry: the interior is a volume
@@ -130,7 +130,7 @@ Two habits protect the derivation:
 
 ## What the applications do not model
 
-`cabinet_drawing.py` draws a rectangular box with rectangular panels and does no interference checking, no depth placement of front objects, no elbows, no non-rectangular cabinets, no chamfers and no grilles. `lf_box` models a straight round vent with an end correction, not a flared, bent or slotted one. `cavity_modes` and `plate_structure` take the chamber as you describe it. Where your cabinet departs from those assumptions, the numbers are estimates: say so in the candidate notes and in the documentation, next to the figure they affect.
+`cabinet_drawing.py` draws a rectangular box with rectangular panels and does no interference checking, no depth placement of front objects, no elbows, no non-rectangular cabinets, no chamfers and no grilles. `lf_box` supports declared straight/flared round-duct geometry; bends and slots remain equivalent-geometry estimates. `cavity_modes` and `plate_structure` take the chamber as you describe it. Where your cabinet departs from those assumptions, the numbers are estimates: say so in the candidate notes and in the documentation, next to the figure they affect.
 
 ## Panel treatment, and how little is established here
 
@@ -157,19 +157,17 @@ lower in modulus, and constrained-layer effectiveness depends on a shear paramet
 layer thickness, shear modulus and bending wavelength — none of which the source sweeps. The
 transferable parts are the topology (shear layer under a stiff skin) and the order of magnitude.
 
-**What the framework does.** `plate_structure` treats panel bays as simply supported plates under the
-internal pressure spectrum, which makes its output a **relative** indicator — this bay is worse than
-that one, this brace helped — rather than an absolute prediction of radiated sound. Nothing here
-converts a panel velocity into a radiated level or into an audibility judgement.
+**Current model boundary.** `plate_structure` reports pinned-to-clamped mode bands, material/treatment priors and a relative audibility comparison when a cone reference is supplied. It does not establish absolute radiated SPL or the restraint of a particular glued joint. The available material data and their limits are recorded in `cabinet-materials-and-panels.md`; use that reference and `simulations/plate_structure/README.md` rather than interpreting a brace-spacing rule as acoustic qualification.
 
-**What no source consulted supplies.** There is no Young's modulus, density or internal loss factor
-here for MDF, HDF, Baltic birch plywood or particle board; no closed-form panel-mode frequency with
-boundary-condition coefficients, and no guidance on which boundary condition a glued cabinet joint
-approximates; no brace-spacing rule beyond the 300 to 400 mm practice already stated, and no measured
-before-and-after figures for any bracing scheme; no radiated-SPL contribution of a vibrating wall
-relative to the driver's output; and no audibility threshold for a panel resonance. A claim that a
-panel is adequately braced is therefore an argument from stiffness and geometry, not a quantified
-acoustic result, and should be written that way.
+## Installation datums and early geometry review
+
+**Practice.** Draw the occupied front, rear and side sections as soon as the driver set is fixed, before fitting the crossover. Use `framework/templates/geometry-audit.md`. Separate flange projection, recess depth, through-cut and overall installed body depth; the acoustic center is a separate model coordinate. Read both ends of each dimension arrow in the manufacturer's drawing.
+
+Track wooden, static assembled and moving/service bounds separately. A passive radiator's diaphragm can project beyond a flush flange. Track duct acoustic path, wall traversal and internal protrusion separately; the tool's `ports.length` is the internal length as defined above. A slot or bent duct equivalence carries tuning uncertainty.
+
+Include fasteners, leads, cable insulation, straps, spacers, adhesive, motor supports and sealed service spaces in the installation reserve. Check individual bolt coordinates and access against panel edges and supports; check wire entries against support grids. When detailing an object, replace its reserve rather than adding both displacements. Intersecting supports need specified joinery, and their solid union is counted once. State view direction separately from datum, especially on rear-mounted boards.
+
+A conservative bounding overlap is a reason to inspect the actual shapes, not proof of interference; likewise a nominal box clearance does not establish fastener access or moving clearance. After a net-air correction, rerun the alignment and the complete fixed-network chain before retaining the old score.
 
 ## Sources
 

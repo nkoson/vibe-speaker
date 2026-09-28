@@ -1,7 +1,7 @@
 ---
 id: target-response
 applies_when: Setting the target a crossover is fitted to, or judging whether a predicted response is a good one
-updated: 2026-09-15
+updated: 2026-09-28
 ---
 
 # What a good frequency response looks like
@@ -87,24 +87,11 @@ problem, not a filter problem. See `baffle-and-driver-placement.md` section 3.
 
 ## 5. What the framework computes, and how it maps
 
-The applications here do not produce a spinorama, a directivity index or a predicted in-room
-response, and no learning or objective should claim one. What they do produce maps onto the above as
-follows.
+`whole_speaker` produces on-axis and angular families with declared window statistics. `spinorama` assembles the orbit, directivity and predicted in-room curves, and withholds its preference score when required rear-radiation priors are missing. The priors and curve geometry limitations in section 7 still apply. See `simulations/spinorama/README.md`.
 
-- `whole_speaker` gives the on-axis curve, horizontal and vertical families at the angles you ask
-  for, and window statistics over a stated angular window. A listening-window-like figure can be
-  approximated by averaging its horizontal and vertical curves over the window angles; an early
-  reflections or sound power estimate cannot, because the orbit is incomplete. Say which it is.
-- `response_metrics` reports, per band, the mean, the ripple, the **standard deviation** and the
-  **slope**, plus octave-band means and the band held within a tolerance. The standard deviation
-  over a narrow band is the closest available relative of NBD, and the slope with the deviation about
-  it is the closest relative of SM. Both are more informative than the ripple figure and neither is
-  currently the thing most projects quote.
-- Sustained cutoffs from `whole_speaker` are measured on the on-axis curve against a chosen reference
-  band. LFX is defined on the **sound power** curve at **-6 dB**. An on-axis f3 is therefore not
-  LFX, is usually the more flattering of the two, and should not be compared with published figures
-  as if it were. See `keep-system-and-box-cutoffs-separate` in `framework/learnings` for how much a
-  cutoff moves for a small change of reference level.
+`response_metrics` reports band means, ripple, standard deviation and slope, plus NBD, SM and AAD named for their source curve. A partial angular family does not become a measured CTA orbit merely by computing those statistics.
+
+Sustained cutoffs in `whole_speaker` describe on-axis pressure against the selected system reference band; `lf_box` normally uses the bass section's own reference band. LFX uses sound power and its own definition. State scope, threshold and reference band/level with each quantity; an f3 is not an f6 or an LFX. Keep absolute equal-voltage bass levels alongside normalized extension.
 
 ## 6. Setting the target for a fit
 
@@ -241,8 +228,7 @@ individually reasonable and jointly impossible:
   the margin directly.
 - **Sensitivity is quoted per volt, not per watt.** The convention is 2.83 V at 1 m, which is 1 W into
   8 ohm but 2 W into 4 ohm, so the same speaker gains about 3 dB on the label by halving its
-  impedance. Two products' sensitivity figures are comparable only at the same impedance, and a
-  sensitivity target paired with an impedance target is one constraint, not two.
+  impedance. Voltage sensitivity can be compared at the same voltage, distance, band, weighting and radiation environment even when impedance differs, but then electrical power differs. Compare input current and impedance as well; voltage sensitivity is not efficiency.
 - **Impedance minima below the nominal rating are normal, not a fault.** The convention behind a
   nominal rating, in IEC 60268-5, is that the modulus does not fall below 80 percent of it — about
   6.4 ohm for an 8 ohm speaker and 3.2 for a 4 ohm one — and published measurements of well-regarded
@@ -274,6 +260,18 @@ when the objective is set, not discovered in the evaluation.
 `dBW = Lreq - Lsens + 20 log10(D2 / Dref) + HR`, with at least 3 dB of headroom, and it assumes the
 driver is not already in thermal or excursion compression at that power — which, per
 `driver-selection.md` section 5, is exactly where a passive system's real ceiling lives.
+
+## 10. Level basis, cutoff stability and attribution
+
+**Definition.** A cutoff threshold is `reference_level + threshold_db`. Changing the upper-section voicing moves the reference even if absolute bass output is unchanged. A shallow plateau or intermediate trough can cross that threshold and move a sustained cutoff abruptly. Record fixed-frequency bass levels, the threshold margin at that feature and any censored/no-pass bound before interpreting a change as added bass.
+
+**Practice.** Derive a fit level from the complete bass-to-midband envelope with finite-baffle/outlet effects and realizable losses. `target.spl_db: auto` is the mean of the starting network and supplies no physical level budget. A controlled voicing sweep can price sensitivity, extension and heat without changing LF hardware; its cutoff trade need not be linear. Assess margins with input/stock uncertainty rather than declaring a sub-decibel threshold coincidence robust.
+
+In tolerance studies retain every draw. Percentiles over resolved cutoffs are conditional; left-censored and no-sustained-pass cases need separate counts and the total denominator. A no-pass draw cannot be omitted from a joint-target assessment. A censored cutoff establishes a bound, not an exact frequency. These are statistical bookkeeping conventions, not automatic design judgments.
+
+**Coherent pressure arithmetic.** At a residual feature, use the contributing complex section pressures at one observation point: `|p1+p2|^2 = |p1|^2 + |p2|^2 + 2|p1||p2| cos(delta_phi)`. A quieter out-of-band section can therefore add a hump or subtract a dip. Inspect relative phase and depth sensitivity before attributing the feature to a driver's raw magnitude response; assess filter/overlap changes against that mechanism.
+
+A comparable reference record states voltage or power, distance, band, weighting, environment and provenance. Unknown conditions remain unknown. Quantities read or calculated from a graph carry a derived label and reading uncertainty from the first evaluation, even if the graph itself is measured.
 
 ## Sources
 

@@ -5,7 +5,7 @@ from pathlib import Path
 LEARNINGS = Path(__file__).resolve().parents[1] / "learnings"
 REQUIRED_KEYS = ("id", "date", "project", "phase", "confidence", "applies_when", "tags")
 PHASES = {"validation", "research", "design", "evaluation", "selection", "documentation", "process"}
-SECTIONS = ("## Observation", "## Why it mattered", "## Advice", "## Evidence")
+SECTIONS = ("## What went wrong", "## What could have helped")
 
 
 def learning_files():
@@ -24,7 +24,6 @@ def frontmatter(text):
 
 def test_learning_files_are_well_formed():
     files = learning_files()
-    assert files, "no learnings found"
     for path in files:
         text = path.read_text()
         fields = frontmatter(text)
@@ -33,8 +32,10 @@ def test_learning_files_are_well_formed():
         assert fields["id"] == path.stem, f"{path.name}: id must equal the file name"
         assert fields["phase"] in PHASES, f"{path.name}: unknown phase {fields['phase']}"
         assert fields["confidence"] in {"low", "medium", "high"}, f"{path.name}: bad confidence"
+        assert tuple(re.findall(r"^## .+$", text, re.M)) == SECTIONS, f"{path.name}: expected one failure and one prevention section"
         for section in SECTIONS:
-            assert section in text, f"{path.name}: missing section {section}"
+            body = text.split(section, 1)[1].split("\n## ", 1)[0].strip()
+            assert body, f"{path.name}: empty section {section}"
 
 
 def test_index_lists_every_learning_once():
@@ -47,6 +48,6 @@ def test_index_lists_every_learning_once():
 
 def test_advice_is_not_phrased_as_absolute_rules():
     for path in learning_files():
-        advice = path.read_text().split("## Advice", 1)[1].split("## Evidence", 1)[0].lower()
+        advice = path.read_text().split("## What could have helped", 1)[1].lower()
         for word in (" always ", " never ", " must "):
             assert word not in advice, f"{path.name}: advice contains '{word.strip()}'; phrase it as a consideration"

@@ -55,3 +55,5 @@ Nothing produced here is a measurement. Digitized datasheet curves carry reading
 ## License
 
 See `LICENSE`.
+
+Incorporated project findings are tracked in [the improvement plan](framework/plans/incorporate-learnings-2026-09-28.md). `learnings/` may have no active records after verified incorporation; its index and authoring format remain for future findings.

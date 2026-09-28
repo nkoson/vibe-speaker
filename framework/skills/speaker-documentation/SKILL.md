@@ -16,10 +16,20 @@ Inputs: `project.json`, `reference/reference.json`, the selected `candidates/<cN
 Tools (one command each, `.speaker-venv/bin/python`):
 
 - `framework/tools/cabinet_drawing.py --input final/cabinet.json --out final/` for `cabinet_cutlist.md`, `cabinet_cutlist.json` and the elevation drawing. The elevation alone does not show the interior; document 1 says what else to draw.
-- `framework/tools/schematic.py --input candidates/<cNN>/sim/crossover_network.json --out final/ --name crossover` for the schematic PNG, the connection table and a board netlist. Labels show reference, part name and specification; make sure every leaf in that parameter file carries `part` and `rating` before you draw it. Then open the rendered image: a grouped block is not a construction drawing, and document 2 says what it has to become.
+- `framework/tools/schematic.py --input candidates/<cNN>/sim/crossover_network.params.json --out final/ --name crossover` for the schematic PNG, the connection table and a board netlist. Labels show reference, part name and specification; make sure every leaf in that parameter file carries `part` and `rating` before you draw it. Then open the rendered image: a grouped block is not a construction drawing, and document 2 says what it has to become.
 - `framework/tools/build_pdf.py --out final/<slug>-design-package.pdf --title "<speaker name>" --subtitle "<one line>" --md final/README.md --md final/01-cabinet-construction.md ... --preview final/preview/` to assemble the PDF in reading order and render each page to a PNG for inspection. It supports headings, paragraphs, lists, tables, images and code blocks; images are referenced from the Markdown with relative paths.
 - `framework/tools/plot_curves.py` for every performance plot (system and per-section SPL, acoustic section phase around crossovers, off-axis maps, impedance, excursion and port speed at the stress drive, reference comparison). Where a plot needs phase and the helper does not expose it, take it from the complex responses in the result files rather than reconstructing it.
 - `framework/simulations/response_metrics/run.py` when a comparison statistic is missing.
+
+## Freeze the realization before writing
+
+Use the selected stock realization as the single source for every physical leaf, bank, polarity and geometry datum. A late rating or stock change goes into the parameter files first, followed by network/board/whole-system replay and regenerated schematic, connection table, parts list and plots. Reconcile IDs, values and quantities across those artifacts, including the most stressed positions. A prose correction alone cannot update generated wiring.
+
+State which sources have measured complex installed data and which use magnitude-only curves, reconstructed phase or different test hardware. For prior-based integration, describe crossover values as prototype starting points and include a practical sequence: measure each mounted driver and outlet on the actual horn/baffle with a shared timing reference, measure impedance and tuning, import those responses, refit and recheck the realized network before buying parts in quantity. Numerical fit error is not agreement with a future measurement.
+
+Quote wood dimensions separately from static assembled and moving/service envelopes. Include joints, fastener access, installed wiring/support reserves and internal versus total duct length. Keep the geometry audit and application provenance in the project; put the dimensions and assumptions a builder needs in the package.
+
+Keep box and system cutoffs distinct and label their threshold and reference band. Put equal-voltage bass levels and the uncertainty beside a plateau-sensitive cutoff. Distinguish published measurements from quantities derived from digitized reference plots. In the builder document use those physical definitions, not application names or JSON paths.
 
 ## Package contents
 

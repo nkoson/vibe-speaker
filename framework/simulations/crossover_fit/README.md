@@ -58,4 +58,6 @@ The fit searches the topology and bounds you give it against the source files yo
 
 `results.fitted_network_audit[]` runs `crossover_network`'s compensation audit and insertion loss on the **fitted** values, so the two questions that decide whether a fit is worth quantizing are answered in the same document: does each driver still look resistive across its crossover, and what did the real parts cost in level. Mark a Zobel or a notch with `"role": "compensation"` and name the crossover with `sections[].compensation_audit = {crossover_hz, octaves}`; add `sections[].passband_hz` for the insertion-loss figures.
 
-Read it with `statistics.values_at_bound` before anything else: a value resting on a bound means the topology or the bound is wrong, not that the optimizer finished.
+Read it with `statistics.values_at_bound` before anything else: a value resting on a bound needs investigation of the stock range, topology and target; a constrained optimum may legitimately rest there.
+
+Use explicit fit bounds derived from actual stock values or realizable banks when designing a build. The default bounds around a seed are numerical conveniences. Set an explicit target from the bass-supported level; `auto` inherits the starting network's losses. After snapping, put the actual stock DCR, ESR and ratings into the realized parameter file and rerun the network and whole speaker. Record any missing stock fallback. For an impedance/level trade, compare actual coil/DCR choices rather than assuming lower DCR is always preferable.

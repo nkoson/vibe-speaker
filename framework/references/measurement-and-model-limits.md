@@ -1,7 +1,7 @@
 ---
 id: measurement-and-model-limits
 applies_when: Reading a simulated result for what it is worth, planning the measurements that would confirm it, or writing down what a predicted figure does and does not mean
-updated: 2026-09-15
+updated: 2026-09-28
 ---
 
 # What a simulated result is worth, and what measuring it would take
@@ -270,7 +270,7 @@ error bar from the literature, only the model's declared assumptions and its val
 ## 7. What this framework's models contain, and what they do not
 
 Linear, small-signal physics with declared priors. No distortion, no compression, no port noise, no
-break-up, no room, no joint behaviour, no thermal behaviour. Published data digitised from a
+break-up beyond source data, no full room model and no joint behaviour. `thermal_power` supplies a declared voice-coil heating scenario; it does not establish enclosure endurance or nonlinear compression. Published data digitised from a
 datasheet carries reading uncertainty, and a datasheet impedance prior is a prior, not a measurement.
 The applications report; they do not judge. See `simulations/README.md` for the shared limits and each
 app's own `README.md` for what its model includes.
@@ -278,7 +278,17 @@ app's own `README.md` for what its model includes.
 The practical consequence for a design document is fixed and not negotiable: every figure says
 "predicted" or "simulated", names the drive condition and the model assumptions it rests on, and
 final crossover values are stated as a build starting point to be set after measurement — see
-`crossover-design.md` section 10 and the learning `measured-complex-responses-before-build-ready-crossovers`.
+`crossover-design.md` section 10 and the prototype measurement sequence in `framework/skills/speaker-documentation/SKILL.md`.
+
+## 8. Source ownership and validation practice
+
+Keep the datum of every transfer explicit. `lf_box` pressure includes its external series resistance while its exported driver impedance excludes that resistance. For driver impedance `Z` and external resistance `Rs`, a source-voltage pressure becomes driver-terminal pressure by multiplying by `(Z+Rs)/Z`. This is voltage-divider algebra. `source_response` supports `acoustic.voltage_basis: driver_terminal`; apply the physical resistance once in the downstream network. Keep raw alignment/stress runs at their declared drive and use their own mechanical limits.
+
+An acoustic level correction is a declared calibration, not a new parameter set. Compare source and published levels at the same drive, distance, band, horn/baffle and radiation space; retain graph anchors and reading uncertainty. Where conditions support it, a published measured curve is evidence for an acoustic calibration, but it does not validate the inferred phase or adjust the electrical/thermal/mechanical model. Apply the same calibration to cone and outlet pressure. State the resulting model consistency limits before inferring maximum output.
+
+When combining a lumped bass model with a published wideband curve, define which owns each band's level and shape. Preserve modeled bass and replace the duplicate upper rolloff instead of multiplying the same slope twice. Check actual output against the graph above the blend and the unmodified bass below it. A curve from another horn or baffle is a different mounting prior, not measured installed data.
+
+**Validation practice, not a measurement claim.** Run actual-source level, colocated cone/outlet, placed baffle/path and known-series-resistor checks before iteration one. Verify aggregate source equivalents independently for pressure, per-motor current and excursion; a low-frequency equivalent does not establish distributed cavity behavior. Record plausible acoustic-center uncertainty separately from large sensitivity probes, including common and relative shifts where appropriate. Freeze inputs and cold-replay the dependency chain before delivery; a numerical invariant checks implementation and conventions, not agreement with a microphone.
 
 ## Sources
 

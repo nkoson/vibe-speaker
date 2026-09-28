@@ -77,3 +77,9 @@ Compute these before choosing a crossover frequency. A crossover chosen first wi
 ## Rear radiation
 
 `sections[].rear_radiation` declares what happens behind the cabinet: `{kind: "shadowed_monopole", corner_hz | baffle_width_mm, floor_db, order}`. Without it a section contributes nothing at or behind 90 degrees from its axis, which is the infinite-baffle idealisation. It changes nothing on axis or in a normal off-axis window, and it is required by `spinorama` for a complete orbit.
+
+## Source and evaluation consistency
+
+The result is already normalized using reference distance versus actual path distance; do not add a second listening-distance-to-1 m SPL correction. Check a unity section against its source and baffle. A source calibrated or terminal-normalized by `source_response` exposes `outlet_pressure_per_volt_pa`; use that for the same section's outlet with `voltage_rms: 1`, and use cone-only pressure for the main source.
+
+At a hump or dip, inspect `on_axis.sections` complex pressures and reconstruct their coherent sum before blaming a driver's raw response. Label system cutoffs with their threshold/reference band and bound, keep fixed-frequency bass levels alongside them, and report trough/plateau margins where small level changes move a cutoff. Choose depth scenarios from stated acoustic-center uncertainty; larger probes and common/relative shifts answer different questions.

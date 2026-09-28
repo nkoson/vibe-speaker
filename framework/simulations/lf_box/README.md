@@ -73,3 +73,7 @@ Complex records everywhere follow `{real, imag, magnitude, magnitude_db, phase_d
 1. Ask `alignment` what box the driver wants before describing one, then sweep a few volumes and tunings to see extension, excursion and port speed at the intended drive.
 2. Use `linear_scaling_to_limits` to read what output the alignment supports before excursion or port speed reach the figures you consider acceptable.
 3. Pass the impedance and the cone pressure to the crossover and whole-speaker apps.
+
+## Series resistance and downstream sources
+
+`drive.series_resistance_ohm` affects pressure, excursion and current at the stated source voltage. The reported `z_ohm` is the driver load and excludes that external resistance. Applying a crossover coil to that impedance while reusing source-voltage pressure containing the same coil allowance repeats the loss. Use a zero-external-resistance LF source run, or `source_response.acoustic.voltage_basis: driver_terminal` to remove the allowance; then model physical wiring and coil DCR once in the network. Keep allowance runs for alignment screening and stress runs at their stated drive.

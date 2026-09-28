@@ -1,30 +1,35 @@
 # Evaluation: iteration N
 
-Project: `<slug>`. Evaluator reading of the result documents listed per candidate. Every figure below is quoted from a simulation result file with its path; judgements are the evaluator's.
+Project: `<slug>`. Every candidate value names its actual result file and JSON path; judgments are the evaluator's. Replace placeholders with this brief's targets and conventions.
 
-## Objectives table
+## Central objectives and comparable quantities
 
-| Objective | Target (tolerance) | c01 | c02 | c03 | Source path |
-|---|---|---|---|---|---|
-| Sensitivity 500 to 10000 Hz mean, dB | 99 (1) | 96.4 | 98.1 | 98.9 | `whole_speaker.results.statistics.mean_spl_in_sensitivity_band_db` |
-| f6 sustained, Hz | 38 (3) | 36.7 | 41.2 | 35.9 | `lf_box.results.curves.0.statistics.cutoffs.f6.value_hz` |
-| Impedance minimum 20 to 20000 Hz, ohm | 6.4 (0.4) | 4.3 | 6.1 | 6.6 | `crossover_network.results.statistics.input_z_min_ohm` |
-| Ripple 200 to 10000 Hz, dB | 6 (1) | 4.7 | 5.9 | 7.4 | `whole_speaker.results.statistics.ripple_200_10000_db` |
-| Output before first limit at 20 to 300 Hz, dB | 110 (2) | 112 | 108 | 111 | `lf_box.results.linear_scaling_to_limits` |
+Name the central objectives from the brief. State reference sensitivity conventions and distinguish published claims, independent measurements and values derived from digitized plots. Do not change targets to improve scores.
+
+| Objective and convention | Target/tolerance | Candidate value | Margin/status | Result file and JSON path |
+|---|---|---|---|---|
+| System sensitivity, stated voltage/distance/band/weighting | … | … | … | `whole_speaker.results.statistics.mean_spl_in_sensitivity_band_db` |
+| System sustained cutoff: threshold and reference band/level | … | … | … | `whole_speaker.results.statistics.low_cutoffs.f6` (or actual threshold) |
+| Impedance minimum: frequency and phase | … | … | … | `crossover_network.results.statistics` |
+| Other objectives from this brief | … | … | … | … |
+
+Box-only cutoffs are alignment evidence, not system-objective values. Also record fixed-frequency bass SPL at equal voltage, full bass-to-midband shape, cutoff bounds and margin at the trough/plateau that sets the cutoff.
 
 ## Per candidate
 
-### c01
-- Strengths: ...
-- Weaknesses: ... (quote the figure and the file)
-- Reference comparison: RMS difference to the digitized reference curve 40 to 16000 Hz is 2.1 dB after level alignment (`response_metrics.results.comparisons.1.rms_difference_db`); the candidate is 3 dB lower at 60 to 100 Hz.
-- Risks in the model: which figures rest on priors (datasheet phase, horn coverage), which on measurements.
-- Refinement request: concrete changes for the designer (part, value, dimension), with the expected effect.
+- Strengths and central misses with margins and evidence.
+- Section amplitudes and relative phase at each residual feature; coherent attribution before recommending a driver change.
+- Efficiency and octave loss, physical part count, driver/crossover costs, compensation and ablation findings, active fit bounds and actual stock coverage.
+- Pad/filter voltages, per-leaf stress, frequency-coincident total heat, mounting ratings and unknown coil ratings.
+- Plausible uncertainty scenarios versus deliberate probes; common/relative depth scope and on/off-axis effects. Report total, resolved, censored and no-pass draws. Conditional cutoff percentiles do not establish all-scenario or joint-target robustness.
+- Geometry audit, installed/moving envelope and net-air reconciliation. State what is assumed and what remains to be physically verified.
+- Reference comparison with and without level alignment; derived quantities retain their labels.
+- Concrete refinement request with expected effect, driver bandwidth, spacing/phase/window check, and the evidence distinguishing the mechanism from alternatives.
 
 ## Ranking and decision
 
-1. c03: ...
-2. c02: ...
-3. c01: ...
+Rank central objectives first, then secondary merits and risk. State whether any candidate meets the brief; distinguish a closest prototype from a compliant design. Differences below uncertainty remain unresolved.
 
-Continue: yes / no. If the iteration limit is reached, the recommended candidate for the final package and the reasons.
+Where targets trade, cite a controlled voicing/DCR study with the selected point and its cost. Continue exploration within budget when a central miss can plausibly close. Otherwise choose construction documentation only when justified or explicitly requested; a concise unmet-objective/options report may be the proper outcome.
+
+Correction accounting: affected candidates, before/after evidence, ranking impact, invalidated exploration and authorized budget treatment.

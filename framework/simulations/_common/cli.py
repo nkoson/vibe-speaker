@@ -7,7 +7,9 @@ import argparse
 import datetime
 import json
 import math
+import os
 import sys
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -207,6 +209,20 @@ def curve_from_reference(spec, base_dir, f_target, kind="complex"):
     return interp_real(f_target, f_source, value)
 
 
+def write_document(path, document):
+    """Publish a complete JSON document atomically, never a partially written result."""
+    path = Path(path)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", dir=path.parent, delete=False) as fp:
+            temporary = Path(fp.name)
+            json.dump(to_jsonable(document), fp, indent=1)
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+
 def run(name, version, compute, description, notes, validity=()):
     """Parse the standard arguments, run compute(params, base_dir) and write the result document.
 
@@ -223,21 +239,28 @@ def run(name, version, compute, description, notes, validity=()):
     parser.add_argument("--out", required=True, help="folder that receives the result JSON")
     parser.add_argument("--name", default=name, help="result file name without extension")
     args = parser.parse_args()
-    if args.input == "-":
-        params = json.load(sys.stdin)
-        base_dir = Path.cwd()
-    else:
-        params = load_json(args.input)
-        base_dir = Path(args.input).resolve().parent
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
+    if Path(args.name).name != args.name or args.name in ("", ".", ".."):
+        parser.error("--name must be a file stem, not a path")
+    path = out_dir / f"{args.name}.json"
+    if args.input != "-" and path.resolve() == Path(args.input).resolve():
+        parser.error("input and result paths must differ")
+    # Invalidate before parsing inputs or computing: either can fail unexpectedly.
+    path.unlink(missing_ok=True)
+    params = None
     started = datetime.datetime.now(datetime.timezone.utc)
     try:
+        if args.input == "-":
+            params = json.load(sys.stdin)
+            base_dir = Path.cwd()
+        else:
+            params = load_json(args.input)
+            base_dir = Path(args.input).resolve().parent
         results = compute(params, base_dir)
-    except InputError as exc:
+    except (InputError, json.JSONDecodeError) as exc:
         document = {"simulation": name, "version": version, "status": "input_error", "error": str(exc), "inputs": params}
-        path = out_dir / f"{args.name}.json"
-        path.write_text(json.dumps(to_jsonable(document), indent=1))
+        write_document(path, document)
         print(f"input error: {exc}", file=sys.stderr)
         print(path)
         return 2
@@ -254,7 +277,6 @@ def run(name, version, compute, description, notes, validity=()):
         "constants": dict(CONSTANTS),
         "results": results,
     }
-    path = out_dir / f"{args.name}.json"
-    path.write_text(json.dumps(to_jsonable(document), indent=1))
+    write_document(path, document)
     print(path)
     return 0
