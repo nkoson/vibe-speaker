@@ -17,8 +17,8 @@ NOTES = [
     "No fluid-structure coupling, no panel radiation, no joint compliance, no aperture-bearing panels; comparative screening of panel thickness, material and brace spacing.",
     "The mode band is Leissa's frequency parameter evaluated at both edge conditions: pinned from the exact closed form lambda = pi^2 (1 + (a/b)^2), clamped interpolated from his tabulated values. The band is the deliverable - the edge condition alone moves the fundamental by a factor of 1.8 to 2.2 and a real glued joint is neither condition.",
     "Material data is the BBC's measured E at 250 Hz, density and maximum Q, with the Wood Handbook's static-bending moduli for the products the BBC did not measure. Plywood is orthotropic and this is isotropic plate theory applied with a geometric-mean E; E itself varies 10 to 20 percent across the band.",
-    "Damping treatments are the BBC's measured loss factors on a 9 mm birch plywood substrate. The rank order transfers to another panel and the absolute values do not.",
-    "The audibility criterion is the BBC's measured perceptibility curve, reported against a RELATIVE panel output. No absolute panel SPL is computed here and none should be: the BBC established that the panels, the driver and the enclosed air are coupled and that the coupling sets the radiated level, so an overall measurement is the only way to get it.",
+    "Damping treatments are the BBC's measured loss factors on a 9 mm birch plywood substrate. Transfer to other substrates, temperatures and bond conditions is a scenario assumption, not a universal ranking.",
+    "The audibility criterion is the BBC's measured perceptibility curve, reported against a RELATIVE panel output. No absolute panel SPL is computed here: a model of coupled panels, driver, enclosed air and exterior radiation is needed for that quantity. The current volume-velocity ratio is a screening proxy.",
 ]
 
 

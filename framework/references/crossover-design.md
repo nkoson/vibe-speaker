@@ -1,7 +1,7 @@
 ---
 id: crossover-design
 applies_when: Choosing a crossover topology, fitting values, quantizing to stock, reading dissipation or impedance, or judging a crossover result
-updated: 2026-09-28
+updated: 2026-10-15
 ---
 
 # Passive crossover design: principles
@@ -117,11 +117,11 @@ Check, in this order, and write what you found:
 6a. What the network keeps and what it costs to buy: `efficiency.loss_db` with the pad depths and the compensation audit that explain it, and `parts.total` with where the bodies went. Then the ablation report, if the topology is still open: an element nothing recovers from losing is settled, an element the rest of the network absorbs is a decision to make and write down.
 7. Acoustic crossings inside both drivers' published ranges, with the woofer's beamwidth near the horn's coverage at the crossing.
 8. Tolerance envelope and the depth-perturbation result, before admiring the nominal curve.
-9. What the fit assumed: datasheet phase, prior impedance models, no measurement. The values are a starting point for a build that will be measured, and the documentation says so.
+9. What the fit assumed: datasheet phase, prior impedance models, no measurement. Select final stock values using the declared source basis and robustness studies, and document their predicted performance.
 
-## 10. What no simulation settles
+## 10. Model scope and final design values
 
-Real impedance and real acoustic response on the real baffle, horn phase, driver-to-driver variation, thermal compression and the value shift that comes with it, port and cabinet noise. Final crossover values are set after measurement; a simulated network is a build starting point, and calling it anything else in a document is a false claim.
+Source impedance, installed acoustic phase, sample variation, thermal drift, port noise and cabinet vibration carry different levels of model uncertainty. A completed simulation design can specify final construction values: qualify its performance as predicted and select those values using plausible source, geometry, loss and tolerance scenarios. An empirical performance certification is a different claim. Measurement is an optional additional evidence source, not a prerequisite for completing this framework's design work.
 
 ## 11. Compensation networks, with the numbers and the disagreements
 
@@ -136,7 +136,7 @@ scale the resistor differently: `R = 1.1 Re` (Elliott) and `R = 1.25 Re` (Dickas
 is derived; both are empirical corrections for the fact that `Le` is frequency-dependent. `Le` itself
 is usually quoted at one frequency, so the capacitance inherits that ambiguity, and a driver whose
 impedance rise is semi-inductive rather than a clean single `Le` cannot be tracked by one R-C at all.
-Measure the impedance curve rather than trusting a single datasheet `Le`.
+Prefer published complex impedance curves where available; otherwise bracket plausible frequency-dependent load models rather than treating a single datasheet `Le` as exact.
 
 **Resonance notch.** A parallel L-C-R across the driver flattens the `fs` peak, with
 `RN = Re / Qes` — and `RN` is the **total**, of which the notch inductor's own DCR is a real part (in
@@ -207,8 +207,7 @@ region achieves about +/-0.5 dB of ripple; a fit target tighter than that is opt
   to decide whether a coil suits a particular crossover position.
 
   **Treat that as settled rather than as a search still to be done.** The number is not withheld, it
-  has not been taken. A design that needs to know where a cored coil saturates must either measure it
-  or avoid the question, and the framework's part records should carry "not published" rather than a
+  has not been taken. Use a published current-dependent model where available, or select a suitable air-core alternative when uncertainty about saturation is decisive. The framework's part records should carry "not published" rather than a
   blank that invites an assumption.
 
   What *is* established about the physics, from the same supplier:
@@ -233,12 +232,14 @@ region achieves about +/-0.5 dB of ripple; a fit target tighter than that is opt
   Filter corner frequencies, filter Q and L-pad attenuation all move with it, which is one more reason
   to prefer an L-pad over a bare series resistor, and a reason a passive design voiced cold is not the
   same design when hot. This matters in monitoring and PA duty and is negligible at domestic level.
-- **Capacitors.** Polypropylene in the signal path (dielectric constant about 1.5, strength 23 to
-  25 MV/m, which is why it is physically large); polyester acceptable at lower power (2.8 to 4.5,
-  16 MV/m). Electrolytics do not belong in a hi-fi crossover: their value drifts with age, and
-  non-polarised crossover types have been quoted with tolerances as wide as +20/-50 percent, which at
-  the low end doubles a corner frequency. Class II ceramics (X7R, Y5V and relatives) never belong in a
-  signal path at all.
+- **Capacitors.** Select dielectric and construction by actual tolerance, ESR, AC current/voltage,
+  temperature, lifetime, volume and cost, as in section 7. The earlier blanket ban on bipolar
+  electrolytics conflicted with the crossover-specific manufacturer data already cited there and is
+  withdrawn. Film parts can offer tighter tolerance and lower loss; a suitable bipolar electrolytic
+  remains an option, particularly for a large shunt value, if its actual specifications and the
+  sensitivity study support it. Neither a premium label nor an unspecified class-wide tolerance
+  establishes suitability. Voltage-dependent Class II ceramics need a bias-dependent model before
+  they can be treated as a constant capacitor.
 - **Insertion loss.** A heavily padded network with high-DCR coils has been quoted as losing "as much
   as 3 dB" overall. That is an upper bound from an author arguing for bi-amping, not a typical value;
   compute the actual loss from your own DCR and pad values, where section 4's `20 log10(R_L / Z + 1)`
@@ -263,6 +264,17 @@ region achieves about +/-0.5 dB of ripple; a fit target tighter than that is opt
 
 For series/parallel banks, compute leaf powers from each leaf's voltage/current and sum at the same frequency. Summing unrelated per-part maxima overstates simultaneous heat, while assigning a whole bank's power to one leaf overstates that leaf's stress. `crossover_network` reports physical leaves and conservation is checked against `board_nodal`; changing a bank requires regenerating both the model and construction artifacts.
 
+## 14. Driver impedance and physical realization
+
+Mixed nominal driver impedances can be useful in a passive level budget; compare voltage sensitivity
+and complete loaded input impedance rather than matching nominal labels. A no-series-resistor
+network is an option, not a quality target. For a resistive prototype at fixed corner, capacitor
+values scale as `1/R` and inductor values as `R`; actual cost and package size need inventory data.
+Electrical crossings and acoustic crossings are different observables: the latter include driver response, baffle effects and propagation. Compare the complete acoustic branches and amplifier load when choosing driver impedances.
+
+Physical realization is covered by [crossover assembly](crossover-assembly.md); unmodeled sonic
+preferences are not numeric advantages in the model.
+
 ## Sources
 
 - Jantzen Audio technical FAQ, "Coil types and where to use them" and "P-core inductors - Ferrite and non-ferrite powder cores". First-hand manufacturer statement that power handling and saturation points are not measured for their coils, the ferrite-versus-powder saturation behaviour, the 1.2 kHz practice threshold and the air-core hierarchy. A vendor source, and the rules of thumb in it carry no derivation. https://jantzen-audio.com/faq/coil-types-and-where-to-use-them/
@@ -274,7 +286,7 @@ For series/parallel banks, compute leaf powers from each leaf's voltage/current 
 - Zobel, O. J., "Theory and Design of Uniform and Composite Electric Wave-Filters", *Bell System Technical Journal*, vol. 2, no. 1, 1923 - the impedance-compensation network by its original name.
 - Dickason, V., *The Loudspeaker Design Cookbook*, 8th ed., Audio Amateur Press - crossover topologies, L-pads, Zobels, notch filters and component practice in one place.
 - Beranek, L. L., Mellow, T. J., *Acoustics: Sound Fields and Transducers*, Academic Press, 2012 - the electro-mechano-acoustic models the ladders terminate into.
-- D'Appolito, J., *Testing Loudspeakers*, Audio Amateur Press - what has to be measured before crossover values are final.
+- D'Appolito, J., *Testing Loudspeakers*, Audio Amateur Press - methods for optional empirical characterization.
 - IEC 60268-5, *Sound system equipment - Part 5: Loudspeakers* - the signal conditions under which power ratings are defined.
 - The manufacturer's datasheet of the exact part, read for the condition its rating applies to: free air with a derating curve, or a held case temperature on a heatsink.
 - Nichicon, *Aluminum Electrolytic Capacitors UDB series*, catalogue CAT.8100M - a bipolarized electrolytic "designed specifically for crossover networks in Hi-Fi sound systems": +/-20 percent at 1 kHz, tan delta at most 0.10 at 1 kHz and 0.15 at 5 kHz, 50 V rated, -40 to +85 C, and the allowable continuous current table quoted in section 7. The catalogue also marks the series "scheduled to be discontinued, not recommended for new designs", which is where the availability point comes from. Manufacturer datasheet read at first hand. <https://www.nichicon.co.jp/english/series_items/catalog_pdf/e-udb.pdf>

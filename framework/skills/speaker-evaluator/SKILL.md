@@ -45,6 +45,8 @@ Pull the figures from these places:
 
 ## Score
 
+For revised baselines and model-sensitive results, check [comparable sources and revisions](../speaker-design/references/simulation-integrity.md). For attribution, protection, part removal and close rankings, use [crossover search and diagnosis](../speaker-designer/references/crossover-search.md). Require evidence for the applicable checks without assuming the fitting app implements them. In particular, compare governing modes inside a sufficiently wide analysis band, and keep a user's priorities distinct from a designer's diagnostic thresholds.
+
 For every objective in `project.json`: candidate value, target, tolerance, margin, and whether it is met, met within tolerance, or missed. A miss is a finding, never a reason to change the target.
 
 Beyond the objectives, judge the candidate as an experienced designer would:
@@ -78,6 +80,10 @@ Read the conditional basis and counts in `lf_uncertainty.results.summary`: total
 Before blaming a driver for a hump or dip, inspect `whole_speaker.results.on_axis.sections` complex pressures at that frequency. State each contribution and relative phase, reconstruct the coherent sum, and compare the depth scenarios. Out-of-band leakage can create a feature well above a crossing. A feature moving with relative delay points to interference and should prompt a tested filter/geometry request before replacement of the wrong driver.
 
 Every crossover-frequency request repeats the feasible interval check: driver bandwidth and protection, physical spacing, both spacing screens, and the actual angular window with relative phase. A value of `c/(2d)` is not a predicted null in a specified narrow listening window. Read a requested new driver's top octave as well as its coincident geometry. If a conflict can be priced with a controlled voicing or stock-DCR sweep, request that comparison before claiming no solution exists.
+
+## Room-dependent evidence
+
+Where room scenarios were run, compare `room_response` direct and total pressure at physical seats, spatial energy mean and spread, and changes with boundary assumptions, placement and toe-in. Check frequency coverage and reflection-order sensitivity. Keep this particular-room calculation distinct from `spinorama`'s angularly weighted predicted-in-room curve. A narrow room null is not by itself a driver/crossover defect; request a controlled geometry or room scenario before changing the speaker. Rank by the user's listening region and priorities, with a definite design recommendation supported by the available simulations.
 
 ## Compare
 

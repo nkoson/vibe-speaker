@@ -1,7 +1,7 @@
 ---
 id: measurement-and-model-limits
 applies_when: Reading a simulated result for what it is worth, planning the measurements that would confirm it, or writing down what a predicted figure does and does not mean
-updated: 2026-09-28
+updated: 2026-10-15
 ---
 
 # What a simulated result is worth, and what measuring it would take
@@ -9,8 +9,7 @@ updated: 2026-09-28
 Nothing this framework produces is a measurement. Every curve is a linear, small-signal model
 evaluated over declared priors, and the distance between that and a microphone is the subject of this
 reference. It exists for two jobs: to keep predicted figures honestly labelled, and to say what the
-measurement that would confirm one actually involves — because most of the error in a real
-build-and-measure loop comes from the measurement, not from the physics.
+conditions behind published or user-supplied measurement data. The default design workflow completes the speaker through simulation, research and robustness analysis; the measurement procedures below apply when interpreting such data or when the user requests that work.
 
 ## 1. Quasi-anechoic measurement is bounded by the room, not the software
 
@@ -270,15 +269,12 @@ error bar from the literature, only the model's declared assumptions and its val
 ## 7. What this framework's models contain, and what they do not
 
 Linear, small-signal physics with declared priors. No distortion, no compression, no port noise, no
-break-up beyond source data, no full room model and no joint behaviour. `thermal_power` supplies a declared voice-coil heating scenario; it does not establish enclosure endurance or nonlinear compression. Published data digitised from a
+break-up beyond source data, no full room wave/scattering model and no joint behaviour. `room_response` adds finite-order rectangular-room reflections at physical receivers; see [room simulation](room-simulation.md). `thermal_power` supplies a declared voice-coil heating scenario; it does not establish enclosure endurance or nonlinear compression. Published data digitised from a
 datasheet carries reading uncertainty, and a datasheet impedance prior is a prior, not a measurement.
 The applications report; they do not judge. See `simulations/README.md` for the shared limits and each
 app's own `README.md` for what its model includes.
 
-The practical consequence for a design document is fixed and not negotiable: every figure says
-"predicted" or "simulated", names the drive condition and the model assumptions it rests on, and
-final crossover values are stated as a build starting point to be set after measurement — see
-`crossover-design.md` section 10 and the prototype measurement sequence in `framework/skills/speaker-documentation/SKILL.md`.
+A design document labels computed performance "predicted" or "simulated" and states the drive condition and consequential assumptions. Final stock values are selected through the simulation workflow, including sensitivity to uncertain inputs. Empirical certification is separate from a complete simulation-designed construction package; see `crossover-design.md` section 10.
 
 ## 8. Source ownership and validation practice
 

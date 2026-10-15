@@ -10,6 +10,10 @@ Create when the driver set is chosen, before crossover fitting. This audit suppo
 - Detail intentional intersections as real joints (for example half-laps), subtract solid union volume once, and check each fastener against panel edges, supports and wire entries.
 - Reconcile gross air, every displacement/reserve and net air; replace reserves when detailing the corresponding hardware rather than counting both. Keep clearances and installation access visible in the drawings.
 - After any change, regenerate volume/cut list and rerun the alignment plus fixed network and downstream response. Record the effect before freezing the construction package.
+- Identify the governing CAD/drawing revision, each loose-panel datum, and separate nominal machining dimensions from factory hardware, installed faces and acoustic positions.
+- Define actual recess/aperture/grille contours, radii and tooling; check compressed gaskets, fixing lands, full fastener stacks and moving clearance. Check solid-wood grain, joint faces and seasonal float together.
+- Replace generic board envelopes with exact part bodies, leads, supports, ties, screw/tool access and lining. Audit every warning into this record and inspect the assembly sequence.
+- Reconcile circuit nodes with copper/links and every visible wire, including external connections; inspect symbols, restraint holes and mirrored terminal labels. See the documentation skill's construction audit for the detailed procedure.
 
 | Object | Shape and source | x range | depth range | z range | Clearance/joint/access finding |
 |---|---|---|---|---|---|

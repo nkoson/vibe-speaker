@@ -50,7 +50,7 @@ The applications output results only. Thresholds are parameters; interpretation 
 
 ## Scope and limits
 
-Nothing produced here is a measurement. Digitized datasheet curves carry reading uncertainty, horn and tweeter phase is reconstructed, and distortion, compression, port noise, breakup beyond published data, room effects and thermal behaviour are not simulated. A first-build package from this framework is a starting point that a builder verifies by measuring drivers, tuning and the crossover.
+Nothing produced here is a measurement. Digitized datasheet curves carry reading uncertainty, horn and tweeter phase is reconstructed, and distortion, port noise, breakup beyond published data, full room scattering and nonlinear compression are not simulated. The room app adds 3D rectangular-room reflections and seating studies; thermal heating is available as a declared scenario. The framework delivers complete simulation-designed construction packages, selecting final values through research, comparison and robustness checks. Additional measurements can be used when supplied or requested; they are not a prerequisite for completing a design.
 
 ## License
 

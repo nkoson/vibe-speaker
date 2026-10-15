@@ -25,7 +25,7 @@ NOTES = [
 VALIDITY = [
     "Lumped elements hold while every part and every wire run is short compared with a wavelength; at 20 kHz that is 17 mm per degree of phase, so board layout, not the ladder, is the limit at the top of the band.",
     "The ladder is exact for the load it is given. A datasheet impedance prior is a prior, not a measurement, and a fit against one is only as good as it.",
-    "No source consulted states the decibel error between a simulated and a measured crossover transfer; final values are set after measurement.",
+    "No source consulted states the decibel error between a simulated and a measured crossover transfer; source and component uncertainty are evaluated as declared scenarios.",
 ]
 
 

@@ -1,0 +1,24 @@
+{
+  "frequencies": {"min_hz": 20, "max_hz": 1000, "points": 981, "spacing": "linear"},
+  "room": {
+    "dimensions_m": [5.2, 6.8, 2.7],
+    "pressure_reflection": {
+      "x_min": 0.65, "x_max": 0.65, "y_min": 0.7, "y_max": 0.55,
+      "z_min": {"points": [[20, 0.8], [200, 0.7], [2000, 0.3]]},
+      "z_max": 0.6
+    },
+    "basis": "Illustrative pressure-reflection scenarios, not a material database or an actual room."
+  },
+  "max_order": 2,
+  "speakers": [{
+    "name": "single-speaker", "speaker_file": "../whole_speaker/example.json",
+    "origin_m": [1.5, 1.1, 0], "yaw_deg": 10, "input_voltage_rms": 2.83,
+    "rear_radiation": {"kind": "shadowed_monopole", "corner_hz": 350, "floor_db": -20, "order": 1}
+  }],
+  "receivers": [
+    {"name": "centre", "position_m": [2.6, 4.1, 1.0]},
+    {"name": "left", "position_m": [2.3, 4.1, 1.0]},
+    {"name": "right", "position_m": [2.9, 4.1, 1.0]},
+    {"name": "forward", "position_m": [2.6, 3.8, 1.0]}
+  ]
+}

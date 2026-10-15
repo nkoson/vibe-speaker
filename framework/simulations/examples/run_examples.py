@@ -31,6 +31,7 @@ CHAIN = [
     ("crossover_fit", SIMS / "crossover_fit" / "example.json", "crossover_fit"),
     ("board_nodal", SIMS / "board_nodal" / "example.json", "board_nodal"),
     ("whole_speaker", SIMS / "whole_speaker" / "example.json", "whole_speaker"),
+    ("room_response", SIMS / "room_response" / "example.json", "room_response"),
     # the full orbit has to exist before response_metrics can take an LFX from its sound power curve
     ("spinorama", SIMS / "spinorama" / "example.json", "spinorama"),
     ("cavity_modes", SIMS / "cavity_modes" / "example.json", "cavity_modes"),

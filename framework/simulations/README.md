@@ -1,6 +1,6 @@
 # Simulation applications
 
-Eighteen standalone Python programs. Each reads one JSON parameter file, computes one linear engineering model and writes one JSON result document into the folder you name. None of them decides whether a result is good, blocked or viable: they report curves, numbers and the assumptions behind them, and the reader (you, the language model running the design skills) judges.
+Nineteen standalone Python programs. Each reads one JSON parameter file, computes one linear engineering model and writes one JSON result document into the folder you name. None of them decides whether a result is good, blocked or viable: they report curves, numbers and the assumptions behind them, and the reader (you, the language model running the design skills) judges.
 
 ```
 python framework/simulations/<name>/run.py --input params.json --out <folder> [--name <result-name>]
@@ -21,6 +21,7 @@ Every folder holds `run.py`, a `README.md` with the full input and output contra
 | `crossover_fit` | Bounded least-squares fit of marked component values to a target coherent response, with an optional element-ablation pass and stock quantization | Find values for my chosen topology, then ask which elements are earning their place and what real stock does to them |
 | `board_nodal` | Netlist solve of the realized board with wires, terminal pairs and connection modes | Does the drawn board behave like the intended ladders, in linked and bi-amp modes, and what do the parts see |
 | `whole_speaker` | Coherent sum of the sections at their positions with directivity, baffle and filters; polar maps, floor image, polarity and depth studies, same-band array criteria and the near/far-field border | The predicted system response on and off axis, and whether the distance it was computed at is a far field at all |
+| `room_response` | Finite-order 3D rectangular-room image paths with source orientation, six wall coefficients and multiple receivers | How placement, toe-in and early reflections change physical listening-position pressure |
 | `cavity_modes` | Internal standing waves of the bass chamber (analytical or FVM), lining damping, cone loading change, port leakage, pressure envelope | Are braces, lining and port placement doing their job inside the box |
 | `plate_structure` | Panel bays as a mode band between pinned and clamped edges, measured material and damping-treatment data, and the BBC audibility criterion over a relative panel output | Which panel needs a brace, more thickness or damping, and which octave to worry about |
 | `response_metrics` | Statistics of curves and differences between curves, including published reference points, plus NBD, SM, AAD, LFX and LFQ named with the curve each came from | Score a candidate and compare it with the reference speaker |
@@ -64,6 +65,7 @@ thermal_power ─> lf_box (thermal.coil_temperature_c) and crossover_network (th
 
 ## Tools (`framework/tools`)
 
+- `plot_room_response.py`: room geometry, actual-seat curves, direct/room differences and spatial spread from `room_response`.
 - `plot_curves.py`: curves or angle maps from any result file to PNG.
 - `cabinet_drawing.py`: cut list, chamber volume accounting and front, side-section and rear drawings from a cabinet description.
 - `schematic.py`: ladder schematics (labels: reference, part name, value, loss and rating), pin-to-pin connection table and a starting `board_nodal` netlist from a `crossover_network` parameter file or a `crossover_fit` result. `tools/example_crossover.json` is a self-contained example with capacitor banks and resistor arrays.
@@ -75,7 +77,7 @@ thermal_power ─> lf_box (thermal.coil_temperature_c) and crossover_network (th
 
 ## Limits shared by every model
 
-Linear, small-signal physics with declared priors. No distortion, port noise, breakup, room or joint behaviour is simulated. Published data digitized from datasheets carries reading uncertainty. A computed curve is a prediction, never a measurement.
+Linear, small-signal physics with declared priors. No distortion, port noise, breakup beyond source data or joint behaviour is simulated. `room_response` adds finite specular room reflections; it does not model a complete late-reverberant or modal room field. Published data digitized from datasheets carries reading uncertainty. A computed curve is a prediction, never a measurement.
 
 Thermal behaviour is the one exception, and a narrow one: `thermal_power` models voice-coil heating as a two-body lumped system over declared priors, and `lf_box` and `crossover_network` accept a coil temperature as a scenario. That is resistance drift and nothing else — nonlinear compression, which is instantaneous rather than thermal, is in none of them.
 

@@ -2,7 +2,7 @@
 
 Two-body lumped voice-coil thermal model. It answers the question every sensitivity claim dodges: what is the output once the coil is hot. The coil dissipates `P_Re = i_rms^2 Re` into a coil body `(Rtv, Ctv)` coupled to the magnet and frame `(Rtm, Ctm)`, and the rising `Re` feeds back into the drive.
 
-**Ship every result from this application as a scenario, not a prediction.** Datasheets almost never publish `Rtv`, `Rtm`, `Ctv` or `Ctm`, so the parameters are priors until somebody measures them, and the equivalent-mass check is the only sanity test available without a measurement.
+**Report a predicted thermal scenario with its parameter basis.** Datasheets rarely publish `Rtv`, `Rtm`, `Ctv` or `Ctm`. Use sourced driver-class priors, check equivalent masses and time constants, and compare plausible parameter ranges when heat affects selection. Choose the design and margins from those scenarios; no new user measurement is required.
 
 **Two power-test protocols exist and they answer different questions.** This model's priors and its 130 %-of-cold-`RE` abort point come from the accelerated protocol — short steps, target coil rise — which measures how fast the coil heats. AES2-2012 clause 6 specifies an endurance test instead: pink noise a decade above the stated low-frequency limit, 12 dB crest factor, **two hours per step to thermal equilibrium**, with rated power being what survives two hours without permanent change. Both are reported in `results.test_protocols`, and nothing here is calibrated against the second, so no figure from this application is a rated power in the AES2 sense.
 

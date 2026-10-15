@@ -11,6 +11,10 @@ Companion skills: `speaker-designer` (how to build a candidate), `speaker-evalua
 
 Interpreter: `.speaker-venv/bin/python` at the repository root (numpy, scipy, matplotlib present). Run one app per shell command, never chained.
 
+## Design responsibility
+
+The default deliverable is a complete, buildable loudspeaker designed from published data and simulations, without requiring the user to take acoustic measurements. Own the engineering decisions: research missing evidence, compare plausible source/geometry/loss scenarios, choose robust parts and margins, and refine toward the user's objectives. Explain material assumptions once with their consequences; do not turn them into recurring requests to measure or postpone final crossover values. Use supplied measurements when available, or a measurement workflow when requested. Honest predicted labels and model limits remain essential.
+
 ## Project layout
 
 Every project lives in `framework/projects/<slug>/`:
@@ -28,6 +32,10 @@ final/                the documentation package of the selected candidate
 
 ## 1. Start a new project
 
+Use [brief-to-experiments](references/brief-to-experiments.md) to translate qualitative goals into controlled comparisons, distinguish user priorities from proxies and choose robust final values under uncertain inputs.
+
+For inherited designs, imported curves or changed model conventions, use [comparable sources and revisions](references/simulation-integrity.md) before ranking. It covers released-baseline replay, fixture correction, calibration order, exact part identity and model/band sensitivity; record the applicable evidence in the simulation audit.
+
 1. Create the folder and `project.json` from `framework/templates/project.json`. Fill the brief from the user's words: reference product, size and budget limits, what must not change, and the iteration limit. Default limits when the user gives none: 3 iterations, 3 candidates per iteration, 1 finalist for detailed cavity and panel analysis.
 2. Write the objectives as target, tolerance, direction and basis. Take them from the reference research when the user asked to approach a reference; otherwise from the brief. Objectives are optimization targets you judge with the tolerance; never edit a target to make a candidate look better. A missed objective is a finding to report.
 
@@ -36,6 +44,8 @@ final/                the documentation package of the selected candidate
 4. Follow `speaker-learnings` to consult `framework/learnings/INDEX.md`: open the learnings whose situation matches this project, decide for each whether it applies, and log the decision. They are advice from earlier projects, not requirements; do not copy their figures into the objectives.
 
 Resume: if the user names an existing project, read its `project.json`, its latest evaluation and the candidate files, then continue from `state.phase`. Never overwrite a candidate folder; refinements are new candidates with a `parent`.
+
+Separate circuit/construction evidence, published response conditions and subjective claims when evaluating a reference design. Historical part prices and availability need current verification. Read `framework/references/cabinet-construction.md` and `framework/references/crossover-assembly.md` before physical realization. When the brief depends on placement or a listening region, plan `room_response` scenarios using `framework/references/room-simulation.md`.
 
 ## 2. Research the reference
 
@@ -73,7 +83,7 @@ When a model or input error is discovered mid-project, record a separate correct
 
 ## 5. Select and document
 
-Select against the central objectives first. State explicitly when no candidate meets the brief, distinguish a closest prototype from a compliant design, and name the missed objectives with their margins and the assumptions carrying the most risk. While useful budget remains, address a central miss before spending effort on detailed boards, FVM, panels and polished construction drawings; early physical feasibility drawings still happen before fitting. If the budget is exhausted without a concept approaching the central targets, deliver a concise predicted-performance and options report rather than automatically finishing the construction package. Honor an explicit user request to document that prototype anyway. For a candidate selected for construction documentation, follow `speaker-documentation` to produce `final/`, whose deliverable is the PDF `final/<slug>-design-package.pdf` with its Markdown sources and images beside it. Deliver to the user: the PDF path, a short standalone summary of the selected design, the missed objectives, and what a builder must verify by measurement.
+Select against the central objectives first. State explicitly when no candidate meets the brief, distinguish a closest prototype from a compliant design, and name the missed objectives with their margins and the assumptions carrying the most risk. While useful budget remains, address a central miss before spending effort on detailed boards, FVM, panels and polished construction drawings; early physical feasibility drawings still happen before fitting. If the budget is exhausted without a concept approaching the central targets, deliver a concise predicted-performance and options report rather than automatically finishing the construction package. Honor an explicit user request to document that prototype anyway. For a candidate selected for construction documentation, follow `speaker-documentation` to produce `final/`, whose deliverable is the PDF `final/<slug>-design-package.pdf` with its Markdown sources and images beside it. Deliver to the user: the PDF path, a short standalone summary of the selected design, the missed objectives, and the design assumptions and construction details that materially affect the result.
 
 The PDF is written for the builder: drawings, schematic, plots, parts and the assumptions that change what a builder does, with the framework's own provenance left in the project folder. `speaker-documentation` states what each document carries and what the tools do not draw on their own; treat those requirements as documentation quality rather than as further design objectives.
 

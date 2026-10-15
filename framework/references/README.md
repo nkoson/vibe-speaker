@@ -20,6 +20,9 @@ References are not learnings. A learning in `framework/learnings/` says what hap
 | [horn-and-waveguide-design](horn-and-waveguide-design.md) | Sizing a horn throat, rear cavity or mouth, or deciding whether a horn model can answer the question |
 | [arrays-and-directivity-control](arrays-and-directivity-control.md) | Arraying several sources of the same passband - a line array, a column, a stacked pair or an MTM |
 | [cabinet-materials-and-panels](cabinet-materials-and-panels.md) | Choosing a cabinet material or wall thickness, predicting a panel resonance, or judging whether panel radiation will be audible |
+| [crossover-assembly](crossover-assembly.md) | Turning the selected network into exact physical boards, banks and wiring |
+| [cabinet-construction](cabinet-construction.md) | Choosing joints, braces, treatment regions and assembly sequences as model inputs |
+| [room-simulation](room-simulation.md) | Adding actual room geometry, reflections and listening-position scenarios |
 
 ## What these references cover, and where they stop
 

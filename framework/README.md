@@ -53,3 +53,5 @@ Simulations report; the model decides. No Python code in this folder marks a res
 The skills are linked into `.claude/skills/` for Claude Code and `.agents/skills/` for other agent hosts; `AGENTS.md` at the repository root is the generic entry point.
 
 Incorporated project findings are tracked in [the improvement plan](plans/incorporate-learnings-2026-09-28.md). `learnings/` may have no active records after verified incorporation; its index and authoring format remain for future findings.
+
+Simulation-only design is the default: the agent owns final stock values and construction choices, using sourced inputs and robustness studies. Room-aware work uses [room_response](simulations/room_response/README.md) for 3D rectangular-room reflection and seating scenarios. The [architecture and model coverage procedure](skills/speaker-designer/references/model-coverage.md) connects the available simulations; [cabinet construction](references/cabinet-construction.md) and [crossover assembly](references/crossover-assembly.md) cover physical realization. The [October incorporation record](plans/incorporate-learnings-2026-10-15.md) records the integrated project findings.

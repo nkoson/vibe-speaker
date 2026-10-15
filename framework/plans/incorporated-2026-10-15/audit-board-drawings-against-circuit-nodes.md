@@ -1,0 +1,28 @@
+---
+id: audit-board-drawings-against-circuit-nodes
+date: 2026-10-14
+project: neat-petite-dayton-astra, neat-dayton-redcatt
+phase: documentation
+confidence: medium
+applies_when: Turning crossover circuit graphs into schematics and physical prototyping-board drawings
+tags: [crossover, wiring, pcb, schematics, documentation, validation]
+---
+
+## What went wrong
+Reassigning two previously joined return rails to opposite supply nodes made the old bridge a direct input short. Rail-tap aliases also collided with existing cloverleaf addresses: the connection table was correct, but the drawing coloured unrelated islands as connected. A correct electrical graph also failed to reveal restraint holes cutting active copper or overlapping each other. In a schematic renderer, endpoint logic that assumed increasing coordinates drew continuous wires through descending capacitor, resistor and coil symbols. The solved circuit was correct while its construction drawing depicted bypassed components. Graph equivalence alone did not expose these physical and visual errors. A solderless fixture then reproduced every circuit node while giving a small nonzero response difference from the permanent stripboard because its wires and spring contacts distributed resistance differently.
+
+A later solderless construction guide showed component placement separately from a node/port diagram, but omitted the actual wires on the board. Both were electrically correct, yet the builder could not follow one physical drawing to assemble it. The logical audit had mistaken a connection reference for a usable wiring plan.
+
+## What could have helped
+Compare every component and driver endpoint with the authoritative circuit, grouping only actual factory copper and specified links. Audit old links and terminal labels whenever a rail changes function. Keep physical pad addresses distinct from rail-tap aliases, and inspect the rendered copper map as well as the netlist. Overlay every mounting and restraint hole on the actual copper, including the remaining hole ligaments and tool access. Read rendered schematic symbols in both horizontal and vertical directions, checking explicit wire gaps at capacitor plates and other component bodies against the intended circuit. Include disconnected-driver DC checks that distinguish intended low-resistance coil paths from unintended bridges. Document verification checks the plan; the soldered board still needs inspection and continuity testing.
+
+
+A low-jumper goal also needs an honest wire count. A board using rails and cloverleaf islands can need more component-lead extensions and reinforcement wires than continuous stripboard even when both report zero inter-node jumpers. Compare practical board patterns before committing the layout, count every added conductor by function, and model distributed copper resistance before prescribing reinforcement. Keep required native lead reach separate from unverified supplied lead length; check insulated wire diameter against feeds as well as conductor area. Mirrored foil views need unchanged terminal identities and an explicit coordinate datum. On a trimmed board, distinguish the edge-based cut dimension from an inferred grid origin.
+
+When documenting a solderless comparison, count individual contact interfaces, not only connector bodies. Preserve the component identities and driver polarity, model a stated range of contact and extension-wire resistance, and compare with the current physical board on the same source and cabinet-volume model. Keep topology equivalence separate from measured-response equivalence and from connector current ratings.
+
+For a build-by-picture request, show the complete physical board with every component lead, adapter, individual wire and external driver connection in one master view. Draw connector ports on their actual entry face, label wire ends consistently, and distinguish insulated crossings from junctions. Audit native-lead reach and cut lengths including terminal insertion and bends. A placement view, port table or abstract schematic can support that plan, but does not replace the visible end-to-end wires. Preserve a large-format vector sheet when a normal document page would make the connections too small to follow.
+
+A complete picture is not yet a buildable one. Putting every node connector at the board edges and giving every component end its own adapter and extension produced twenty crossing wires that a builder could not follow. Place node connectors among the parts they join, put leads straight into their node, and treat the wire count and the number of crossings as audit outputs. Before routing, check whether parts held at fixed positions, such as coils kept at the final-board geometry, force a crossing. A loop through two fixed coils that separates two other fixed coils cannot be wired without one. Fix only the parts whose geometry matters, and move the rest. On a breadboard, use the five-hole clips and rail halves as the nodes themselves, using only one half of any rail whose split is unverified, and keep jumpers for leads too thick to plug in.
+
+For an ordinary plug-in breadboard, check the exact maker’s accepted lead range rather than inferring it from an830-point label. Count only the adapters that actual lead diameter requires, keep unpublished lead sizes as receiving checks, and audit five-hole groups independently of power rails and printed numbering. A no-solder requirement also applies to external driver/amp leads; specify factory pin leads or explicit mechanical adapters rather than hiding soldered pigtails. Quantify the temporary fixture’s contact resistance before treating its response as the finished crossover.

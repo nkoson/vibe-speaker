@@ -23,7 +23,7 @@ NOTES = [
 ]
 VALIDITY = [
     "The result is a local optimum inside the stated bounds within the evaluation budget. It is not a proof that no better set of values exists, and a value resting on a bound means the topology or the bound is wrong.",
-    "Everything the fit optimises is a model: datasheet phase, prior impedance models, no measurement. The values are a build starting point to be set after measurement.",
+    "Everything the fit optimises is a model: datasheet phase, prior impedance models, no measurement. Final stock selection also considers tolerance, protection, geometry and source-model sensitivity.",
     "The objective is the coherent sum at the requested angles only. A low in-band residual with a step in the vertical map at the crossover is a worse loudspeaker than a slightly worse residual without one.",
 ]
 
