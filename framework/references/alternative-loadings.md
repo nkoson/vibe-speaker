@@ -60,21 +60,31 @@ radiator in place of the rear seal, and the two-chamber double-driver box.
 ### The failure mode that is not optional
 
 **The acoustic low-pass stops working, and the box then leaks everything above it out of the port.**
-The front chamber acts as a low-pass only while the port behaves as a lumped mass. That ends at the
-port's first pipe resonance, at roughly the frequency where the wavelength is four times the port's
-physical length:
+The front chamber acts as a low-pass only while the port behaves as a lumped mass. A port is a tube
+open at both ends, so on its end-corrected length `L_eff = L_physical + 0.732 d`:
 
 ```
-f_port_resonance ~= c / (4 L_port)
+f_lumped_limit    ~= c / (4 L_eff)    the lumped model under-states the port flow by 3.9 dB here
+f_port_resonance  ~= c / (2 L_eff)    first pipe resonance: port output peaks
 ```
 
-Above it, the port is a quarter-wave tube, not a mass, and out-of-band energy is radiated straight
-through. The published simulations, comparing a lumped-mass port model against the same port modelled
-as a transmission line terminated in its radiation impedance, make the conclusion flat: **an
-electrical low-pass filter is in practice mandatory on a bandpass box.** A design that relies on the
-enclosure alone for its low-pass is relying on a model that has stopped being true.
+At the quarter-wave point the exact tube passes `kL / sin kL = pi / 2` times the flow the lumped mass
+predicts, and the error grows from there to the half-wave resonance, where the port radiates the
+out-of-band energy straight through. The chamber's compliance lifts the resonance only slightly,
+because a port tuned well below its pipe frequency sees the chamber as nearly an open end. The
+published simulations, comparing a lumped-mass port model against the same port modelled as a
+transmission line terminated in its radiation impedance, make the conclusion flat: **an electrical
+low-pass filter is in practice mandatory on a bandpass box.** A design that relies on the enclosure
+alone for its low-pass is relying on a model that has stopped being true.
 
-This also constrains geometry: a long port pushes `f_port_resonance` down into the region the box was
+**A claim checked and corrected.** The source states that "the first port resonance frequency is
+just at" the frequency where the wavelength is four times the port's physical length. That is the
+resonance of a tube closed at one end. A distributed-tube calculation of a port on its chamber,
+repeated in `framework/tests/test_source_round_two.py`, puts the first output peak at `c / (2 L_eff)`
+for chambers of 20 to 80 L; `c / (4 L)` on the physical length was off by nearly a factor of two.
+The quarter-wave figure survives only as the point where the lumped model starts to fail.
+
+This also constrains geometry: a long port pushes both frequencies down into the region the box was
 supposed to filter. A bandpass box with a long, narrow port is the worst case, and that is exactly
 what a low tuning in a small chamber asks for.
 
@@ -212,7 +222,7 @@ loading, or any loading whose behaviour depends on a nonlinear or level-dependen
 
 ## Sources
 
-- J. Ahonen, "Electroacoustic modelling of the subwoofer enclosures", Linearteam technical paper, 6 July 2007. Source of the bandpass equivalent circuits, component-value method and the port-resonance caution; worked example recomputed and verified here. **Self-published** by the author of enclosure models for the WinISD Pro program; the method is the standard lumped-element analysis, the arithmetic was checked, and it is flagged as self-published rather than peer-reviewed. http://jahonen.kapsi.fi/Audio/Papers/enclosuremodelling.pdf
+- J. Ahonen, "Electroacoustic modelling of the subwoofer enclosures", Linearteam technical paper, 6 July 2007. Source of the bandpass equivalent circuits, component-value method and the port-resonance caution; worked example recomputed and verified here. Its quarter-wave statement of the first port resonance was checked and corrected to the half-wave one (section on the failure mode). **Self-published** by the author of enclosure models for the WinISD Pro program; the method is the standard lumped-element analysis, the arithmetic was checked, and it is flagged as self-published rather than peer-reviewed. http://jahonen.kapsi.fi/Audio/Papers/enclosuremodelling.pdf
 - R. H. Small, "Direct-Radiator Loudspeaker System Analysis", J. Audio Eng. Soc. 20, pp. 383-395, June 1972, and the vented-box series. The parameter definitions the isobaric derivation in section 2 is built on; already established in `driver-selection.md` and `enclosure-alignments.md`.
 - H. F. Olson, gradient loudspeaker work (1973), for the definition of a gradient loudspeaker and the first-order pattern family. Known through secondary description; **not read at first hand**.
 - US Patent 10893345, "Compact speaker system with controlled directivity", for the reported 2 to 2.5 octave practical passband of a cardioid arrangement. A patent specification, not a measurement series. https://patents.google.com/patent/US10893345

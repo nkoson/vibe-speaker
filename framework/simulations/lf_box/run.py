@@ -152,13 +152,19 @@ def _bandpass_ports(bandpass, stress_band):
     rows = []
     for port in bandpass["ports"]:
         resonance = port["pipe_resonance_hz"]
+        limit = port["lumped_limit_hz"]
         rows.append(dict(chamber=port["chamber"], tuning_hz=port["tuning_hz"], radiates_to_room=port["radiates_to_room"],
-                         physical_length_mm=port["vent"]["physical_length_mm"], diameter_mm=port["vent"]["diameter_mm"],
-                         count=port["vent"]["count"], pipe_resonance_hz=resonance,
-                         resonance_above_stress_band=bool(resonance and resonance > stress_band[1])))
+                         physical_length_mm=port["vent"]["physical_length_mm"],
+                         effective_length_mm=port["vent"]["effective_length_mm"], diameter_mm=port["vent"]["diameter_mm"],
+                         count=port["vent"]["count"], pipe_resonance_hz=resonance, lumped_limit_hz=limit,
+                         resonance_above_stress_band=bool(resonance and resonance > stress_band[1]),
+                         lumped_limit_above_stress_band=bool(limit and limit > stress_band[1])))
     return dict(ports=rows,
-                derivation="f = c / (4 L_port), the frequency at which the wavelength is four times the port's physical "
-                           "length. Above it the port is a quarter-wave tube rather than a lumped mass.",
+                derivation="A port is a tube open at both ends. Its first pipe resonance is the half-wave one, "
+                           "f = c / (2 L_eff), on the end-corrected length L_eff = L_physical + 0.732 d; the chamber's "
+                           "compliance lifts it only slightly. At f = c / (4 L_eff) the lumped-mass model already "
+                           "under-states the port's volume velocity by 3.9 dB (kL / sin kL = pi / 2), so the box's "
+                           "acoustic low-pass is no longer what the model shows from there up.",
                 consequence="above its first pipe resonance the acoustic low-pass stops working and out-of-band energy is "
                             "radiated straight out of the port. The published comparison of a lumped-mass port against the "
                             "same port modelled as a transmission line makes the conclusion flat: AN ELECTRICAL LOW-PASS "

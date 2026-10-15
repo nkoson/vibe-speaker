@@ -108,10 +108,14 @@ def chamber_network(spec, f, reference_hz, label="chamber"):
             child = chamber_network(child_spec, f, (child_spec.get("vent") or {}).get("tuning_hz") or fb,
                                     f"{label}.into")
             z_branch = z_port + child["z"]
+        # a port is open at both ends: its first pipe resonance is the half-wave one on the end-corrected
+        # length, and the lumped-mass model under-states the port flow by 3.9 dB at the quarter-wave point
+        realizable = geometry["physical_length_mm"] > 0
+        effective_m = geometry["effective_length_mm"] / 1000
         branch = dict(tuning_hz=fb, qp=qp, lmap_kg_per_m4=float(lmap), z_port=z_port, z_branch=z_branch,
                       geometry=geometry, child=child, radiates_to_room=child is None,
-                      pipe_resonance_hz=C / (4 * geometry["physical_length_mm"] / 1000)
-                      if geometry["physical_length_mm"] > 0 else None)
+                      pipe_resonance_hz=C / (2 * effective_m) if realizable else None,
+                      lumped_limit_hz=C / (4 * effective_m) if realizable else None)
         admittance = admittance + 1 / z_branch
     record["has_vent"] = branch is not None
     return dict(z=1 / admittance, cab=cab, record=record, branch=branch)
@@ -125,7 +129,7 @@ def chamber_flows(node, pressure, out=None):
         flow = pressure / branch["z_branch"]
         out.append(dict(label=node["record"]["label"], tuning_hz=branch["tuning_hz"], flow=flow,
                         geometry=branch["geometry"], radiates_to_room=branch["radiates_to_room"],
-                        pipe_resonance_hz=branch["pipe_resonance_hz"],
+                        pipe_resonance_hz=branch["pipe_resonance_hz"], lumped_limit_hz=branch["lumped_limit_hz"],
                         chamber_volume_l=node["record"]["volume_l"]))
         if branch["child"] is not None:
             chamber_flows(branch["child"], flow * branch["child"]["z"], out)
@@ -184,7 +188,8 @@ def bandpass_response(ts, enclosure, f, voltage_rms=2.83, series_r=0.0, space="h
         speed = np.sqrt(2) * np.abs(row["flow"]) / row["geometry"]["area_m2"]
         ports.append(dict(chamber=row["label"], tuning_hz=row["tuning_hz"], vent=row["geometry"],
                           radiates_to_room=row["radiates_to_room"], air_speed_peak_ms=speed,
-                          pipe_resonance_hz=row["pipe_resonance_hz"], chamber_volume_l=row["chamber_volume_l"]))
+                          pipe_resonance_hz=row["pipe_resonance_hz"], lumped_limit_hz=row["lumped_limit_hz"],
+                          chamber_volume_l=row["chamber_volume_l"]))
     order = 2 * (1 + count_vents(chambers["front"]) + count_vents(chambers["rear"]))
     result = dict(f_hz=f, pressure_pa=pressure, outlet_pressure_pa=pressure,
                   cone_pressure_pa=np.zeros(len(f), complex),

@@ -170,13 +170,32 @@ def test_bandpass_reports_the_port_pipe_resonance_and_demands_an_electrical_low_
     r = load("lf_box_bandpass")
     resonances = r["bandpass"]["port_resonances"]
     port = resonances["ports"][0]
-    # f = c / (4 L) on the port's physical length
-    assert port["pipe_resonance_hz"] == pytest.approx(343.0 / (4 * port["physical_length_mm"] / 1000), rel=1e-6)
+    # half-wave resonance of a tube open at both ends, on the end-corrected length
+    assert port["pipe_resonance_hz"] == pytest.approx(343.0 / (2 * port["effective_length_mm"] / 1000), rel=1e-6)
+    assert port["lumped_limit_hz"] == pytest.approx(port["pipe_resonance_hz"] / 2, rel=1e-6)
     assert "MANDATORY" in resonances["consequence"]
     # the bandwidth-for-gain exchange is reported, not implied
     exchange = r["bandpass"]["exchange"]
     assert exchange["passband_3_db"]["width_octaves"] > 0
     assert "given up" in exchange["exchange"]
+
+
+def test_port_pipe_resonance_matches_a_distributed_tube_on_its_chamber():
+    # the port as a lossless tube on the end-corrected length, fed by the chamber compliance and open
+    # at its mouth: the first output peak above the tuning is the reported pipe resonance
+    for volume_l, fb, diameter in ((40, 30, 102), (80, 55, 150), (20, 50, 50)):
+        f = np.linspace(5, 2000, 400000)
+        node = acoustics.chamber_network({"volume_l": volume_l, "vent": {"tuning_hz": fb, "diameter_mm": diameter}},
+                                         f, fb)
+        branch = node["branch"]
+        length = branch["geometry"]["effective_length_mm"] / 1000
+        z0 = cli.RHO * cli.C / branch["geometry"]["area_m2"]
+        k = 2 * np.pi * f / cli.C
+        pressure = 1 / (2j * np.pi * f * node["cab"] + 1 / (1j * z0 * np.tan(k * length)))
+        flow = np.abs(pressure / (1j * z0 * np.sin(k * length)))
+        above = f > 3 * fb
+        peak = f[above][np.argmax(flow[above] * (f[above] < 1.5 * branch["pipe_resonance_hz"]))]
+        assert peak == pytest.approx(branch["pipe_resonance_hz"], rel=0.02)
 
 
 def test_bandpass_narrower_passband_raises_the_midband_level():
