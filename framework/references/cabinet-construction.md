@@ -20,7 +20,7 @@ Read [cabinet geometry](cabinet-geometry.md) for fit/volume, [materials and pane
 
 **Physics.** Unequal dimensions can separate some coincident resonances; they do not establish low radiation or rapid decay. Stiffness moves modal frequencies; mass and loss change different terms of the mechanical response. Joint restraint, driver reaction forces and coupling between panels matter. Evaluate the complete relevant band before selecting a brace/material arrangement.
 
-**Evidence scope.** The BBC's cabinet studies support treating stiffness, loss and coupling together; they do not establish that one wood species or thickness is always best. The current panel model uses isolated-panel approximations and a relative output proxy. A future coupled structural/acoustic solver can estimate radiation with explicit boundary conditions and convergence checks; the existing proxy is not such a solver. [BBC RD 1977/3](https://downloads.bbc.co.uk/rd/pubs/reports/1977-03.pdf)
+**Evidence scope.** The BBC's cabinet studies support treating stiffness, loss and coupling together; they do not establish that one wood species or thickness is always best. `plate_structure` provides isolated-panel screening and a relative output proxy. `coupled_cabinet` computes panel/cavity/exterior interaction with declared springs and masses; its modal and surface refinements are independent numerical checks. [BBC RD 1977/3](https://downloads.bbc.co.uk/rd/pubs/reports/1977-03.pdf)
 
 ## Make the sequence buildable
 

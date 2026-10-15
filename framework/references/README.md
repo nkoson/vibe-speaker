@@ -22,6 +22,7 @@ References are not learnings. A learning in `framework/learnings/` says what hap
 | [cabinet-materials-and-panels](cabinet-materials-and-panels.md) | Choosing a cabinet material or wall thickness, predicting a panel resonance, or judging whether panel radiation will be audible |
 | [crossover-assembly](crossover-assembly.md) | Turning the selected network into exact physical boards, banks and wiring |
 | [cabinet-construction](cabinet-construction.md) | Choosing joints, braces, treatment regions and assembly sequences as model inputs |
+| [simulation-methods](simulation-methods.md) | Connecting geometry, wave fields, nonlinear states and correlated scenarios through explicit physical contracts |
 | [room-simulation](room-simulation.md) | Adding actual room geometry, reflections and listening-position scenarios |
 
 ## What these references cover, and where they stop

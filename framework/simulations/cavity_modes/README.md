@@ -43,3 +43,11 @@ Internal coordinates of the chamber: x from the inside left wall, y from the ins
 - `field_sections[]`: cell coordinates and pressure in the section plane at each requested frequency.
 
 Feed `results.pressure_envelope_rms_pa` (with `frequency_path: results.f_hz`) to `plate_structure` as the panel load. Scale it to your drive voltage: the envelope is linear in voltage.
+
+## Shared geometry and canonical source export
+
+An optional `assembly` record/file uses the shared metre-based geometry schema. In FVM mode its air-minus-solid mask is evaluated in the cavity coordinate frame. Keep the assembly and `cavity` bounds/datum consistent, and inspect the reported air-volume refinement.
+
+`results.pressure_per_volt_pa`, `outlet_pressure_per_volt_pa` and `z_ohm` are exported from a separate unity terminal-voltage solve with zero external series resistance. They are independent of the stress-drive settings and carry a source contract. Use cone pressure plus a separately positioned outlet, or an explicitly combined source, to retain one copy of each radiator. The supported frequency band follows the actual result grid.
+
+`export_complex_field: true` adds FVM coordinates and complex pressure samples for spatial loading studies. This is distinct from the maximum-pressure envelope used by the older isolated-panel screen.

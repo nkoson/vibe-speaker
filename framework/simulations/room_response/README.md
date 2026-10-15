@@ -10,7 +10,7 @@ Run the normal example chain first to create this example's referenced source fi
 
 ## Geometry and input
 
-Room coordinates are metres, with walls at zero and at each dimension: x across, y forward, z up. Speaker local coordinates follow `whole_speaker`: x lateral, y forward from the front baffle, z height; acoustic depth is negative y. `origin_m` translates that datum, including the existing cabinet floor offset. `yaw_deg` rotates local forward +y toward room +x for positive angles. Driver tilt and rear-outlet orientation are preserved. Room dimensions, source acoustic centres and receivers must be physically valid; the acoustic centres and receivers must be strictly inside the room. The origin can lie on the floor.
+Room coordinates are metres, with walls at zero and at each dimension: x across, y forward, z up. Speaker local coordinates follow `whole_speaker`: x lateral, y forward from the front baffle, z height; acoustic depth is negative y. `origin_m` translates that datum, including the existing cabinet floor offset. `yaw_deg` rotates local forward +y toward room +x for positive angles. Driver tilt, explicit source normals and arbitrary outlet normals/positions are preserved. Shared `assembly_source` geometry is resolved by the source loader. Room dimensions, source acoustic centres and receivers must be physically valid; the acoustic centres and receivers must be strictly inside the room. The origin can lie on the floor.
 
 | Input | Meaning |
 |---|---|
@@ -22,7 +22,7 @@ Room coordinates are metres, with walls at zero and at each dimension: x across,
 | `speakers[].rear_radiation` | Optional fallback for imported sources lacking a rear prior; same `shadowed_monopole` fields as `whole_speaker` |
 | `receivers[]` | `name` and `position_m` for each seat or spatial sample |
 
-Voltage defaults to the imported parameter document's input voltage, then 2.83 V. Multiple speakers reproduce the same coherent input; independent stereo channels are not modeled. An omni source is full-sphere. Other directivity types require a declared rear prior so wall-facing rays do not silently disappear. Choose those priors by source type and compare alternatives when they influence the result.
+Voltage defaults to the imported parameter document's input voltage, then 2.83 V. Multiple speakers reproduce the same coherent input; independent stereo channels are not modeled. Omni, signed dipole/cardioid and fully covered complex angular fields define their full-space radiation. Other directivity types use a declared rear prior so wall-facing rays do not silently disappear. Choose those priors by source type and compare alternatives when they influence the result.
 
 Pressure reflection is **not** energy absorption. For an ideal nontransmitting boundary with a real positive reflection coefficient, `r = sqrt(1 - alpha)`; a random-incidence absorption catalogue is not automatically the correct specular coefficient. Frequency tables are interpolated in log frequency and must cover the requested band. Imported source, transfer and baffle curves must cover it too; this app rejects endpoint extrapolation.
 
@@ -52,3 +52,7 @@ The model excludes furniture, scattering, nonrectangular boundaries, wall vibrat
 ![Simulated rectangular room, direct and reflected pressure, and seat-to-seat variation](example.png)
 
 The figure uses the supplied example and illustrative boundary coefficients. Regenerate it with `framework/tools/plot_room_response.py` from the example result.
+
+## Combining model bands
+
+`max_arrival_ms` truncates reflected image paths by propagation arrival time. An optional `model_blend` supplies `modal_file`, optional `ray_file` and `transition_hz: [low, high]`. Receiver coordinates and supported bands are checked. Each receiver then reports a raised-cosine power blend, modal/image overlap difference, weights and the early/late time-partition overlap. The modal field is used below the transition and early-plus-incoherent-late energy above it. This is an explicit model approximation; it does not preserve a coherent phase across a power blend or choose the transition on the agent's behalf.

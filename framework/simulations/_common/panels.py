@@ -104,8 +104,8 @@ CRITERION_LIMITS = [
     "the curve should slope downwards; a curve rising with frequency would be easier to justify on directivity grounds.",
     "It is a 1977 result on 1977 programme material, measured with a pressure-gradient microphone placed so the cone's "
     "radiation falls in its null.",
-    "It is nonetheless the only published quantitative threshold obtained here, and it is decision-changing: a panel "
-    "resonance at 150 Hz needs 13 dB of margin and one at 1 kHz needs 30 dB.",
+    "For this empirical comparison curve, a panel "
+    "resonance at 150 Hz corresponds to about 18 dB on this interpolation and one at 1 kHz needs 30 dB.",
 ]
 
 
@@ -227,10 +227,9 @@ def mode_band(a_m, b_m, thickness_m, e_pa, density, nu=0.3):
                 pinned_hz=pinned * scale * speed, clamped_hz=clamped * scale * speed,
                 band_hz=[pinned * scale * speed, clamped * scale * speed],
                 band_octaves=math.log2(clamped / pinned),
-                single_value_refused="the edge condition alone moves this frequency by a factor of 1.8 to 2.2. A glued "
+                boundary_condition_basis="the edge condition alone moves this frequency by a factor of 1.8 to 2.2. A glued "
                                      "butt joint into a thin panel is much nearer pinned than clamped, a thick panel "
-                                     "into a rebate with a glue block is nearer clamped, and neither is either. Report "
-                                     "the band; any narrower figure is false precision.",
+                                     "into a rebate with a glue block is nearer clamped, and neither is either. The band compares these idealized restraints rather than certifying a real joint.",
                 optimistic_at_the_bottom="worked on the BBC's own LS3/6 cabinet this bracket gives 196 to 393 Hz for the "
                                          "side panel, and the BBC's measurement of that cabinet peaks near 150 Hz - "
                                          "below even the pinned bound - because a real panel carries the driver's "

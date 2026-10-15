@@ -1,0 +1,33 @@
+{
+  "assembly": {
+    "schema_version": 1,
+    "objects": [
+      {
+        "id": "air",
+        "role": "air",
+        "dimensions_m": [
+          0.3,
+          0.4,
+          0.5
+        ]
+      },
+      {
+        "id": "brace",
+        "dimensions_m": [
+          0.3,
+          0.02,
+          0.5
+        ],
+        "origin_m": [
+          0,
+          0.2,
+          0
+        ]
+      }
+    ]
+  },
+  "cell_sizes_m": [
+    0.04,
+    0.02
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "network": {
+    "frequencies": {
+      "min_hz": 20,
+      "max_hz": 1000,
+      "points": 100
+    },
+    "sections": [
+      {
+        "name": "lf",
+        "re_ohm": 6,
+        "elements": [
+          {
+            "id": "L1",
+            "type": "L",
+            "position": "series",
+            "value_mh": 1,
+            "dcr_ohm": 0.2
+          }
+        ],
+        "load": {
+          "kind": "resistive",
+          "r_ohm": 6
+        }
+      }
+    ]
+  },
+  "thermal": {
+    "lf": {
+      "steady_resistance_k_w": 3
+    }
+  },
+  "programme": {
+    "voltage_rms": 5
+  },
+  "iterations": 15
+}

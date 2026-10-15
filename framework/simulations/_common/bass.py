@@ -396,7 +396,7 @@ def vent_physics(vent, fb_hz, net_volume_l, peak_velocity_ms=None, vd_m3=None, p
     edge_radius = port.get("edge_radius_mm")
     dmin = float(port.get("throat_diameter_mm", vent["diameter_mm"]))
     out["edge_radius"] = dict(required_mm=0.2 * dmin, stated_mm=float(edge_radius) if edge_radius else None,
-                              meets_requirement=bool(edge_radius and float(edge_radius) >= 0.2 * dmin),
+                              radius_minus_reference_mm=None if edge_radius is None else float(edge_radius)-0.2*dmin,
                               note="every port edge should carry a blend radius of at least 20 percent of the minimum "
                                    "diameter: the entrance-loss coefficient is about 0.05 for r/D >= 0.2 against 0.5 for a "
                                    "square edge. Both ends count, because the signal oscillates and both ends are entrances.")

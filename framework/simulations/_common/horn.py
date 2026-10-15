@@ -48,11 +48,11 @@ def keele_design(ts, fc_hz, front_cavity_l=None):
     suitable = fls < fc
     out = dict(
         cutoff_hz=fc, fs_hz=fs, qts=qts, vas_l=vas * 1000, sd_cm2=sd * 1e4,
-        suitability=dict(fs_qts=fls, cutoff_hz=fc, suitable=bool(suitable),
+        suitability=dict(fs_qts=fls, cutoff_hz=fc, cutoff_minus_fs_qts_hz=fc-fls,
                          margin_ratio=fc / fls,
                          rule="VB is finite and positive only when fLS = fs Qts < fc. A driver with fs Qts >= fc is not "
                               "suited to a horn at that cutoff: no cavity volume will annul the reactance. One line of "
-                              "arithmetic, and it rejects unsuitable drivers before any modelling."),
+                              "arithmetic; the sign describes this equation's finite-positive-cavity domain."),
         throat=dict(area_m2=2 * math.pi * fs * qts * vas / C,
                     area_cm2=2 * math.pi * fs * qts * vas / C * 1e4,
                     derivation="ST = 2 pi fs Qts Vas / c, the throat that makes the horn's reflected load resistance "

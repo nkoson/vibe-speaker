@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "runner": "framework/tools/run_benchmarks.py",
+  "cases": [
+    {
+      "id": "delay_interpolation",
+      "reference": "analytical unit-magnitude delayed response",
+      "test": "test_delayed_complex_interpolation_preserves_unit_amplitude"
+    },
+    {
+      "id": "pulsating_sphere",
+      "reference": "analytical exterior spherical-wave radiation",
+      "test": "test_exterior_sphere_matches_pulsating_sphere_and_refines"
+    },
+    {
+      "id": "modal_room",
+      "reference": "uniform compliance and reciprocal Green function",
+      "test": "test_modal_room_reciprocity_and_uniform_compliance"
+    },
+    {
+      "id": "mutual_network",
+      "reference": "transformer ratio and passive power conservation",
+      "test": "test_mutual_coils_conserve_power_and_transform_voltage"
+    },
+    {
+      "id": "nonlinear_energy",
+      "reference": "electrical input equals stored-energy change plus losses",
+      "test": "test_nonlinear_energy_accounting_and_small_signal"
+    },
+    {
+      "id": "coupled_cabinet",
+      "reference": "zero-coupling limit and assembled-equation residual",
+      "test": "test_coupled_cabinet_zero_coupling_and_spatial_symmetry"
+    },
+    {
+      "id": "geometry_union",
+      "reference": "exact union/intersection volumes of overlapping boxes",
+      "test": "test_air_union_subtracts_overlap_once"
+    },
+    {
+      "id": "clamped_plate_refinement",
+      "reference_data": "framework/benchmarks/clamped-square-reference.json",
+      "test": "test_rotational_restraint_converges_toward_clamped_plate_reference"
+    }
+  ],
+  "test_file": "framework/tests/test_fidelity_models.py",
+  "evidence_scope": "Numerical equation verification. These cases do not assign design quality or establish empirical agreement. Fixtures are generated from equations; no third-party measurement dataset is redistributed."
+}

@@ -12,19 +12,23 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _common import cli, acoustics, networks, radiation  # noqa: E402
 
 NAME = "crossover_fit"
-VERSION = "1.2"
+VERSION = "1.3"
+
+class EvaluationBudgetExceeded(Exception):
+    """Expected termination of a bounded numerical search."""
+
 NOTES = [
     "Log-space bounded least squares on the marked element values; the target curve and weights are yours. The result is a local optimum inside the bounds within the evaluation budget, not a proof of the best crossover.",
     "The objective is the coherent on-axis sum (and optional extra angles) of the same geometry that whole_speaker evaluates, so the fitted values can be pasted into crossover_network and whole_speaker unchanged.",
     "The impedance term only penalizes input impedance below the stated figure; it does not enforce it.",
     "The compensation audit and the insertion loss are computed on the fitted values, so they describe the network the fit landed on and not the one it started from.",
     "The ablation pass removes one element at a time and refits the rest, so what each element is worth is measured against this design rather than assumed from its name. Removing a series element shorts it and removing a shunt element opens it, which is what leaving the part out of the build does. It reports the cost of the removal; whether that cost is worth the part is the designer's judgement and nothing here decides it.",
-    "Quantization snaps each fitted value to the nearest value in the stock lists you supply and reports what the snap cost, with the network ready to paste. Values are not constrained to stock during the search, because a fit pinned to a grid hides which direction the value wanted to move.",
+    "Joint stock trials preserve supplied value/loss/SKU records and report total/evaluated combinations. The numerical response-cost minimum among those trials is returned alongside the trial table for design interpretation.",
 ]
 VALIDITY = [
-    "The result is a local optimum inside the stated bounds within the evaluation budget. It is not a proof that no better set of values exists, and a value resting on a bound means the topology or the bound is wrong.",
+    "The result is a local optimum inside the stated bounds within the evaluation budget. It is not a proof that no better set of values exists, and a value resting on a bound identifies a search boundary to investigate.",
     "Everything the fit optimises is a model: datasheet phase, prior impedance models, no measurement. Final stock selection also considers tolerance, protection, geometry and source-model sensitivity.",
-    "The objective is the coherent sum at the requested angles only. A low in-band residual with a step in the vertical map at the crossover is a worse loudspeaker than a slightly worse residual without one.",
+    "The objective is the coherent sum at the requested angles only. It does not score unrequested directions or decide how a vertical-map feature trades against another objective.",
 ]
 
 
@@ -58,13 +62,19 @@ def _value_key(kind):
     return "value_mh" if kind == "L" else "value_uf" if kind == "C" else "value_ohm"
 
 
+def _stock_records(leaf, stock):
+    choices = leaf.get("stock") or (stock or {}).get(leaf["type"]) or []
+    key = _value_key(leaf["type"])
+    records = [dict(v) if isinstance(v, dict) else {key: float(v)} for v in choices]
+    for record in records:
+        if any(k in record for k in ("id","nodes","type","position")):
+            raise cli.InputError("stock records use sku; circuit identity stays fixed")
+        cli.positive(record.get(key), "stock." + key)
+    return records
+
+
 def _stock_for(leaf, stock):
-    """The purchasable values for one leaf: its own list if it has one, else the list for its type."""
-    own = leaf.get("stock")
-    if own:
-        return [float(v) for v in own]
-    shared = (stock or {}).get(leaf["type"])
-    return [float(v) for v in shared] if shared else []
+    return [record[_value_key(leaf["type"])] for record in _stock_records(leaf, stock)]
 
 
 def _snap(value, choices):
@@ -83,7 +93,7 @@ def _target(spec, f, base_dir, current_db, band):
 
 def compute(params, base_dir):
     system = copy.deepcopy(cli.require(params, "system"))
-    sections_cfg = cli.require(params, "sections")
+    sections_cfg = copy.deepcopy(cli.require(params, "sections"))
     system["sections"] = [dict(w, transfer=None) for w in system["sections"]]
     target = params.get("target") or {}
     band = tuple(target.get("band_hz", [100.0, 16000.0]))
@@ -137,8 +147,12 @@ def compute(params, base_dir):
     def residual(x, polarity, target_db):
         budget["calls"] += 1
         if budget["calls"] > budget["max"]:
-            raise RuntimeError("budget")
-        return residual_values(x, polarity, target_db)
+            raise EvaluationBudgetExceeded("budget")
+        value = residual_values(x, polarity, target_db)
+        cost = float(np.sum(value ** 2) / 2)
+        if cost < incumbent["cost"]:
+            incumbent.update(x=x.copy(), cost=cost)
+        return value
 
     def refit(variant, polarity, target_db, max_nfev, max_calls):
         """Fit one variant network under its own call budget; returns its in-band error and curves."""
@@ -152,19 +166,23 @@ def compute(params, base_dir):
         def variant_residual(x):
             spent["calls"] += 1
             if spent["calls"] > max_calls:
-                raise RuntimeError("budget")
-            return residual_values(x, polarity, target_db, variant_rows, variant_elements)
+                raise EvaluationBudgetExceeded("budget")
+            value = residual_values(x, polarity, target_db, variant_rows, variant_elements)
+            cost = float(np.sum(value**2)/2)
+            if cost < retained["cost"]: retained.update(x=x.copy(),cost=cost)
+            return value
 
         status = "no free value left to fit; evaluated as given"
         x = np.log([r["start"] for r in variant_rows]) if variant_rows else np.zeros(0)
+        retained = dict(x=x.copy(),cost=float(np.sum(residual_values(x,polarity,target_db,variant_rows,variant_elements)**2)/2))
         if variant_rows:
             lo = np.log([r["min"] for r in variant_rows])
             hi = np.log([r["max"] for r in variant_rows])
             try:
                 sol = least_squares(variant_residual, x, bounds=(lo, hi), max_nfev=max_nfev, x_scale="jac")
-                x, status = sol.x, sol.message
-            except RuntimeError:
-                status = "objective-call budget exhausted"
+                x, status = retained["x"], sol.message
+            except EvaluationBudgetExceeded:
+                x, status = retained["x"], "objective-call budget exhausted"
         db_, zin, _ = evaluate(x, polarity, variant_rows, variant_elements)
         return dict(rms_error_in_band_db=float(np.sqrt(np.mean(((db_[0] - target_db) ** 2)[inside]))),
                     ripple_in_band_db=float(np.ptp(db_[0][inside])),
@@ -181,21 +199,23 @@ def compute(params, base_dir):
     best = None
     attempts = []
     for polarity in combos:
+        initial_cost = float(np.sum(residual_values(x0, list(polarity), target_db) ** 2) / 2)
+        incumbent = dict(x=x0.copy(), cost=initial_cost)
         try:
             sol = least_squares(residual, x0, bounds=bounds, args=(list(polarity), target_db), max_nfev=int(params.get("max_nfev", 150)), x_scale="jac")
-            x = sol.x
-            cost = float(sol.cost)
+            x = incumbent["x"]
+            cost = incumbent["cost"]
             status = sol.message
-        except RuntimeError:
+        except EvaluationBudgetExceeded:
             # the budget is gone, so score the start point without spending another call
-            x = x0
-            cost = float(np.sum(residual_values(x0, list(polarity), target_db) ** 2) / 2)
+            x = incumbent["x"]
+            cost = incumbent["cost"]
             status = "objective-call budget exhausted"
         db_, zin, _ = evaluate(x, list(polarity))
         rms = float(np.sqrt(np.mean(((db_[0] - target_db) ** 2)[inside])))
         attempts.append(dict(polarity=list(polarity), cost=cost, rms_error_in_band_db=rms, status=status, objective_calls=budget["calls"]))
         if best is None or cost < best["cost"]:
-            best = dict(x=x, polarity=list(polarity), cost=cost)
+            best = dict(x=x.copy(), polarity=list(polarity), cost=cost, rms=rms)
     _apply(rows, best["x"])
     fitted_values = [dict(id=r["id"], section=sections_cfg[r["section"]].get("name"), type=r["leaf"]["type"], key=r["key"], start=r["start"],
                           fitted=float(r["leaf"][r["key"]]), min=r["min"], max=r["max"],
@@ -285,33 +305,45 @@ def compute(params, base_dir):
         stock = params.get("stock") or {}
         variant = copy.deepcopy(sections_cfg)
         variant_rows = _variables(variant)
-        snapped = []
-        values = []
-        for source, destination in zip(rows, variant_rows):
-            choices = _stock_for(source["leaf"], stock)
-            fitted = float(source["leaf"][source["key"]])
-            value = _snap(fitted, choices) if choices else fitted
-            destination["leaf"][destination["key"]] = value
-            values.append(value)
-            snapped.append(dict(id=source["id"], section=sections_cfg[source["section"]].get("name"),
-                                type=source["leaf"]["type"], key=source["key"], fitted=fitted, stock_value=value,
-                                error_percent=100.0 * (value - fitted) / fitted, from_stock=bool(choices)))
-        variant_elements = [networks.with_wire(w) for w in variant]
-        db_q, z_q, _ = evaluate(np.log(values), best["polarity"], variant_rows, variant_elements)
-        quantized_sections = copy.deepcopy(variant)
-        for section in quantized_sections:
+        choices = []
+        for row in rows:
+            records = _stock_records(row["leaf"], stock) or [{row["key"]: row["leaf"][row["key"]]}]
+            records.sort(key=lambda r: abs(np.log(r[row["key"]] / row["leaf"][row["key"]])))
+            choices.append(records)
+        limit = int(params.get("max_stock_trials", 256))
+        # Explore joint stock combinations, nearest records first; report truncation.
+        stock_trials = []
+        best_stock = None
+        for combination in itertools.islice(itertools.product(*choices), limit):
+            for dst, record in zip(variant_rows, combination):
+                dst["leaf"].update(record)
+            values = [r["leaf"][r["key"]] for r in variant_rows]
+            trial_elements = [networks.with_wire(w) for w in variant]
+            db_q, z_q, _ = evaluate(np.log(values), best["polarity"], variant_rows, trial_elements)
+            cost = float(np.sum(residual_values(np.log(values),best["polarity"],target_db,variant_rows,trial_elements)**2)/2)
+            row = dict(values=values, cost=cost, input_z_min_ohm=float(abs(z_q[audible]).min()),
+                       rms_error_in_band_db=float(np.sqrt(np.mean(((db_q[0]-target_db)**2)[inside]))),
+                       inventory_cost=networks.inventory_cost(combination))
+            stock_trials.append(row)
+            if best_stock is None or cost < best_stock["cost"]:
+                best_stock = dict(row, sections=copy.deepcopy(variant), curves=db_q, records=copy.deepcopy(combination))
+        quantized_sections = best_stock["sections"]
+        for section, polarity in zip(quantized_sections,best["polarity"]):
+            section["polarity"] = polarity
             for e in section.get("elements", []):
                 for leaf in acoustics.iter_elements(e):
-                    leaf.pop("fit", None)
-                    leaf.pop("stock", None)
-        _apply(rows, best["x"])
-        quantization = dict(values=snapped, sections=quantized_sections,
-                            rms_error_in_band_db=float(np.sqrt(np.mean(((db_q[0] - target_db) ** 2)[inside]))),
-                            ripple_in_band_db=float(np.ptp(db_q[0][inside])),
-                            input_z_min_ohm=float(np.abs(z_q[audible]).min()),
-                            note="the fitted values snapped to the nearest stock value in log space, evaluated as a whole. "
-                                 "A value with from_stock false had no list to snap to. Rerun crossover_network on these "
-                                 "sections with the real DCR and ESR before treating any of it as the design.")
+                    leaf.pop("fit", None); leaf.pop("stock", None)
+        snapped = [dict(id=r["id"], section=sections_cfg[r["section"]].get("name"), type=r["leaf"]["type"], key=r["key"],
+                        fitted=float(r["leaf"][r["key"]]), stock_value=float(value),
+                        error_percent=100*(value/r["leaf"][r["key"]]-1), from_stock=bool(_stock_for(r["leaf"],stock)))
+                   for r,value in zip(rows,best_stock["values"])]
+        quantization = dict(values=snapped, sections=quantized_sections, trials=stock_trials,
+                            combinations_total=int(np.prod([len(c) for c in choices])), combinations_evaluated=len(stock_trials),
+                            rms_error_in_band_db=best_stock["rms_error_in_band_db"],
+                            ripple_in_band_db=float(np.ptp(best_stock["curves"][0][inside])),
+                            input_z_min_ohm=best_stock["input_z_min_ohm"],
+                            note="Joint stock trials with supplied SKU/loss records. The returned realization minimizes the declared response cost among evaluated combinations; final design selection belongs to the caller.")
+        _apply(rows,best["x"])
 
     start_curve = start_db[0]
     aud = (full_f >= 20) & (full_f <= 20000)
@@ -320,7 +352,7 @@ def compute(params, base_dir):
                 attempts=attempts, selected_polarity=best["polarity"], fitted_values=fitted_values, fitted_sections=fitted_sections,
                 on_axis_spl_db=on_axis, sections=[dict(name=w.get("name"), transfer=transfers[i], spl_db=acoustics.db(parts[i, 0] * scale)) for i, w in enumerate(sections_cfg)],
                 fitted_network_audit=audits, input_z_ohm=total_z,
-                statistics=dict(rms_error_in_band_db=min(a["rms_error_in_band_db"] for a in attempts),
+                statistics=dict(rms_error_in_band_db=best["rms"],
                                 ripple_in_band_db=float(np.ptp(on_axis[(full_f >= band[0]) & (full_f <= band[1])])),
                                 input_z_min_ohm=float(np.abs(total_z[aud]).min()), input_z_min_hz=float(full_f[aud][np.argmin(np.abs(total_z[aud]))]),
                                 objective_calls=budget["calls"], variables=len(rows), values_at_bound=[v["id"] for v in fitted_values if v["at_bound"]]))

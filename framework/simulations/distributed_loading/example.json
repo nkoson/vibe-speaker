@@ -1,0 +1,70 @@
+{
+  "frequencies": {
+    "min_hz": 20,
+    "max_hz": 1000,
+    "points": 100
+  },
+  "nodes": [
+    "rear",
+    "mouth"
+  ],
+  "chambers": [
+    {
+      "node": "rear",
+      "volume_l": 20
+    }
+  ],
+  "ducts": [
+    {
+      "nodes": [
+        "rear",
+        "mouth"
+      ],
+      "length_m": 1.2,
+      "area_m2": 0.015,
+      "attenuation_np_m": 0.15
+    }
+  ],
+  "outlets": [
+    {
+      "id": "mouth",
+      "node": "mouth",
+      "radius_m": 0.0691,
+      "position_m": [
+        0,
+        -0.3,
+        0.2
+      ]
+    }
+  ],
+  "drivers": [
+    {
+      "id": "cone",
+      "ts": {
+        "fs_hz": 35,
+        "vas_l": 248.9,
+        "qms": 6.0,
+        "qes": 0.34,
+        "re_ohm": 5.1,
+        "le_mh": 0.72,
+        "sd_cm2": 857,
+        "xmax_mm": 5.75,
+        "xmax_standard": "geometric",
+        "mms_g": 85.2,
+        "bl_tm": 16.7,
+        "displacement_limits": {
+          "xbl_mm": 6.4,
+          "xc_mm": 7.1,
+          "xl_mm": 5.2
+        }
+      },
+      "rear_node": "rear",
+      "position_m": [
+        0,
+        0,
+        0.7
+      ],
+      "voltage_rms": 1
+    }
+  ]
+}

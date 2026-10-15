@@ -9,11 +9,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _common import cli, acoustics  # noqa: E402
 
 NAME = "transmission_line"
-VERSION = "1.0"
+VERSION = "1.1"
 NOTES = [
     "Length from the taper-factor table: L = SF c / (4 fb). Never use L = c / (4 fb) for a tapered line; the taper factor spans 0.62 to 1.42 across the published taper ratios and the untapered value is only the SF = 1 case.",
     "Stuffing slows propagation: a measured 342 m/s falls to about 319 m/s, an asymptote reached by about 0.6 lb/ft^3, so a stuffed line tunes lower than an unstuffed length calculation predicts. Both lengths are reported.",
-    "The source's own conclusion is the one that matters: at equal volume and equal tuning a transmission line gives no deeper bass than a reflex box. Choose it for cone-displacement control and low terminus velocity, not for extension.",
+    "Equal-volume comparisons depend on taper, driver position, stuffing, terminus load and cutoff definition; compare complete responses rather than treating one published comparison as a universal rule.",
     "This is length and mode arithmetic only. There is no line response, no stuffing loss model, no terminus radiation and no driver in it; lf_box does not model a transmission line at all.",
     "All of it rests on one self-published modelling site, and the advantages claimed for the loading are asserted without numbers.",
 ]
@@ -60,12 +60,11 @@ def compute(params, base_dir):
              "harmonics are the uniform-line spacing applied to a tapered line, which is an estimate: a taper moves the "
              "higher modes off exact odd multiples, which is part of why it is used.")
 
-    # For a line closed at the driver end and open at the terminus, the nth mode's particle velocity
-    # goes as sin(k_n x) from the closed end, so a driver placed where that sine is zero cannot excite
-    # it: x = 2 L / (2n - 1) for the first such node. The classic third-of-the-way offset is the n = 2 case.
+    # A volume-velocity source couples to pressure cos((2n-1) pi x/(2L)).
+    # Its first pressure node is x/L = 1/(2n-1), not a velocity node.
     offsets = []
     for n in (2, 3):
-        fraction = 2.0 / (2 * n - 1)
+        fraction = 1.0 / (2 * n - 1)
         if fraction < 1.0:
             offsets.append(dict(suppresses_mode=f"{2 * n - 1}/4 wave", fraction_from_closed_end=fraction,
                                 fraction_from_terminus=1 - fraction,
@@ -83,14 +82,13 @@ def compute(params, base_dir):
         modes=modes,
         driver_offset=dict(options=offsets,
                            note="the source says to offset the driver along the line to suppress the three-quarter-wave mode "
-                                "without stating where; the fractions above are the velocity nodes of each mode, derived from "
+                                "without stating where; the fractions above are pressure nodes for volume-velocity excitation, derived from "
                                 "the closed-open geometry. Taper the line as well, so residual standing waves move up to where "
                                 "fibre damping works."),
         comparison=dict(
-            conclusion="at equal volume and equal tuning a transmission line gives no deeper bass than a reflex box",
-            buys="cone-displacement control and low terminus velocity",
-            note="price the extension claim before building the line: if extension is the objective, lf_box will settle it in "
-                 "one vented run at this volume and tuning."),
+            basis="The equal-volume/equal-tuning comparison from the cited source is a case-dependent observation, not an alignment law.",
+            observables=["absolute bass output", "sustained cutoff", "cone excursion", "terminus velocity", "ripple"],
+            method="compare distributed_loading against lf_box with equal volume, drive, losses and cutoff definition"),
         validity=dict(statements=list(VALIDITY), taper_ratio_inside_published_range=inside,
                       stuffed_asymptote_density_lb_ft3=0.6))
     return results

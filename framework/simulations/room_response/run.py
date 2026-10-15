@@ -141,18 +141,16 @@ def load_emitters(params, f, base_dir, dimensions):
             records = [(section, section["pressure"] * section["baffle"] * section["transfer"],
                         section["tilt_rad"], section["name"])]
             for outlet_index, outlet in enumerate(section["outlets"]):
-                if outlet["face"] not in ("front", "rear"):
-                    raise cli.InputError("imported outlets support front/rear faces only")
                 records.append((outlet, outlet["pressure"] * outlet["baffle"] * section["transfer"],
                                 np.pi if outlet["face"] == "rear" else 0., f"{section['name']}:outlet-{outlet_index + 1}"))
             for record, pressure, pitch, name in records:
                 centre = origin + rotation @ record["centre"]
                 inside(centre, dimensions, f"{label}/{name} acoustic centre")
                 rear = record.get("rear") or fallback
-                if record["directivity"].get("kind") != "omni" and rear is None:
+                if record["directivity"].get("kind") not in ("omni", "dipole", "cardioid", "complex_grid") and rear is None:
                     raise cli.InputError(f"{label}/{name} needs rear_radiation for reflected rays")
                 emitters.append(dict(name=f"{label}/{name}", centre=centre, rotation=rotation,
-                                     pitch=pitch, pressure=pressure * voltage,
+                                     pitch=pitch, axis=record.get("axis"), pressure=pressure * voltage,
                                      directivity=record["directivity"], rear=rear))
     return emitters
 
@@ -167,10 +165,15 @@ def propagated(emitter, points, f):
     pitch = emitter["pitch"]
     axial = vector[:, 1] * np.cos(pitch) + vector[:, 2] * np.sin(pitch)
     up = -vector[:, 1] * np.sin(pitch) + vector[:, 2] * np.cos(pitch)
-    h = np.arctan2(vector[:, 0], axial)
-    v = np.arctan2(up, np.hypot(vector[:, 0], axial))
+    lateral = vector[:,0]
+    if emitter.get("axis") is not None:
+        forward=np.asarray(emitter["axis"],float);forward/=np.linalg.norm(forward)
+        right=np.cross(forward,[0,0,1] if abs(forward[2])<.99 else [0,1,0]);right/=np.linalg.norm(right)
+        vertical=np.cross(right,forward);axial=vector@forward;up=vector@vertical;lateral=vector@right
+    h = np.arctan2(lateral, axial)
+    v = np.arctan2(up, np.hypot(lateral, axial))
     pattern = acoustics.directivity(emitter["directivity"], f[None, :], h[:, None], v[:, None])
-    if emitter["rear"] is not None:
+    if emitter["rear"] is not None and emitter["directivity"].get("kind") not in ("omni", "dipole", "cardioid", "complex_grid"):
         behind = np.maximum(-axial / distance, 0.)[:, None]
         pattern = pattern * (1 + (radiation.rear_gain(emitter["rear"], f)[None, :] - 1) * behind)
     phase = np.exp(-2j * np.pi * distance[:, None] * f[None, :] / acoustics.C)
@@ -213,6 +216,8 @@ def compute(params, base_dir):
         for emitter in emitters:
             contribution, distances = propagated(emitter, images, f)
             contribution *= gain[None, :]
+            if params.get("max_arrival_ms") is not None and path["order"] > 0:
+                contribution *= (distances[:, None] / acoustics.C <= float(params["max_arrival_ms"]) / 1000)
             max_path = max(max_path, float(distances.max()))
             if path["order"] == 0:
                 direct += contribution
@@ -237,13 +242,47 @@ def compute(params, base_dir):
                          last_order_pressure_pa=last_order[i],
                          order_increment_db=curve - acoustics.db((total[i] - last_order[i]) * scale),
                          direct_and_first_arrivals=sorted(arrivals[i], key=lambda r: r["arrival_ms"])))
+    blend = params.get("model_blend")
+    if blend:
+        transition = blend["transition_hz"]
+        if not 0 < transition[0] < transition[1]:
+            raise cli.InputError("model_blend.transition_hz needs positive increasing endpoints")
+        modal = cli.load_json(cli.resolve_path(blend["modal_file"],base_dir))
+        modal_f = np.asarray(modal["results"]["f_hz"])
+        if modal_f[0] > f[0] or modal_f[-1] < transition[1]:
+            raise cli.InputError("modal source does not cover the low band and transition")
+        weight = np.clip((np.log(f)-np.log(transition[0]))/np.log(transition[1]/transition[0]),0,1)
+        weight = .5-.5*np.cos(np.pi*weight)
+        ray = cli.load_json(cli.resolve_path(blend["ray_file"],base_dir)) if blend.get("ray_file") else None
+        for i,row in enumerate(rows):
+            lowrow = modal["results"]["receivers"][i]
+            if not np.allclose(lowrow["position_m"],positions[i]):
+                raise cli.InputError("modal/image receiver coordinates differ")
+            low = cli.interp_complex(f,modal_f,cli.complex_from_record(lowrow["pressure_pa"]))
+            late = np.zeros(len(f))
+            if ray:
+                rayrow=ray["results"]["receivers"][i]
+                if not np.allclose(rayrow["position_m"],positions[i]):
+                    raise cli.InputError("ray/image receiver coordinates differ")
+                rayf=np.asarray(ray["results"]["f_hz"])
+                if rayf[0]>transition[0] or rayf[-1]<f[-1]:
+                    raise cli.InputError("ray source does not cover the high band")
+                late=cli.interp_real(f,rayf,rayrow["reflected_mean_square_pa2"])
+            high=abs(total[i])**2+late
+            hybrid=(1-weight)*abs(low)**2+weight*high
+            row.update(hybrid_mean_square_pa2=hybrid,hybrid_spl_db=10*np.log10(np.maximum(hybrid,1e-60)/acoustics.P0**2),
+                       model_overlap_difference_db=acoustics.db(low)-acoustics.db(total[i]),
+                       high_model_weight=weight)
+            row["hybrid_basis"]="Declared power blend of modal and early-plus-late fields; not a coherent phase blend."
+            if ray:
+                row["early_late_overlap_ms"]=None if params.get("max_arrival_ms") is None else float(params["max_arrival_ms"])-float(ray.get("validity",{}).get("min_arrival_ms",0))
     seat_db = acoustics.db(total * scale)
     energy = np.mean(np.abs(total) ** 2, axis=0)
     suggested_step = acoustics.C / (8 * max_path)
     return dict(f_hz=f, max_order=order, image_count=len(paths),
                 room_dimensions_m=dimensions, walls=list(WALLS), pressure_reflection=coefficients,
                 source_geometry=[dict(name=e["name"], centre_m=e["centre"],
-                                      forward_vector=e["rotation"] @ np.array([0., np.cos(e["pitch"]), np.sin(e["pitch"])]),
+                                      forward_vector=e["rotation"] @ np.asarray(e["axis"] if e.get("axis") is not None else [0., np.cos(e["pitch"]), np.sin(e["pitch"])]),
                                       directivity=e["directivity"], rear_radiation=e["rear"]) for e in emitters],
                 receivers=rows,
                 spatial_summary=dict(energy_mean_spl_db=10 * np.log10(np.maximum(energy / acoustics.P0 ** 2, 1e-60)),

@@ -423,3 +423,17 @@ def draw_scale(elements, rng, tol):
                 spread = float(leaf.get("tolerance_fraction", tol.get(leaf["type"], 0.0)))
                 scale[key] = 1 + rng.uniform(-spread, spread)
     return scale
+
+
+def inventory_cost(records):
+    """Known subtotal and missing prices; a missing quote is not a zero price."""
+    subtotal=0.;missing=[];currencies=set()
+    for index,record in enumerate(records):
+        price=record.get("price")
+        if isinstance(price,dict):
+            if price.get("currency"):currencies.add(price["currency"])
+            price=price.get("amount")
+        if price is None:missing.append(record.get("sku",record.get("id",str(index))))
+        else:subtotal+=float(price)
+    return dict(known_subtotal=subtotal,unpriced_items=missing,currencies=sorted(currencies),
+                basis="Only comparable currency/tax/quantity records should be interpreted as a total; no currency conversion is performed.")

@@ -27,7 +27,17 @@
    "direction": "at_least",
    "basis": "Example target only; replace with a stated comparable sensitivity convention",
    "reference_value": "Fill only from a source with known voltage/power, distance, band, weighting and environment; do not assume the maker and independent figures are comparable.",
-   "class_note": "2.83 V is 1 W at 8 ohm and 2 W at 4 ohm, so this figure is only comparable at a stated impedance. Check it against lf_box efficiency.ceiling for this volume and cutoff before iteration 1"
+   "class_note": "2.83 V is 1 W at 8 ohm and 2 W at 4 ohm, so this figure is only comparable at a stated impedance. Check it against lf_box efficiency.ceiling for this volume and cutoff before iteration 1",
+   "priority": "central",
+   "conditions": {
+    "band_hz": null,
+    "curve": null,
+    "voltage_rms": null,
+    "distance_m": null,
+    "radiation_environment": null,
+    "units": null
+   },
+   "result_reference": null
   },
   {
    "name": "f6_hz",
@@ -36,7 +46,17 @@
    "direction": "at_most",
    "basis": "Example system sustained -6 dB target relative to a declared system reference band; do not relabel a published -3 dB figure",
    "reference_value": "38 Hz published, condition not stated",
-   "class_note": "bound to sensitivity and volume by the efficiency law; the three cannot be set independently"
+   "class_note": "bound to sensitivity and volume by the efficiency law; the three cannot be set independently",
+   "priority": "central",
+   "conditions": {
+    "band_hz": null,
+    "curve": null,
+    "voltage_rms": null,
+    "distance_m": null,
+    "radiation_environment": null,
+    "units": null
+   },
+   "result_reference": null
   },
   {
    "name": "impedance_min_ohm",
@@ -45,7 +65,17 @@
    "direction": "at_least",
    "basis": "8 ohm nominal, amplifier friendly",
    "reference_value": "fill from the reference's measured minimum, not from its nominal label",
-   "class_note": "IEC 60268-5 allows 80 percent of nominal, and published measurements of comparable speakers often read lower. Every Zobel, notch and pad the level budget forces will move this"
+   "class_note": "IEC 60268-5 allows 80 percent of nominal, and published measurements of comparable speakers often read lower. Every Zobel, notch and pad the level budget forces will move this",
+   "priority": "secondary",
+   "conditions": {
+    "band_hz": null,
+    "curve": null,
+    "voltage_rms": null,
+    "distance_m": null,
+    "radiation_environment": null,
+    "units": null
+   },
+   "result_reference": null
   },
   {
    "name": "ripple_200_10000_db",
@@ -53,14 +83,34 @@
    "tolerance": 1,
    "direction": "at_most",
    "basis": "smooth direct sound",
-   "class_note": "published flatness figures across the measurement corpora span roughly +/-1 to +/-6 dB; see target-response.md section 9"
+   "class_note": "published flatness figures across the measurement corpora span roughly +/-1 to +/-6 dB; see target-response.md section 9",
+   "priority": "secondary",
+   "conditions": {
+    "band_hz": null,
+    "curve": null,
+    "voltage_rms": null,
+    "distance_m": null,
+    "radiation_environment": null,
+    "units": null
+   },
+   "result_reference": null
   },
   {
    "name": "max_spl_db_1m",
    "target": 110,
    "tolerance": 2,
    "direction": "at_least",
-   "basis": "reference continuous rating"
+   "basis": "reference continuous rating",
+   "priority": "secondary",
+   "conditions": {
+    "band_hz": null,
+    "curve": null,
+    "voltage_rms": null,
+    "distance_m": null,
+    "radiation_environment": null,
+    "units": null
+   },
+   "result_reference": null
   }
  ],
  "objective_review": {
@@ -96,5 +146,6 @@
   "selected": null
  },
  "log": [],
- "corrections": []
+ "corrections": [],
+ "assumptions": []
 }

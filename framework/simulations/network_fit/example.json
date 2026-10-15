@@ -1,0 +1,71 @@
+{
+  "network": {
+    "frequencies": {
+      "min_hz": 30,
+      "max_hz": 1000,
+      "points": 30
+    },
+    "components": [
+      {
+        "id": "R1",
+        "type": "R",
+        "value_ohm": 4,
+        "nodes": [
+          "in",
+          "out"
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "amp",
+        "plus": "in",
+        "minus": "0",
+        "voltage_rms": 1
+      }
+    ],
+    "loads": [
+      {
+        "id": "driver",
+        "plus": "out",
+        "minus": "0",
+        "impedance": {
+          "kind": "resistive",
+          "r_ohm": 8
+        }
+      }
+    ]
+  },
+  "variables": [
+    {
+      "id": "R1",
+      "bounds": [
+        0.1,
+        20
+      ],
+      "stock": [
+        {
+          "value_ohm": 7.5,
+          "price": 0.5
+        },
+        {
+          "value_ohm": 8.2,
+          "price": 0.5
+        }
+      ]
+    }
+  ],
+  "target": {
+    "transfers": [
+      {
+        "load_id": "driver",
+        "band_hz": [
+          30,
+          1000
+        ],
+        "db": -6.020599913
+      }
+    ]
+  },
+  "max_evaluations": 40
+}

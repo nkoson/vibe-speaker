@@ -14,6 +14,9 @@ A computational receiver can sample pressure, phase and spatial variation withou
 |---|---|---|
 | `whole_speaker` | Coherent section sum and optional floor image | Other room boundaries, scattering and modes |
 | `room_response` | Rectangular 3D geometry, finite specular reflection orders, speaker orientation, multiple receivers and complex boundary-interference curves | Converged modal bass, diffuse late field, furniture, cabinet scattering, wall motion |
+| `room_modal` | Driven cosine modes with complex wall admittance and optional finite-aperture motor feedback | Nonrectangular room waves and unresolved boundary properties |
+| `room_rays` | Triangulated-room specular/diffuse energy transport with explicit early/late time split | Coherent low-frequency interference |
+| `exterior_bem` | Mesh-derived complex cabinet radiation | Unspecified driver mechanics and unresolved mesh features |
 
 The image method represents specular paths by mirrored geometry. Allen and Berkley's rectangular-room formulation is the basis for this class of model. A finite-order sum truncates the reverberant response; it does not inherit the accuracy of an infinite ideal-room solution. [Allen and Berkley, 1979](https://www.trueaudio.com/array/downloads/Image%20Method-Allen%20and%20Berkley%201978.pdf)
 
@@ -27,7 +30,7 @@ Pyroomacoustics demonstrates the broader architecture: explicit sources/receiver
 
 **Simulation outputs.** Compare direct and reflected pressure, equal-voltage bass, seat energy mean and spread, and arrival geometry. Coherent multiple-speaker input is a distinct signal condition from independent stereo. The CTA-style predicted-in-room curve in `spinorama` is an angular weighting estimate, not this particular room's pressure response; keep their names and interpretations separate.
 
-**Convergence.** Refine reflection order, frequency spacing and, for future wave models, mesh size independently. Boundary scenarios are physical uncertainty; numerical refinement tests discretization/truncation. Do not silently convert either spread into a statistical confidence interval. A rigid rectangular box has reference modal frequencies `f = c/2 sqrt((nx/Lx)^2 + (ny/Ly)^2 + (nz/Lz)^2)`; reproducing them is a useful future wave-solver test but does not establish modal amplitudes or losses in a furnished room.
+**Convergence.** Refine reflection order, frequency spacing and, for wave models, mesh size independently. Boundary scenarios are physical uncertainty; numerical refinement tests discretization/truncation. Do not silently convert either spread into a statistical confidence interval. A rigid rectangular box has reference modal frequencies `f = c/2 sqrt((nx/Lx)^2 + (ny/Ly)^2 + (nz/Lz)^2)`; reproducing them is a wave-solver normalization test but does not establish modal amplitudes or losses in a furnished room.
 
 **Design responsibility.** Use these observations to choose geometry, placement ranges, directivity and network margins. Finish the construction design under explicit assumptions rather than replacing a hard decision with a generic instruction to measure. A model limitation is a reason to improve the relevant calculation or choose a less sensitive design, not to imply that a final simulated design is impossible.
 

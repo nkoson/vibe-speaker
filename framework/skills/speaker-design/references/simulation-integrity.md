@@ -8,7 +8,7 @@ Identify the exact delivered realization and its dependency chain, including the
 
 Reconcile supplied CAD, loose-panel drawings, assembled drawings and parts lists by revision. Decide which physical artifact governs before rejecting replacement hardware for a clearance conflict. Recheck inherited prose as well as numbers: observer height, model domain, terminal connection used to measure tuning, notch values and stress figures. A crossover change can move an input-impedance feature without changing the box tuning.
 
-Use exact IDs for edits and dependency rebasing. Candidate-owned dependencies can move; a comparison reference must retain its identity. Clear inherited price, availability, dimensions and source fields when deriving a new part record. Compare each final leaf's value, DCR/ESR, tolerance and rating with its selected stock row and exact SKU, catching second quantization into another series. Normalize prices to one tax/customer/currency basis with vendor and date; distinguish catalogue existence, quantity-specific stock, an unquoted item and a complete total.
+Use exact IDs for edits and dependency rebasing. Candidate-owned dependencies can move; keep a comparison reference tied to its original identity. Clear inherited price, availability, dimensions and source fields when deriving a new part record. Compare each final leaf's value, DCR/ESR, tolerance and rating with its selected stock row and exact SKU, catching second quantization into another series. Normalize prices to one tax/customer/currency basis with vendor and date; distinguish catalogue existence, quantity-specific stock, an unquoted item and a complete total.
 
 ## Put sources on a shared basis
 

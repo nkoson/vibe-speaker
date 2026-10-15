@@ -54,10 +54,19 @@ def compute(params, base_dir):
     double_90 = bool(options.get("double_90_degree_weight", False))
     sections = radiation.load_sections(params, f, base_dir)
 
-    without_prior = [w["name"] for w in sections if not w.get("rear")]
+    def full(record):
+        model = record.get("directivity") or {}
+        if model.get("kind") in ("omni", "dipole", "cardioid"):
+            return True
+        if model.get("kind") == "complex_grid":
+            return (min(model["horizontal_deg"]) <= -180 and max(model["horizontal_deg"]) >= 180
+                    and min(model["vertical_deg"]) <= -90 and max(model["vertical_deg"]) >= 90)
+        return bool(record.get("rear"))
+    without_prior = [w["name"] for w in sections if not full(w)]
+    without_prior += [f"{w['name']}/outlet-{i}" for w in sections for i,o in enumerate(w["outlets"]) if not full(o)]
     orbit = _orbit(sections, f, distance, ear)
     silent = sorted({f"{plane}{angle:+d}" for (plane, angle), p in orbit.items() if not np.any(p > 0)})
-    complete = not without_prior and not silent
+    complete = not without_prior
 
     family = preference.assemble(f, orbit, rear_wall, double_90)
     scale = voltage / acoustics.P0

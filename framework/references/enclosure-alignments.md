@@ -102,7 +102,7 @@ the proviso is part of the number.
 **What actually sets the onset of trouble.** The JBL/Infinity port study found that compression
 correlates with Reynolds number rather than with any single geometry: three deliberately different
 subwoofers, differing in port shape, count, area, box volume and tuning, produced nearly identical
-compression curves, all degrading near `Re = 50,000` and reaching a wall by about 100,000. The
+compression curves, all degrading near `Re = 50,000` and reaching a wall by about 100,000. These are empirical indicators for the tested designs and conditions, not universal noise/compression acceptance limits; oscillatory displacement, edge shape and flare also affect the result. The
 legacy practice of limiting port velocity to about 10 m/s is corroborated by hot-wire measurement of
 the jet-formation transition.
 

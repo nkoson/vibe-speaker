@@ -1,0 +1,15 @@
+{
+  "quantity": "dimensionless clamped square-plate frequency parameter lambda",
+  "values": [
+    35.99,
+    73.41,
+    108.3,
+    131.6,
+    132.3,
+    165.2
+  ],
+  "source": "A. W. Leissa, Vibration of Plates, NASA SP-160 (1969), Table 4.27",
+  "source_url": "https://ntrs.nasa.gov/api/citations/19700009156/downloads/19700009156.pdf",
+  "normalization": "omega = lambda/a^2 * sqrt(D/(rho*h)); clamped square of side a",
+  "provenance": "Numerical facts already documented in framework/references/cabinet-materials-and-panels.md; no source artwork or prose reproduced."
+}

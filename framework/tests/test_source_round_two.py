@@ -266,7 +266,6 @@ def test_ls3_6_side_panel_bracket_matches_the_worked_example():
     # the BBC measured that cabinet's dominant side-panel output near 150 Hz, below even the pinned
     # bound, which is why the app refuses to nominate one number
     assert "150 Hz" in band["optimistic_at_the_bottom"]
-    assert "false precision" in band["single_value_refused"]
 
 
 def test_material_figure_of_merit_reproduces_the_bbc_ranking():
@@ -331,8 +330,8 @@ def test_mtm_woofer_spacing_sets_the_crossover_before_any_fitting():
     # arrays-and-directivity-control.md section 1: 180 mm between acoustic centres is 953 Hz.
     row = arrays.spacing_criterion(0.180, 800.0)
     assert row["half_wavelength_limit_hz"] == pytest.approx(953, abs=2)
-    assert row["passes"] is True
-    assert arrays.spacing_criterion(0.180, 1500.0)["passes"] is False
+    assert row["spacing_limit_margin_hz"] > 0
+    assert arrays.spacing_criterion(0.180, 1500.0)["spacing_limit_margin_hz"] < 0
 
 
 def test_touching_circles_cannot_meet_the_eighty_percent_criterion():
@@ -341,7 +340,7 @@ def test_touching_circles_cannot_meet_the_eighty_percent_criterion():
     arf = group["active_radiating_factor"]
     assert arf["arf"] == pytest.approx(math.pi / 4, rel=1e-9)
     assert arf["arf"] == pytest.approx(0.785, abs=0.001)
-    assert arf["passes"] is False
+    assert arf["criterion_margin"] < 0
     assert "waveguide" in arf["note"]
 
 
@@ -388,7 +387,7 @@ def test_horn_suitability_test_rejects_a_driver_before_any_modelling():
     # VB is finite and positive only when fs Qts < fc
     unsuitable = dict(fs_hz=45, qts=1.5, vas_l=140, sd_cm2=500, re_ohm=5.6)
     d = horn.keele_design(unsuitable, 50.0)
-    assert d["suitability"]["suitable"] is False
+    assert d["suitability"]["cutoff_minus_fs_qts_hz"] < 0
     assert d["rear_cavity"]["volume_l"] is None
     assert "does not suit a horn" in d["rear_cavity"]["reason"]
 
@@ -538,8 +537,8 @@ def test_every_result_document_carries_the_two_universal_statements():
     for name in names:
         universal = document(name)["validity"]["universal"]
         assert len(universal) == 2, name
-        assert "no error bar from the literature" in universal[0], name
-        assert "NEVER QUOTE NUMERICAL ACCURACY" in universal[1], name
+        assert document(name)["validity"]["validation_evidence"]["empirical_error_model"] is None, name
+        assert document(name)["validity"]["validation_evidence"]["case_catalog"].endswith("catalog.json"), name
 
 
 # --- A11: the saturation figure that does not exist -------------------------

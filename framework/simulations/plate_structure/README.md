@@ -2,7 +2,7 @@
 
 Treats each unperforated panel bay of the cabinet as a thin plate and drives it with a uniform pressure spectrum, typically the cavity pressure envelope from `cavity_modes` scaled to the drive voltage. Reports **where the modes land as a band**, the measured damping a named treatment buys, displacement and velocity spectra, and the BBC's measured audibility criterion against a relative panel output.
 
-**Three things this app deliberately refuses.** It does not nominate a single panel-mode frequency, because the edge condition alone moves the fundamental by a factor of 1.8 to 2.2 and a real glued joint is neither pinned nor clamped. It does not convert panel motion into an absolute SPL, because the BBC established that the panels, the driver and the enclosed air are coupled and the coupling sets the level — that is a finding with a source, not an absence of effort. And it does not apply the mode band to a braced panel without an assumption you state, because no source consulted quantifies what a brace does.
+This app is an isolated-panel screening model. Its isotropic restraint comparison and volume-velocity proxy describe that approximation. `coupled_cabinet` supplies a separate coupled panel/cavity/exterior calculation with declared spring and mass properties.
 
 ## Run
 
@@ -26,7 +26,7 @@ python framework/simulations/plate_structure/run.py --input params.json --out re
 
 ## Output (`results`)
 
-- `panels[].mode_band`: the fundamental as a **band** — `pinned_hz` from the exact closed form `lambda = pi^2 (1 + (a/b)^2)`, `clamped_hz` from Leissa's tabulated values interpolated at the panel's aspect ratio, the ratio between them and the band in octaves. Worked on the BBC's own LS3/6 side panel this gives 196 to 393 Hz, and the BBC measured that cabinet's dominant panel output near **150 Hz — below even the pinned bound**, because a real panel carries the driver's reaction mass on compliant joints. Use the band to know which octave to worry about, never as a notch frequency.
+- `panels[].mode_band`: the fundamental as a **band** — `pinned_hz` from the exact closed form `lambda = pi^2 (1 + (a/b)^2)`, `clamped_hz` from Leissa's tabulated values interpolated at the panel's aspect ratio, the ratio between them and the band in octaves. Worked on the BBC's own LS3/6 side panel this gives 196 to 393 Hz, and the BBC measured that cabinet's dominant panel output near **150 Hz — below even the pinned bound**, because a real panel carries the driver's reaction mass on compliant joints. Use the band to know which octave to worry about, rather than assuming an exact notch frequency.
 - `panels[].audibility`: the margin the criterion demands at each edge of that band. A resonance at 150 Hz needs 13 dB below the direct sound, one at 1 kHz needs 30 dB, and that 17 dB is why moving a panel mode up in frequency while raising its `Q` makes matters worse — which is what the BBC measured when they doubled a cabinet's wall thickness.
 - `panels[]`: dimensions, `natural_modes_hz` with `mode_indices`, `first_mode_hz` (the pinned bound, labelled as such), `static_center_mm_at_max_pressure`, `static_sampled_max_mm`, and `loss_variants[]` with the treatment that set each loss factor, `center_displacement_rms_mm`, `modal_bound_rms_mm`, `sampled_max_rms_mm`, `velocity_bound_rms_m_s`, `volume_velocity_rms_m3_s` and their peaks.
 - `panels[].loss_variants[].audibility` (when `audibility.cone` was given): the panel's output relative to the cone as a volume-velocity ratio, the criterion curve, the margin between them and the worst margin with its frequency. A volume-velocity ratio is **not** the BBC's measured panel-to-direct pressure ratio: it holds while both radiators are small compared with a wavelength and flatters the panel above that.
@@ -37,3 +37,7 @@ python framework/simulations/plate_structure/run.py --input params.json --out re
 - `summary`: lowest first mode, the lowest mode band with the panel it belongs to, the worst panel by peak modal bound at the nominal loss factor, the maximum peak bound and static deflection.
 
 Typical reading: the panel whose mode band sits in the 100 to 400 Hz region where the criterion tightens fastest is the one to brace or damp first, and the damping table says what each treatment costs in thickness to get there.
+
+## Orthotropic results
+
+For orthotropic material the app reports its orientation-dependent Navier modes and `band_coverage`, with an explicitly separate `isotropic_comparison`. `mode_band` and the aggregate isotropic-band summary are null for that case, because the isotropic restraint table is not an orthotropic bracket. `coupled_cabinet` adds declared joint springs, attached masses and acoustic feedback where those mechanisms affect the design.

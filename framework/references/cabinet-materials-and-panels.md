@@ -187,7 +187,7 @@ approximation whose error is not established by any source here. Say so when you
 
 **The isolated-panel model does not establish absolute radiated SPL.** The BBC stated the limit of its analytical treatment: "it is not possible to calculate the output resulting from the complex coupling of all the
 panels and loudspeaker unit together, so some form of overall test is required." The panels, the
-driver and the enclosed air are coupled, and the coupling is what sets the radiated level. That limits the present `plate_structure` relative-panel proxy; it is not a prohibition on a future coupled structural/acoustic model with explicit geometry, boundary conditions and verification.
+driver and the enclosed air are coupled, and the coupling is what sets the radiated level. That limits the present `plate_structure` relative-panel proxy; `coupled_cabinet` separately implements coupled structural/acoustic equations with explicit geometry, boundary conditions and verification.
 
 What exists instead is a measured audibility criterion. The BBC assembled it from listening tests on
 real cabinets, plotting panel output level relative to the direct axial response against frequency,
@@ -215,8 +215,8 @@ Its stated limits, which travel with it:
   so the cone's radiation falls in its null.
 
 Even so it is the only published quantitative threshold obtained here, and it is decision-changing:
-it says a panel resonance at 150 Hz has to be **13 dB** below the direct sound to be inaudible, while
-one at 1 kHz needs **30 dB**. Low-frequency panel resonances get much more latitude than intuition
+it says the interpolated comparison level at 150 Hz is about **18 dB** below the direct sound, while
+the curve is **30 dB** below direct sound at 1 kHz. Low-frequency panel resonances get much more latitude than intuition
 suggests, and midband ones get much less.
 
 ## 4. What this settles about wall thickness

@@ -268,9 +268,7 @@ error bar from the literature, only the model's declared assumptions and its val
 
 ## 7. What this framework's models contain, and what they do not
 
-Linear, small-signal physics with declared priors. No distortion, no compression, no port noise, no
-break-up beyond source data, no full room wave/scattering model and no joint behaviour. `room_response` adds finite-order rectangular-room reflections at physical receivers; see [room simulation](room-simulation.md). `thermal_power` supplies a declared voice-coil heating scenario; it does not establish enclosure endurance or nonlinear compression. Published data digitised from a
-datasheet carries reading uncertainty, and a datasheet impedance prior is a prior, not a measurement.
+The original chain uses linear small-signal models. Dedicated applications now add driven room waves, polyhedral reflected energy, geometry-derived radiation, coupled cabinet motion, electrothermal feedback and nonlinear driver/port states. Each has a declared physical and numerical domain; see [simulation methods](simulation-methods.md). These models supply richer conditional predictions without automatically modeling every feature of a real driver, joint or room. Published curves and material parameters retain their source conditions and uncertainty.
 The applications report; they do not judge. See `simulations/README.md` for the shared limits and each
 app's own `README.md` for what its model includes.
 

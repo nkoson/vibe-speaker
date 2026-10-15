@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _common import cli, acoustics  # noqa: E402
 
 NAME = "source_response"
-VERSION = "1.2"
+VERSION = "1.3"
 NOTES = [
     "Pressure per volt is the on-axis free-field figure at 1 m for the source alone; directivity, baffle and position are applied later by whole_speaker.",
     "A published curve is turned into a minimum-phase response; the phase is a reconstruction, not a measurement. A bandwidth prior is a flat level with declared roll-offs.",
@@ -121,16 +121,30 @@ def _pressure(params, f, base_dir):
                 basis += " multiplied above the blend band by the published shape"
             p = p * shape
         return p, basis
+    if kind == "simulation":
+        ref = dict(model["reference"])
+        ref.setdefault("path", "results.pressure_per_volt_pa")
+        return cli.curve_from_reference(ref, base_dir, f), "canonical simulated source per terminal volt"
     if kind == "measured":
         fr = np.asarray(model["frequency_hz"], float)
         if "spl_db" in model:
             mag = acoustics.P0 * 10 ** (np.asarray(model["spl_db"], float) / 20)
-            phase = np.deg2rad(np.asarray(model.get("phase_deg", np.zeros_like(fr)), float))
-            z = mag * np.exp(1j * phase)
+            if "phase_deg" in model:
+                z = mag * np.exp(1j * np.deg2rad(np.asarray(model["phase_deg"], float)))
+                basis = "imported complex response with supplied phase"
+            elif model.get("phase_assumption", "minimum_phase") == "minimum_phase":
+                z = acoustics.minimum_phase(fr, fr, np.asarray(model["spl_db"], float)) * acoustics.P0
+                basis = "magnitude-only input with reconstructed minimum phase"
+            elif model.get("phase_assumption") == "zero":
+                z = mag.astype(complex)
+                basis = "magnitude-only input with explicitly assumed zero phase"
+            else:
+                raise cli.InputError("phase_assumption needs minimum_phase or zero")
         else:
             z = np.asarray(model["real_pa"], float) + 1j * np.asarray(model["imag_pa"], float)
+            basis = "imported complex response with supplied real/imaginary pressure"
         z = z * float(model.get("distance_m", 1.0)) / float(model.get("voltage_rms", 2.83))
-        return cli.interp_complex(f, fr, z), "measured complex response interpolated onto the grid"
+        return cli.interp_complex(f, fr, z, delay_s=float(model.get("delay_s", 0.))), basis
     if kind == "frd_file":
         table = np.loadtxt(cli.resolve_path(model["file"], base_dir), comments=["#", "*", ";"])
         fr = table[:, 0]
@@ -139,7 +153,7 @@ def _pressure(params, f, base_dir):
         z = mag * np.exp(1j * phase) * float(model.get("distance_m", 1.0)) / float(model.get("voltage_rms", 2.83))
         if table.shape[1] <= 2 and model.get("minimum_phase", True):
             z = acoustics.minimum_phase(fr, fr, 20 * np.log10(np.abs(z) / acoustics.P0)) * acoustics.P0
-        return cli.interp_complex(f, fr, z), "FRD file interpolated onto the grid"
+        return cli.interp_complex(f, fr, z, delay_s=float(model.get("delay_s", 0.))), ("FRD supplied complex phase" if table.shape[1] > 2 else "FRD magnitude with reconstructed minimum phase" if model.get("minimum_phase", True) else "FRD magnitude with explicitly assumed zero phase")
     raise cli.InputError(f"unknown acoustic kind '{kind}'")
 
 
@@ -162,6 +176,26 @@ def compute(params, base_dir):
     p, p_basis = _pressure(params, f, base_dir)
     z, z_basis = _impedance(params, f, base_dir)
     model = params.get("acoustic") or {}
+    inherited_contract = {}
+    if model.get("kind") == "simulation":
+        inherited_contract = cli.load_json(cli.resolve_path(model["reference"]["file"],base_dir)).get("results",{}).get("source_contract",{})
+    contract = dict(inherited_contract, **(model.get("contract") or {}))
+    phase_reference = contract.get("phase_reference", "intrinsic")
+    if phase_reference not in ("intrinsic", "common_observer"):
+        raise cli.InputError("contract.phase_reference needs intrinsic or common_observer")
+    if phase_reference == "common_observer":
+        if "reconstructed" in p_basis or "assumed zero" in p_basis:
+            raise cli.InputError("common_observer phase needs supplied complex timing information")
+        reference_m = cli.positive(contract.get("reference_distance_m"), "contract.reference_distance_m")
+        observer = np.asarray(contract.get("observer_position_m"),float)
+        if observer.shape != (3,) or not np.all(np.isfinite(observer)):
+            raise cli.InputError("common_observer contract needs observer_position_m in cabinet coordinates")
+        if not contract.get("common_delay_removed", False):
+            p *= np.exp(2j * np.pi * f * reference_m / acoustics.C)
+        contract["common_delay_removed"] = True
+    contract.update(phase_reference=phase_reference, pressure_reference_m=1.,
+                    baffle=contract.get("baffle", "external"), phase_basis=p_basis,
+                    normalization=contract.get("normalization", "driver_terminal_volt" if model.get("voltage_basis") == "driver_terminal" else "declared_volt"))
     calibration = model.get("level_calibration")
     gain = 1.0
     if calibration is not None:
@@ -214,7 +248,7 @@ def compute(params, base_dir):
         validity["piston_ka_unity_hz"] = acoustics.C / (2 * np.pi * float(radius) / 1000)
     return dict(f_hz=f, name=params.get("name"), pressure_per_volt_pa=p, z_ohm=z, pressure_basis=p_basis, impedance_basis=z_basis,
                 directivity=params.get("directivity"), acoustic_depth_mm=params.get("acoustic_depth_mm"), statistics=stats,
-                validity=validity, **extra)
+                validity=validity, source_contract=contract, **extra)
 
 
 if __name__ == "__main__":

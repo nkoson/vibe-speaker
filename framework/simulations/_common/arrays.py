@@ -47,7 +47,7 @@ def spacing_criterion(spacing_m, upper_hz=None):
                use="this is the frequency that should set the crossover of a same-band group, and it is available "
                    "before any filter is fitted.")
     if upper_hz:
-        out.update(highest_operating_hz=float(upper_hz), passes=bool(float(upper_hz) <= f_max),
+        out.update(highest_operating_hz=float(upper_hz), spacing_limit_margin_hz=f_max-float(upper_hz),
                    spacing_over_half_wavelength=float(upper_hz) / f_max,
                    spacing_for_stated_upper_hz_mm=C / (2 * float(upper_hz)) * 1000)
     return out
@@ -61,7 +61,7 @@ def active_radiating_factor(radiating_area_m2, frame_area_m2):
         raise InputError("the Active Radiating Factor needs positive radiating and frame areas")
     arf = radiating_area_m2 / frame_area_m2
     return dict(radiating_area_m2=radiating_area_m2, frame_area_m2=frame_area_m2, arf=arf, criterion=ARF_CRITERION,
-                passes=bool(arf >= ARF_CRITERION), touching_circles_ceiling=TOUCHING_CIRCLES_ARF,
+                criterion_margin=arf-ARF_CRITERION, touching_circles_ceiling=TOUCHING_CIRCLES_ARF,
                 note="ARF is the fraction of the array's frame that actually radiates. Touching circular sources average "
                      "pi/4 = 78.5 %, which is below the 80 % criterion before any gap, mounting flange or cabinet wall is "
                      "allowed for, so the criterion is impossible to satisfy with cones and domes. The paper's own "
@@ -108,9 +108,7 @@ def near_field_table(frequencies_hz, height_m, observer_m=None):
         rows.append(row)
     return dict(coherent_radiating_height_m=float(height_m), observer_distance_m=observer_m, rows=rows,
                 no_near_field_below_hz=no_near_field_below_hz(height_m),
-                laws="near field: 3 dB per doubling of distance (cylindrical). Far field: 6 dB per doubling "
-                     "(spherical). Near-field extent is linear in frequency and QUADRATIC in height, so doubling the "
-                     "height quadruples the near field.",
+                laws="The formula describes an ideal coherent line. Actual finite-array spreading follows the computed distance response, not a universal 3 dB law.",
                 consequence="polar plots and directivity figures are meaningless inside the near field - they describe "
                             "a far-field property. For a 1 m tall coherent radiating section the border is about 1.4 m "
                             "at 1 kHz and about 15 m at 10 kHz, so a 1 m response of a tall speaker is a near-field "

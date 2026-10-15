@@ -384,6 +384,25 @@ def directivity(model, f, h_rad, v_rad):
     f = np.asarray(f, float)
     if kind == "omni":
         return np.ones(np.broadcast(f, h_rad, v_rad).shape)
+    if kind in ("dipole", "cardioid"):
+        mu = np.cos(h_rad) * np.cos(v_rad)
+        factor = mu if kind == "dipole" else (1 + mu) / 2
+        return np.broadcast_to(factor, np.broadcast(f, h_rad, v_rad).shape).copy()
+    if kind == "complex_grid":
+        from scipy.interpolate import RegularGridInterpolator
+        grid_f = np.asarray(model["frequency_hz"], float)
+        grid_h = np.asarray(model["horizontal_deg"], float)
+        grid_v = np.asarray(model["vertical_deg"], float)
+        data = np.asarray(model["real"], float) + 1j * np.asarray(model["imag"], float)
+        ff, hh, vv = np.broadcast_arrays(f, np.rad2deg(h_rad), np.rad2deg(v_rad))
+        points = np.c_[vv.ravel(), hh.ravel(), np.log(ff.ravel())]
+        if data.shape != (len(grid_v), len(grid_h), len(grid_f)):
+            raise InputError("complex directivity grid shape needs [vertical,horizontal,frequency]")
+        try:
+            values = RegularGridInterpolator((grid_v, grid_h, np.log(grid_f)), data, bounds_error=True)(points)
+        except ValueError as exc:
+            raise InputError("complex angular source does not cover requested frequencies/directions") from exc
+        return values.reshape(ff.shape)
     if kind == "piston":
         radius = piston_radius_m(model)
         theta = np.arctan2(np.hypot(np.tan(h_rad), np.tan(v_rad)), 1.0)

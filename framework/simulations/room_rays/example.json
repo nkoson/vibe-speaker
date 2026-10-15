@@ -1,0 +1,26 @@
+{
+  "room_surface": {
+    "shape": "box",
+    "dimensions_m": [
+      4,
+      5,
+      3
+    ]
+  },
+  "source_position_m": [
+    1,
+    1,
+    1
+  ],
+  "receivers_m": [
+    [
+      2,
+      3,
+      1
+    ]
+  ],
+  "rays": 300,
+  "max_bounces": 8,
+  "duration_ms": 150,
+  "seed": 7
+}

@@ -1,6 +1,6 @@
 # Simulation applications
 
-Nineteen standalone Python programs. Each reads one JSON parameter file, computes one linear engineering model and writes one JSON result document into the folder you name. None of them decides whether a result is good, blocked or viable: they report curves, numbers and the assumptions behind them, and the reader (you, the language model running the design skills) judges.
+Twenty-nine standalone Python programs. Each reads one JSON parameter file, computes a declared engineering model and writes one JSON result document into the folder you name. None of them decides whether a result is good, blocked or viable: they report curves, numbers and the assumptions behind them, and the reader (you, the language model running the design skills) judges.
 
 ```
 python framework/simulations/<name>/run.py --input params.json --out <folder> [--name <result-name>]
@@ -31,6 +31,16 @@ Every folder holds `run.py`, a `README.md` with the full input and output contra
 | `horn_design` | Keele's closed-form horn design from Thiele/Small parameters: suitability, throat, rear cavity, band, HF corners, displacement-limited output, efficiency, mouth criteria and the OS waveguide | Can this driver work in a horn at this cutoff, and how big does every part of it have to be |
 | `open_baffle` | Dipole equivalence frequency, `cos(theta)` pattern, cavity resonance and the 18 dB/octave excursion demand | What would a dipole cost in displacement to reach this level |
 | `transmission_line` | Taper-factor length, mode series and the driver offset that suppresses a higher mode | How long is the line, and is it worth building instead of a reflex box |
+| `assembly_geometry` | Shared metre-based solids, air, meshes and source transforms | How geometry and fabrication records map consistently across models |
+| `exterior_bem` | Constant-panel exterior Helmholtz boundary collocation | How the specified surface geometry and velocity radiate |
+| `room_modal` | Driven room modes with full complex wall-admittance coupling | LF room pressure, finite-aperture source loading and position effects |
+| `room_rays` | Specular/diffuse reflected-energy transport in triangle rooms | Later reflection energy and geometry-dependent arrival distributions |
+| `coupled_cabinet` | Structural panel modes coupled to cavity and exterior pressure | Cabinet motion/radiation with joint, mass and acoustic feedback |
+| `distributed_loading` | Plane-wave acoustic networks coupled to individual motors | Lines, folded horns, chambers and separate cone/mouth output |
+| `nonlinear_driver` | Time-domain motor, thermal and optional nonlinear port states | Level-dependent motion, current, spectra and energy balance |
+| `electrothermal_network` | Programme-weighted self-consistent load resistance/heating | Steady-state hot network/source transfer and thermal residual |
+| `network_fit` | General nodal-network numerical fit and stock trials | Target costs and constraint margins with actual component records |
+| `system_scenarios` | Correlated draws and explicit model alternatives over a dependency chain | Changes in observables, unresolved counts and conditional distributions |
 
 Post-processing figures such as f3, f6, f10, ripple, sensitivity and band-within-tolerance are descriptive statistics of the computed curves. Their thresholds are parameters you pass; the apps report where the curve sits, not whether that is acceptable.
 
@@ -46,7 +56,7 @@ Post-processing figures such as f3, f6, f10, ripple, sensitivity and band-within
 - Any curve in another result file can be referenced with `{"file": "path.json", "frequency_path": "results.f_hz", "path": "results.some.curve"}`. Relative paths resolve against the parameter file's folder. The curve is interpolated onto the consuming app's grid, so grids need not match, but keep source grids at least as wide as the consumer's.
 - Result documents carry `simulation`, `version`, `status` (`computed` or `input_error`), `generated_utc`, the echoed `inputs`, `model_notes` (what the model does and does not include), `validity`, `constants` and `results`.
 - **`validity`** states the band in which the model holds, where one is known, plus the application version: the lumped bound against the first internal standing wave, the piston `ka = 1` frequency, the gate-limited `f > 1 / t_gate` of any imported measurement, the maximum element size `h = c P / (10 f_max)` for a wave-based solve, and the assumptions that bound the rest. No source consulted gives a simulated-versus-measured error bar for any tool, so the validity range is the only honest bound this repository can publish.
-- **`validity.universal`** carries the two statements that are true of every model here, on every document: that no source states the error between a simulated and a measured response for any tool, and that **numerical accuracy must never be quoted as agreement with measurement**. A solver's error against its own governing equation is published and excellent; it says nothing about how far the answer sits from a microphone.
+- **`validity.universal`** distinguishes model assumptions, numerical verification and empirical agreement. `validation_evidence` links the generated benchmark catalogue; `curve_references` reports each input band, extrapolation policy and source validity. These are evidence records, not design decisions.
 - **`constants`** records `c`, `rho0`, the dynamic viscosity of air and the reference pressure the document was computed with. Together with the version this is what lets a curve be re-derived, and compared, later: one commercial solver shipped a 10 to 20 percent lumped-element error across four builds before fixing it, and the defence against that is a recorded version and a recorded constant, not trust.
 - A parameter document the app cannot use produces exit code 2 and a document with `status: input_error` and an `error` message naming the missing or invalid key.
 
@@ -61,7 +71,7 @@ cavity_modes ─> plate_structure                 schematic.py (tools) ─> boar
 thermal_power ─> lf_box (thermal.coil_temperature_c) and crossover_network (thermal.coil_temperatures_c)
 ```
 
-`horn_design`, `horn_loading`, `open_baffle` and `transmission_line` stand alone: they answer geometry questions about a loading before it is committed to, and nothing downstream consumes their results. Run `horn_design` first — it sizes a horn from the driver — and `horn_loading` afterwards, for the impedance of a contour already chosen.
+`horn_design`, `horn_loading`, `open_baffle` and `transmission_line` stand alone: they answer geometry questions about a loading before it is committed to, while `distributed_loading` supplies a connected motor/duct/outlet response where needed. Run `horn_design` first — it sizes a horn from the driver — and `horn_loading` afterwards, for the impedance of a contour already chosen.
 
 ## Tools (`framework/tools`)
 
@@ -77,13 +87,13 @@ thermal_power ─> lf_box (thermal.coil_temperature_c) and crossover_network (th
 
 ## Limits shared by every model
 
-Linear, small-signal physics with declared priors. No distortion, port noise, breakup beyond source data or joint behaviour is simulated. `room_response` adds finite specular room reflections; it does not model a complete late-reverberant or modal room field. Published data digitized from datasheets carries reading uncertainty. A computed curve is a prediction, never a measurement.
+The original chain uses linear, small-signal physics with declared priors. Dedicated apps add nonlinear driver/port-loss states, room modes, reflected ray energy and joint-spring/cabinet coupling under their declared contracts; full aeroacoustic port noise and unmodeled material/motor behavior remain outside those calculations. Published data digitized from datasheets carries reading uncertainty. A computed curve is a prediction, never a measurement.
 
-Thermal behaviour is the one exception, and a narrow one: `thermal_power` models voice-coil heating as a two-body lumped system over declared priors, and `lf_box` and `crossover_network` accept a coil temperature as a scenario. That is resistance drift and nothing else — nonlinear compression, which is instantaneous rather than thermal, is in none of them.
+`thermal_power` supplies a two-body thermal scenario, while `electrothermal_network` iterates programme-weighted electrical/temperature feedback and `nonlinear_driver` evaluates the supplied time-domain motor, suspension and port laws. Their contracts distinguish resistance drift, nonlinear compression and unknown physical parameters.
 
-**No source consulted states the decibel or degree error between a simulated and a measured response, for any tool.** That was searched for deliberately, and the shape of the absence is informative: numerical accuracy against the governing equation is published and excellent, while agreement with measurement is reported qualitatively even in review literature. The two are different quantities and must never be substituted for one another. Every result here therefore carries no error bar from the literature, only the model's declared assumptions and the validity band in its own document. Record the version and re-run anything produced by a version later found wrong.
+Model-specific contracts describe what each solver computes. New room, boundary, coupled-cabinet and nonlinear apps extend the original linear chain; their numerical scope and evidence are documented in `framework/references/simulation-methods.md`. Benchmark errors are conditional on the case, geometry, input data and numerical resolution. They are distinct from empirical uncertainty.
 
-**Alignment tables exist for sealed and vented boxes and for nothing else.** The bandpass, isobaric, aperiodic and cardioid loadings are solved as equivalent circuits for the geometry given; no tabulated alignment family was obtained for any of them, and no result document may imply one was used.
+**The framework includes sealed/vented alignment tables.** The bandpass, isobaric, aperiodic and cardioid loadings are solved as equivalent circuits for the geometry given; no tabulated alignment family is implemented for them, so their results identify the supplied equivalent circuit.
 
 ## Reliable project execution
 
@@ -92,3 +102,13 @@ For loops and project helpers use `.speaker-venv/bin/python framework/tools/run_
 The shared app CLI also invalidates the old output before loading input and publishes JSON atomically. Invalid input produces `input_error`; an unexpected crash leaves no result to mistake for the old computation. Never accept output after a nonzero exit, even if a file exists. Run dependent apps in order and stop the project chain on failure. Do not launch concurrent writers for the same result path.
 
 A custom cache must include transitive file contents and model code in its key. A cold replay of the frozen chain remains part of selection verification. Actual-source numerical invariants are in `framework/templates/simulation-audit.md`; they establish consistency, not measured accuracy.
+
+## Connected advanced models
+
+See the designer skill's [advanced workflow](../skills/speaker-designer/references/advanced-simulation.md). `cavity_modes` exports canonical cone/outlet/impedance sources; `exterior_bem` exports angular source fields; room apps share receiver coordinates and explicitly partition model/time bands. `assembly_geometry` feeds geometry and drawing records. `system_scenarios` replays these dependencies over common draws. `framework/tools/collect_objectives.py` collects objective observations and signed differences; selection remains with the agent.
+
+## Result-contract migration
+
+Current outputs replace design-acceptance flags with observables: array spacing has `spacing_limit_margin_hz`, radiating area has `criterion_margin`, the horn cutoff relation has `cutoff_minus_fs_qts_hz`, and vent edge geometry has `radius_minus_reference_mm`. Panel comparison reports `worst_margin_after_scatter_db`; orthotropic `mode_band` is null with a separate `isotropic_comparison`. Interpret these quantities in the evaluator, rather than converting a sign into a universal design verdict.
+
+Complex interpolation defaults to magnitude/residual-phase interpolation, with explicit `delay_s` and optional `cartesian` compatibility mode. Curve references record extrapolation; `error`, `zero` and `hold` are explicit policies. Every CLI result records an implementation digest covering the simulation code and shared numerical library, plus the benchmark catalogue and source-reference diagnostics. Replaying an earlier candidate is useful after a convention or model update; retain both result bases for comparison.

@@ -4,12 +4,14 @@ Every application reads one JSON parameter document, computes, and writes one
 JSON result document into the requested folder. Nothing here judges a result.
 """
 import argparse
+import hashlib
 import datetime
 import json
 import math
 import os
 import sys
 import tempfile
+from contextvars import ContextVar
 from pathlib import Path
 
 import numpy as np
@@ -32,13 +34,10 @@ MU = 1.825e-5
 # The first is the hole under every simulated figure here; the second is the way that hole is most
 # often papered over, so it is stated as a prohibition rather than as a caveat.
 UNIVERSAL_VALIDITY = [
-    "No source consulted states the decibel or degree error between a simulated and a measured response, for any tool. "
-    "The comparison is conventionally reported in the literature without a number at all, so every result here carries "
-    "no error bar from the literature - only its declared assumptions and the validity range in this document.",
-    "NEVER QUOTE NUMERICAL ACCURACY AS AGREEMENT WITH MEASUREMENT. A wave solver's numerical error against its own "
-    "governing equation is published and excellent - better than 0.1 percent for analytic room modes - and it says "
-    "nothing whatever about how far the answer sits from a microphone.",
+    "Computed performance is conditional on the supplied physical inputs and model assumptions. Validation evidence is specific to the observable, model and conditions reported.",
+    "Numerical convergence, analytical agreement and empirical agreement are distinct evidence categories. Design interpretation belongs to the model using these results.",
 ]
+REFERENCE_DIAGNOSTICS = ContextVar("reference_diagnostics", default=None)
 
 CONSTANTS = {
     "speed_of_sound_m_s": C,
@@ -177,15 +176,30 @@ def file_reference(spec, base_dir):
     return dotted(document, spec["path"]) if spec.get("path") else document
 
 
-def interp_complex(f_target, f_source, z_source):
-    """Log-frequency Cartesian interpolation of a complex curve; holds the end values outside the source band."""
+def interp_complex(f_target, f_source, z_source, method="polar", delay_s=0.0):
+    """Interpolate magnitude and residual phase separately, removing a declared delay first.
+
+    A delay not resolved by source samples cannot be recovered uniquely. Supplying
+    delay_s preserves it exactly instead of interpolating across phase wraps.
+    """
     f_target = np.asarray(f_target, float)
     f_source = np.asarray(f_source, float)
     z_source = np.asarray(z_source, complex)
+    if (f_source.ndim != 1 or len(f_source) < 2 or z_source.shape != f_source.shape
+            or np.any(~np.isfinite(f_source)) or np.any(f_source <= 0)
+            or len(np.unique(f_source)) != len(f_source) or np.any(~np.isfinite(z_source))):
+        raise InputError("complex curve needs matching finite values at unique positive frequencies")
     order = np.argsort(f_source)
     lf_s = np.log(f_source[order])
     lf_t = np.log(f_target)
-    return np.interp(lf_t, lf_s, z_source.real[order]) + 1j * np.interp(lf_t, lf_s, z_source.imag[order])
+    if method == "cartesian":
+        return np.interp(lf_t, lf_s, z_source.real[order]) + 1j * np.interp(lf_t, lf_s, z_source.imag[order])
+    if method != "polar" or not np.isfinite(delay_s):
+        raise InputError("interpolation needs method polar or cartesian and a finite delay_s")
+    residual = z_source[order] * np.exp(2j * np.pi * f_source[order] * delay_s)
+    magnitude = np.interp(lf_t, lf_s, np.abs(residual))
+    phase = np.interp(f_target, f_source[order], np.unwrap(np.angle(residual)))
+    return magnitude * np.exp(1j * phase - 2j * np.pi * f_target * delay_s)
 
 
 def interp_real(f_target, f_source, y_source):
@@ -202,11 +216,32 @@ def curve_from_reference(spec, base_dir, f_target, kind="complex"):
     The referenced value is a complex record (real/imag) or a real list.
     """
     document = load_json(resolve_path(require(spec, "file", label="curve reference"), base_dir))
+    if document.get("status", "computed") != "computed":
+        raise InputError(f"reference is not computed: {spec['file']}")
     f_source = np.asarray(dotted(document, spec.get("frequency_path", "results.f_hz")), float)
     value = dotted(document, require(spec, "path", label="curve reference"))
+    outside = (np.asarray(f_target) < f_source.min()) | (np.asarray(f_target) > f_source.max())
+    policy = spec.get("extrapolation", "hold")
+    if policy not in ("hold", "zero", "error"):
+        raise InputError("extrapolation needs hold, zero or error")
+    if policy == "error" and np.any(outside):
+        raise InputError(f"reference {spec['file']}:{spec['path']} does not cover the requested band")
+    diagnostic = dict(file=str(resolve_path(spec["file"], base_dir)), path=spec["path"],
+                      source_band_hz=[float(f_source.min()), float(f_source.max())],
+                      requested_band_hz=[float(np.min(f_target)), float(np.max(f_target))],
+                      extrapolated_points=int(np.count_nonzero(outside)), extrapolation=policy,
+                      source_validity=document.get("validity", {}))
+    records = REFERENCE_DIAGNOSTICS.get()
+    if records is not None and diagnostic not in records:
+        records.append(diagnostic)
     if kind == "complex":
-        return interp_complex(f_target, f_source, complex_from_record(value))
-    return interp_real(f_target, f_source, value)
+        result = interp_complex(f_target, f_source, complex_from_record(value),
+                                spec.get("interpolation", "polar"), float(spec.get("delay_s", 0.)))
+    else:
+        result = interp_real(f_target, f_source, value)
+    if policy == "zero":
+        result[outside] = 0
+    return result
 
 
 def write_document(path, document):
@@ -250,6 +285,7 @@ def run(name, version, compute, description, notes, validity=()):
     path.unlink(missing_ok=True)
     params = None
     started = datetime.datetime.now(datetime.timezone.utc)
+    REFERENCE_DIAGNOSTICS.set([])
     try:
         if args.input == "-":
             params = json.load(sys.stdin)
@@ -265,15 +301,23 @@ def run(name, version, compute, description, notes, validity=()):
         print(path)
         return 2
     computed_validity = results.pop("validity", None) if isinstance(results, dict) else None
+    digest=hashlib.sha256()
+    paths=sorted(Path(__file__).parent.glob("*.py"))+sorted(Path(__file__).resolve().parents[1].glob("*/run.py"))
+    for source_path in paths:
+        digest.update(source_path.name.encode());digest.update(source_path.read_bytes())
     document = {
+        "implementation_sha256": digest.hexdigest(),
         "simulation": name,
         "version": version,
         "status": "computed",
         "generated_utc": started.isoformat(timespec="seconds"),
         "inputs": params,
         "model_notes": list(notes),
-        "validity": {"app_version": version, "statements": list(validity),
-                      "universal": list(UNIVERSAL_VALIDITY), **(computed_validity or {})},
+        "validity": {"app_version": version, "statements": list(validity) or list(notes),
+                      "universal": list(UNIVERSAL_VALIDITY),
+                      "curve_references": REFERENCE_DIAGNOSTICS.get(),
+                      "validation_evidence": {"case_catalog": "framework/benchmarks/catalog.json", "empirical_error_model": None},
+                      **(computed_validity or {})},
         "constants": dict(CONSTANTS),
         "results": results,
     }

@@ -1,0 +1,40 @@
+{
+  "frequencies": {
+    "values_hz": [
+      100,
+      200,
+      400
+    ]
+  },
+  "cabinet": {
+    "dimensions_m": [
+      0.3,
+      0.4,
+      0.5
+    ],
+    "material": {
+      "thickness_m": 0.018,
+      "density_kg_m3": 700,
+      "youngs_modulus_pa": 3500000000.0,
+      "loss_factor": 0.03
+    }
+  },
+  "surface_divisions": 2,
+  "panel_mode_order": 1,
+  "acoustic_mode_order": 2,
+  "source": {
+    "position_m": [
+      0.15,
+      0.01,
+      0.25
+    ],
+    "volume_velocity_m3_s": 0.0001
+  },
+  "observers_m": [
+    [
+      0.15,
+      1,
+      0.25
+    ]
+  ]
+}

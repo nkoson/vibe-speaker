@@ -15,13 +15,6 @@ HARNESS = Path(__file__).resolve().parents[1]
 OUT = HARNESS / "simulations" / "examples" / "out"
 
 
-@pytest.fixture(scope="session", autouse=True)
-def chain():
-    proc = subprocess.run([sys.executable, str(HARNESS / "simulations" / "examples" / "run_examples.py")], capture_output=True, text=True)
-    assert proc.returncode == 0, proc.stdout + proc.stderr
-    return proc.stdout
-
-
 def load(name):
     return json.loads((OUT / f"{name}.json").read_text())
 

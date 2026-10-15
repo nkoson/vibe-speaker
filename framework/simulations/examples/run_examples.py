@@ -42,6 +42,16 @@ CHAIN = [
     ("horn_design", SIMS / "horn_design" / "example.json", "horn_design"),
     ("open_baffle", SIMS / "open_baffle" / "example.json", "open_baffle"),
     ("transmission_line", SIMS / "transmission_line" / "example.json", "transmission_line"),
+    ("assembly_geometry", SIMS / "assembly_geometry" / "example.json", "assembly_geometry"),
+    ("exterior_bem", SIMS / "exterior_bem" / "example.json", "exterior_bem"),
+    ("room_modal", SIMS / "room_modal" / "example.json", "room_modal"),
+    ("room_rays", SIMS / "room_rays" / "example.json", "room_rays"),
+    ("coupled_cabinet", SIMS / "coupled_cabinet" / "example.json", "coupled_cabinet"),
+    ("distributed_loading", SIMS / "distributed_loading" / "example.json", "distributed_loading"),
+    ("nonlinear_driver", SIMS / "nonlinear_driver" / "example.json", "nonlinear_driver"),
+    ("electrothermal_network", SIMS / "electrothermal_network" / "example.json", "electrothermal_network"),
+    ("network_fit", SIMS / "network_fit" / "example.json", "network_fit"),
+    ("system_scenarios", SIMS / "system_scenarios" / "example.json", "system_scenarios"),
 ]
 
 

@@ -1,6 +1,6 @@
 # Search and diagnose a realized crossover
 
-Read for topology changes, component reduction, stock fitting or a close ranking. The built-in `crossover_fit` provides bounded least squares, on-axis ablation and nearest-value snapping. The wider checks below are agent/project work, not features to assume the app implements.
+Read for topology changes, component reduction, stock fitting or a close ranking. The built-in `crossover_fit` provides bounded least squares, on-axis ablation and joint stock trials. The wider checks below are agent/project work, not features to assume the app implements.
 
 ## Search the user's problem
 
@@ -18,9 +18,9 @@ If the user requests a build-up from zero, simulate the zero-part state. Add one
 
 Derive stock ranges from this driver's impedance, desired shelf, notch frequencies and level mismatch. Check catalogue coverage and internal gaps as well as endpoints; an inherited list's endpoint is not a manufacturer's limit. Investigate meaningful boundary optima before claiming infeasibility. Keep electrical losses, price and package dimensions attached to one exact SKU; do not combine attributes from different coil shapes or wire gauges.
 
-Compare continuous and realized values. For sparse series, fit with the critical part held at actual stock, or evaluate joint combinations bracketing the fitted values and refine several promising combinations. Independent nearest snapping can miss interactions. The app's current quantization is only a starting point for this search.
+Compare continuous and realized values. For sparse series, fit with the critical part held at actual stock, or evaluate joint combinations bracketing the fitted values and refine several promising combinations. Independent nearest snapping can miss interactions. Read the evaluated versus total combination counts; bounded stock enumeration can leave unexplored combinations.
 
-Test a fitter on the known incumbent and a perturbed start, retaining the best observed feasible point, including the initial point. Termination on step tolerance is not evidence of a good fit. Crossing detectors and hinge terms can make an objective nonsmooth; consider smooth surrogates or an incumbent-seeded population method and repeated seeds for close leaders. A global optimizer is not proof of a global optimum, and the built-in least-squares app does not implement that population workflow.
+Test a fitter on the known incumbent and a perturbed start, retaining the best observed feasible point, including the initial point. Termination on step tolerance is not evidence of a good fit. Crossing detectors and hinge terms can make an objective nonsmooth; consider smooth surrogates or an incumbent-seeded population method and repeated seeds for close leaders. A global optimizer is not proof of a global optimum, and local fitting is distinct from a population search. `network_fit` adds general-network targets and explicit numeric constraints; its trial table supports the agent's interpretation.
 
 ## Realized protection
 
