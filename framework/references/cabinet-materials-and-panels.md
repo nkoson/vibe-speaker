@@ -241,9 +241,11 @@ expensive, damping material" to comply.
 
 ## 5. Not covered
 
-Bracing: no source here quantifies what a brace does to `lambda`, and a brace changes both the
-effective panel dimensions and the edge condition, so neither the aspect-ratio table nor the pinned/
-clamped bracket can be applied to a braced panel without an assumption that is stated. Curved and
+Bracing as a frequency parameter: no source here gives `lambda` for a braced panel, and a brace
+changes both the effective panel dimensions and the edge condition, so neither the aspect-ratio
+table nor the pinned/clamped bracket can be applied to a braced panel without an assumption that is
+stated. What bracing does and does not achieve, and when braced bays stop acting together, is in
+`cabinet-construction.md` section 3. Curved and
 non-rectangular panels. Joint stiffness as a number. Cabinet wall transmission loss as distinct from
 panel resonance. The audibility of panel radiation under programme material other than the BBC's.
 

@@ -22,7 +22,7 @@ Internal coordinates of the chamber: x from the inside left wall, y from the ins
 |---|---|
 | `cavity.width_mm`, `depth_mm`, `height_mm` | Inside dimensions of the bass chamber |
 | `cavity.braces[]` | Window braces: `z_mm` (bottom of the brace plane), `rim_mm` (solid rim width), `thickness_mm` |
-| `cavity.lining` | `thickness_mm`, `flow_resistivity_pas_m2` (10000 is a typical polyester or fiberglass batt; 20000 is denser) |
+| `cavity.lining` | `thickness_mm`, `flow_resistivity_pas_m2` from the material's datasheet or a measurement. Measured values found: about 2300 for a light glass wool and 4300 for polyester fibre at 30 kg/m³; lighter loudspeaker fills are lower still ([cabinet construction](../../references/cabinet-construction.md) section 9.2). When omitted it defaults to 10000, which is denser than those measured fills. The Miki lining model is stated valid for `0.01 < f / σ < 1` |
 | `cavity.unlined_background_q` | Background modal Q without lining, default 30 |
 | `driver.ts`, `driver.position {x_mm, z_mm}` | Woofer data and cone centre on the front wall |
 | `outlet` | `{type: port, face, positions [{x_mm, z_mm}], inner_diameter_mm, outer_diameter_mm, length_mm, qp}` or `{type: passive_radiator, face, position, radiator, added_mass_g}`; omit for a sealed chamber |

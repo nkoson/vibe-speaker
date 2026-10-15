@@ -21,7 +21,7 @@ References are not learnings. A learning in `framework/learnings/` says what hap
 | [arrays-and-directivity-control](arrays-and-directivity-control.md) | Arraying several sources of the same passband - a line array, a column, a stacked pair or an MTM |
 | [cabinet-materials-and-panels](cabinet-materials-and-panels.md) | Choosing a cabinet material or wall thickness, predicting a panel resonance, or judging whether panel radiation will be audible |
 | [crossover-assembly](crossover-assembly.md) | Turning the selected network into exact physical boards, banks and wiring |
-| [cabinet-construction](cabinet-construction.md) | Choosing joints, braces, treatment regions and assembly sequences as model inputs |
+| [cabinet-construction](cabinet-construction.md) | Building the cabinet: bracing, damping, joints, adhesives, fasteners and driver mounting, lining and fill, sealing, separate chambers, ports and outside details as built, floor coupling, materials as built, assembly sequence and workshop safety |
 | [simulation-methods](simulation-methods.md) | Connecting geometry, wave fields, nonlinear states and correlated scenarios through explicit physical contracts |
 | [room-simulation](room-simulation.md) | Adding actual room geometry, reflections and listening-position scenarios |
 
@@ -60,7 +60,9 @@ recorded.
 **Not covered at all.** Compression ratio, throat-cavity volume and horn efficiency as a function of
 area ratio; bandpass, aperiodic and cardioid **alignment tables** (the equivalent circuits are
 covered, the tabulated alignments are not); a design model for true ribbons, planar-magnetic panels,
-coaxials or full-range drivers, as opposed to the constraints on them; bracing as a quantity; panel
+coaxials or full-range drivers, as opposed to the constraints on them; bracing as a frequency
+parameter and the rotational stiffness of glued joints (what bracing and joints do is in
+`cabinet-construction.md`, from manufacturer and university studies of single cabinets); panel
 radiation converted to an absolute SPL, which the BBC established cannot be computed from the panels
 alone; a quantitative intelligibility metric tied to array geometry; and **any published figure for
 how far a simulated response sits from a measured one** - a deliberate search for that figure in
