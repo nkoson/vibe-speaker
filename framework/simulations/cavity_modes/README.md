@@ -29,6 +29,7 @@ Internal coordinates of the chamber: x from the inside left wall, y from the ins
 | `outlet` | `{type: port, face, positions [{x_mm, z_mm}], inner_diameter_mm, outer_diameter_mm, length_mm, qp}` or `{type: passive_radiator, face, position, radiator, added_mass_g}`; omit for a sealed chamber |
 | `outlet.positions[].face` | Per-port override: `front`, `rear`, `left`, `right`. Side ports specify `y_mm` and `z_mm`; front/rear specify `x_mm` and `z_mm`. The model averages their modal coupling into one shared outlet flow state. |
 | `outlet.internal_length_mm` | Physical protrusion from the inside wall to the duct's inner end. Defaults to `length_mm` for compatibility. `length_mm` remains the total acoustic duct length. |
+| `outlet.inner_mouth_diameter_mm`, `inner_flare_outer_diameter_mm`, `inner_flare_length_mm` | Optional inner-mouth averaging disk and cylindrical flare-block occupancy. Duct impedance still uses the throat diameter and declared equivalent length; use `distributed_loading` to establish a tapered duct's equivalent. Defaults preserve straight-tube geometry. |
 | `enclosure` | `net_volume_l`, `tuning_hz`, `ql`, `qp` (same figures as `lf_box`) |
 | `drive` | `voltage_rms`, `series_resistance_ohm`, optional `terminal_transfer` reference |
 | `method.kind` | `rectangular` or `fvm` |

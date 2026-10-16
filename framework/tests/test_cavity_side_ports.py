@@ -40,6 +40,19 @@ def test_circular_aperture_solid_union_and_bounds():
         app.brace_solid_mask(brace, *pts.T, np.array([.3, .4, .5]))
 
 
+def test_inner_flare_patch_is_distinct_from_throat():
+    app = apps.module("cavity_modes")
+    p = parameters()
+    p["outlet"].update(inner_mouth_diameter_mm=70, inner_flare_outer_diameter_mm=90,
+                       inner_flare_length_mm=20)
+    g = app._geometry(p)
+    assert g["outlet_radius"] == .02
+    assert g["outlet_patch_radius"] == .035
+    r = app.finite_volume_modes(g, 25, 350)
+    assert np.all(np.isfinite(r["outlet"]))
+    assert abs(r["outlet"][0]) == pytest.approx(1, abs=1e-7)
+
+
 @pytest.mark.parametrize("face", ["left", "right", "front", "rear"])
 def test_fvm_patch_is_on_fluid_side_of_duct_end(face):
     app = apps.module("cavity_modes")

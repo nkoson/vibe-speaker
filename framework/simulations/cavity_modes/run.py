@@ -69,7 +69,9 @@ def _geometry(params):
             patch_signs.append(-1 if face == "rear" else 1)
         else:
             raise cli.InputError(f"unknown outlet.type '{kind}'")
+    patch_radius = float((outlet or {}).get("inner_mouth_diameter_mm", o_radius * 2000)) / 2000
     return dict(dims=dims, braces=braces, lining=lining, cone=cone, cone_radius=radius, patches=patches, outlet_radius=o_radius,
+                outlet_patch_radius=patch_radius,
                 patch_axes=patch_axes, patch_signs=patch_signs,
                 outlet=outlet, wall_thickness=float(cav.get("wall_thickness_mm", 18.0)) / 1000)
 
@@ -110,7 +112,7 @@ def rectangular_modes(g, max_hz):
         return norm * np.prod(np.cos(k * center), axis=1) * average
 
     e0 = disk(g["cone"], g["cone_radius"])
-    ep = sum(disk(p, g["outlet_radius"], axis) for p, axis in zip(g["patches"], g["patch_axes"])) / len(g["patches"]) if g["patches"] else np.zeros_like(fn)
+    ep = sum(disk(p, g["outlet_patch_radius"], axis) for p, axis in zip(g["patches"], g["patch_axes"])) / len(g["patches"]) if g["patches"] else np.zeros_like(fn)
     # Lined: both side walls, rear, top and bottom; the front is unlined.
     boundary = 2 * np.where(indices[:, 0] == 0, 1, 2) / L[0] + np.where(indices[:, 1] == 0, 1, 2) / L[1] + 2 * np.where(indices[:, 2] == 0, 1, 2) / L[2]
     return dict(frequency_hz=fn, cone=e0, outlet=ep, boundary_ratio_m_inv=boundary, indices=indices, method="rectangular analytical modes",
@@ -149,6 +151,12 @@ def finite_volume_modes(g, mesh_mm, max_hz, include_braces=True, include_tubes=T
             inside_tube = sum((coordinates[j]-p[j])**2 for j in range(3) if j != axis) < od**2
             along = coordinates[axis] < p[axis] if sign > 0 else coordinates[axis] > p[axis]
             fluid &= ~(inside_tube & along)
+            flare_length = float(outlet.get("inner_flare_length_mm", 0)) / 1000
+            if flare_length:
+                outer_radius = float(outlet.get("inner_flare_outer_diameter_mm", od * 2000)) / 2000
+                distance_from_end = sign * (p[axis] - coordinates[axis])
+                ring = sum((coordinates[j]-p[j])**2 for j in range(3) if j != axis) < outer_radius**2
+                fluid &= ~(ring & (distance_from_end >= 0) & (distance_from_end < flare_length))
     ids = np.full(shape, -1, int)
     ids[fluid] = np.arange(np.count_nonzero(fluid))
     n = int(fluid.sum())
@@ -220,7 +228,7 @@ def finite_volume_modes(g, mesh_mm, max_hz, include_braces=True, include_tubes=T
 
     e0 = average_patch(g["cone"], g["cone_radius"])
     if g["patches"]:
-        ep = sum(average_patch(p, g["outlet_radius"], axis, sign) for p, axis, sign in zip(g["patches"], g["patch_axes"], g["patch_signs"])) / len(g["patches"])
+        ep = sum(average_patch(p, g["outlet_patch_radius"], axis, sign) for p, axis, sign in zip(g["patches"], g["patch_axes"], g["patch_signs"])) / len(g["patches"])
         patches = np.column_stack([patch_vectors[0], np.mean(patch_vectors[1:], axis=0)])
     else:
         ep = np.zeros_like(fn)
