@@ -7,7 +7,7 @@ from scipy.optimize import minimize, differential_evolution, NonlinearConstraint
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from _common import cli,apps,radiation,acoustics,networks
 NAME="network_fit"
-VERSION="1.0"
+VERSION="1.1"
 
 class EvaluationBudgetExceeded(Exception):
     """Stop numerical work while retaining evaluated trials."""
@@ -22,6 +22,14 @@ def compute(params,base_dir):
     bounds=[tuple(np.log(v["bounds"])) for v in variables]
     if any(lo>=hi or not lo<=x<=hi for (lo,hi),x in zip(bounds,x0)):raise cli.InputError("fit start lies outside positive ordered bounds")
     target=params.get("target",{});trials=[];budget=int(params.get("max_evaluations",200));cache={}
+    acoustic_target=target.get("spl_db")
+    if isinstance(acoustic_target,dict):
+        acoustic_target=cli.curve_from_reference(acoustic_target,base_dir,f,kind="real")
+    elif acoustic_target is not None:
+        acoustic_target=np.full(len(f),float(acoustic_target))
+    acoustic_weights=np.ones(len(f))
+    for weight in target.get("weights",[]):
+        acoustic_weights[(f>=weight["band_hz"][0])&(f<=weight["band_hz"][1])]=float(weight["weight"])
     system=params.get("system");sources=radiation.load_sections(system,f,base_dir) if system else None
     angles=target.get("vertical_angles_deg",[0.]);observer=(system or {}).get("observer",{})
     distance=float(observer.get("distance_m",3));ear=float(observer.get("ear_height_m",1))
@@ -42,7 +50,7 @@ def compute(params,base_dir):
             p,_=radiation.pressure(sources,f,radiation.observation_points(distance,ear,angles,"V"),distance,transfers)
             acoustic=acoustics.db(p*float(params.get("input_voltage_rms",2.83))/cli.P0)
             band=target.get("band_hz",[f[0],f[-1]]);sel=(f>=band[0])&(f<=band[1])
-            residual.extend((acoustic[:,sel]-float(target["spl_db"])).ravel().tolist())
+            residual.extend(((acoustic[:,sel]-acoustic_target[None,sel])*acoustic_weights[None,sel]).ravel().tolist())
         if not residual:raise cli.InputError("network fit needs transfer targets or an acoustic target")
         margins=[]
         for condition in params.get("constraints",[]):
@@ -51,6 +59,13 @@ def compute(params,base_dir):
             if quantity=="input_impedance_ohm":curve=abs(next(s for s in mode["sources"] if s.get("active"))["input_z_ohm"])
             elif quantity=="terminal_voltage_rms":curve=loads[condition["load_id"]]["voltage_rms"]
             elif quantity=="component_power_w":curve=next(c for c in mode["components"] if c["id"]==condition["component_id"])["power_w"]
+            elif quantity=="acoustic_relative_db":
+                if acoustic is None:raise cli.InputError("acoustic_relative_db needs a system acoustic target")
+                axis=int(np.argmin(np.abs(np.asarray(angles,dtype=float))))
+                if float(angles[axis])!=0:raise cli.InputError("acoustic_relative_db needs zero degrees among target.vertical_angles_deg")
+                ref=condition.get("reference_band_hz",[300,3000]);reference=(f>=ref[0])&(f<=ref[1])
+                if not np.any(reference):raise cli.InputError("acoustic reference band has no frequency samples")
+                curve=acoustic[axis]-np.mean(acoustic[axis,reference])
             else:raise cli.InputError(f"unknown fit quantity {quantity}")
             if "minimum" in condition:margins.append(float(np.min(curve[sel])-condition["minimum"]))
             if "maximum" in condition:margins.append(float(condition["maximum"]-np.max(curve[sel])))

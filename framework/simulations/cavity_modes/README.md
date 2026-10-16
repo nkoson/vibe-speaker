@@ -30,6 +30,9 @@ Internal coordinates of the chamber: x from the inside left wall, y from the ins
 | `outlet.positions[].face` | Per-port override: `front`, `rear`, `left`, `right`. Side ports specify `y_mm` and `z_mm`; front/rear specify `x_mm` and `z_mm`. The model averages their modal coupling into one shared outlet flow state. |
 | `outlet.internal_length_mm` | Physical protrusion from the inside wall to the duct's inner end. Defaults to `length_mm` for compatibility. `length_mm` remains the total acoustic duct length. |
 | `outlet.inner_mouth_diameter_mm`, `inner_flare_outer_diameter_mm`, `inner_flare_length_mm` | Optional inner-mouth averaging disk and cylindrical flare-block occupancy. Duct impedance still uses the throat diameter and declared equivalent length; use `distributed_loading` to establish a tapered duct's equivalent. Defaults preserve straight-tube geometry. |
+| `outlet.inner_end_correction_mm` | Explicit additional inlet length. Default is zero for the FVM basis with its static residual, which owns the inlet near-field inertia; the truncated analytical basis retains `0.61 × throat radius`. An explicit value overrides this choice. Do not add a lumped correction to inner-mouth loading already resolved by the field. The exterior piston radiation impedance remains separate. |
+| `outlet.segments` | Optional constant-area acoustic segments, ordered from inside mouth to exterior: `[{length_mm, diameter_mm}, ...]`. Lengths must sum to `outlet.length_mm`. Cascaded reciprocal two-ports retain taper/duct propagation; declare a profile prior when a maker does not publish the internal contour. |
+| `outlet.outer_mouth_diameter_mm` | Exterior radiation aperture diameter; defaults to throat diameter. This is the open mouth, not the mounting flange. |
 | `enclosure` | `net_volume_l`, `tuning_hz`, `ql`, `qp` (same figures as `lf_box`) |
 | `drive` | `voltage_rms`, `series_resistance_ohm`, optional `terminal_transfer` reference |
 | `method.kind` | `rectangular` or `fvm` |
@@ -44,6 +47,7 @@ Internal coordinates of the chamber: x from the inside left wall, y from the ins
 - `cone_deviation_db`, `outlet_relative_db`, `cavity_spl_db` versus `lumped_spl_db`, `driver_z_ohm`, `box_pressure_at_cone_pa`, `pressure_envelope_rms_pa` of the finest basis on `f_hz`.
 - `unlined_comparison`: the same figures with the lining removed.
 - `mesh_convergence`: relative change of the first ten modes, maximum change of cone deviation and outlet leakage between the two finest meshes.
+- `excursion_peak_mm`, `port_air_speed_peak_ms`: direct drive-conditioned displacement and maximum plane-wave speed across the declared duct segments; do not recover these by dividing pressure curves near cone nulls. `port_model` records the segment lengths and end-correction ownership.
 - `field_sections[]`: cell coordinates and pressure in the section plane at each requested frequency.
 
 Feed `results.pressure_envelope_rms_pa` (with `frequency_path: results.f_hz`) to `plate_structure` as the panel load. Scale it to your drive voltage: the envelope is linear in voltage.
@@ -55,3 +59,7 @@ An optional `assembly` record/file uses the shared metre-based geometry schema. 
 `results.pressure_per_volt_pa`, `outlet_pressure_per_volt_pa` and `z_ohm` are exported from a separate unity terminal-voltage solve with zero external series resistance. They are independent of the stress-drive settings and carry a source contract. Use cone pressure plus a separately positioned outlet, or an explicitly combined source, to retain one copy of each radiator. The supported frequency band follows the actual result grid.
 
 `export_complex_field: true` adds FVM coordinates and complex pressure samples for spatial loading studies. This is distinct from the maximum-pressure envelope used by the older isolated-panel screen.
+
+For tapered-port occupancy, optional `outlet.outer_segments` gives `{length_mm, diameter_mm}` segments from the inner mouth towards the outer mouth. Only the part inside the chamber is excluded from the FVM air domain. These outside diameters describe solid/duct displacement; they are separate from the acoustic `segments` bore diameters. A manufactured profile that is not fully dimensioned needs explicit profile sensitivity studies, not a claimed exact CFD geometry.
+
+The uniform cavity mode includes the specified leakage loss `ql` for vented boxes as well as sealed/PR boxes. A zero-mode straight-port case recovers the leaky lumped model at low frequency; omitting that damping would silently turn `ql` into an ignored parameter.

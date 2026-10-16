@@ -15,3 +15,7 @@ Results contain all trial values, objective costs, signed constraint margins, lo
 Inspect actual realized stress/protection and complete response families before selecting a design. Mathematical constraints describe the caller's search domain; their relevance and values belong to the agent's interpretation of the user brief and component evidence.
 
 See [simulation methods](../../references/simulation-methods.md) for equations, sources and verification scope, and [advanced workflow guidance](../../skills/speaker-designer/references/advanced-simulation.md) for connecting the result to a design.
+
+`target.spl_db` may also reference a real target curve using `{file, frequency_path, path}`. Optional `target.weights[]` entries `{band_hz, weight}` weight acoustic residuals within named bands, as in `crossover_fit`. These weights do not relax the explicit electrical constraints.
+
+An `acoustic_relative_db` constraint uses the on-axis acoustic sum relative to its mean in `reference_band_hz` (default300-3000Hz). Include zero degrees in the target angles. Setting a minimum over a low-frequency band can enforce a required extension margin during fitting; verify sustained cutoff on the final dense grid and stock realization afterward.
