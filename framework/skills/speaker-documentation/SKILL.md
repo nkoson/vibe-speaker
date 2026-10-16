@@ -31,6 +31,10 @@ State the source basis and the robustness checks supporting the selected values.
 
 Quote wood dimensions separately from static assembled and moving/service envelopes. Include joints, fastener access, installed wiring/support reserves and internal versus total duct length. Keep the geometry audit and application provenance in the project; put the dimensions and assumptions a builder needs in the package.
 
+Present cabinet construction dimensions in whole millimetres, without decimal or fractional millimetres, throughout drawings, cut lists, machining tables and prose. Use centreline or symmetry references for centred features. Reconcile mating dimensions together; specify nominal whole-millimetre sizes and practical fitting instructions where plywood thickness or joint clearance requires a fitted joint. Transfer factory fixing patterns from the actual part rather than rounding individual holes. Keep precise computational geometry in the project, and rerun affected simulations if the physical design changes.
+
+Make construction drawings self-contained for fabrication: dimension each panel, aperture, recess profile and depth, groove, mounting pattern and support from explicit datums. Show recessed-driver seating and remaining material in section, including reinforcement and fastening. For purchased ports, identify the exact part and show its mounting aperture, installed length, attachment, clearances and any supports with their dimensions and locations. Tables and prose supplement the drawing dimensions rather than replacing them.
+
 Keep box and system cutoffs distinct and label their threshold and reference band. Put equal-voltage bass levels and the uncertainty beside a plateau-sensitive cutoff. Distinguish published measurements from quantities derived from digitized reference plots. In the builder document use those physical definitions, not application names or JSON paths.
 
 ## Package contents
@@ -40,6 +44,8 @@ Write these Markdown files with the images beside them; keep language plain and 
 Three of these documents have a drawing requirement that the tools do not meet on their own, and each is stated with the document that carries it. They are guidance for a document a builder can work from - not extra design limits, fixed page counts or acceptance gates - so choose the views and plot ranges that make this design understandable.
 
 The rules below hold for every figure in the package, drawings and plots alike.
+
+**Frequency axes span 20 Hz to 20,000 Hz and use ordinary hertz labels.** Logarithmic spacing is appropriate, but label ticks with numeric frequencies such as 20, 100, 1000 and 20000, never powers of ten or scientific notation. Label the axis with Hz. Show only the supported data range and mark unavailable regions rather than extrapolating limited-band results to fill the axis. Supplementary zoomed views may help explain a feature, but do not replace the full-band plots.
 
 **Every figure carries a key, and a style means one thing.** Build the legend from the styles the figure actually drew, so anything a reader can see is named somewhere. Then hold each meaning across the package: settle once what marks material present in this view, a body that belongs to a removed or adjacent sub-assembly but takes up space here, a volume reserved for travel or access, and a feature in a panel seen through the box - and use that same style for that same class in every figure. Solid lines are edges visible in the view; dashed lines are hidden, removed or beyond. One style carrying two meanings in one package misleads more than leaving the feature out would, because nothing tells the reader the meaning changed.
 
