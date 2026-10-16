@@ -1,7 +1,7 @@
 ---
 id: baffle-and-driver-placement
 applies_when: Choosing the baffle size, deciding where each driver sits on it, setting the crossover frequencies that the spacing has to survive, or judging an off-axis result
-updated: 2026-09-15
+updated: 2026-09-28
 ---
 
 # The baffle and where the drivers sit on it
@@ -35,7 +35,7 @@ Section 6 collects the numeric versions of this transition, the compensation net
 that rides on top of it.
 
 **Consequence for the level budget.** A section whose passband straddles the step has a 6 dB slope
-built into it before any filter is applied. Either the driver's own rising response absorbs it, or
+built into it before any filter is applied. Either the driver's own falling response offsets it, or
 the crossover pays for it with a shelf, which costs sensitivity and dissipates the difference. This
 is the same arithmetic as the level budget in `crossover-design.md` section 4, and it is why the
 baffle width belongs to the level budget and not only to the cabinet drawing.
@@ -77,9 +77,7 @@ spacing or the step itself.
 
 **Physics.** Two sources radiating the same signal from points separated by `d` interfere. At an
 angle `theta` from the perpendicular bisector of the line joining them, the path difference is
-`d sin(theta)`. A complete cancellation requires a path difference of half a wavelength, so a full
-null can exist only where `d >= lambda / 2`. Below that the pair still tilts and narrows its lobe,
-but it cannot null.
+`d sin(theta)`. For equal-level sources radiating in phase on the perpendicular bisector, a complete far-field cancellation needs half a wavelength of path difference, so a null from spacing alone requires `d >= lambda / 2`. With filter phase or an acoustic-depth offset, use the total relative phase instead; this spacing bound alone does not rule out cancellation.
 
 That gives the number to compute before choosing a crossover frequency, not after: with a
 centre-to-centre spacing `d`, the frequency above which the pair can null in its plane is
@@ -106,9 +104,7 @@ parallel-driver note in `crossover-design.md` section 6.
 **What the framework does.** `whole_speaker` places each section at its `x_mm`, `z_mm` and `depth_mm` and
 sums coherently with directivity, so the vertical map and the window statistics already contain this
 effect; `results.path_differences` reports the acoustic path difference between each pair in
-millimetres and microseconds. Nothing computes the spacing rule for you. Compute `c / (2d)` for each
-adjacent pair and compare it with the intended crossover before fitting, because a crossover chosen
-first will simply be reported as a poor vertical window afterwards.
+millimetres and microseconds. `results.pair_geometry` reports both `c/(2d)` and `c/d`. Compute them before fitting, and evaluate the requested angular window with actual branch levels and phase; a spacing screen alone does not predict a narrow-window null.
 
 ## 4. Where the array sits relative to the room
 
@@ -143,8 +139,7 @@ figure.
 **What the framework does.** `whole_speaker` takes `observer.ear_height_m` and `distance_m` and can add
 a single coherent floor image through its `floor` block; it has no walls, no ceiling and no room. A
 free-field result is therefore an incomplete statement about bass, and adding room gain to a modelled
-curve to meet an objective is not allowed — see `reference-sensitivity-conventions-differ` in
-`framework/learnings`.
+curve to meet an objective is not allowed — see `references/target-response.md` section 10 for comparable sensitivity conventions.
 
 ## 5. Making a placement claim
 

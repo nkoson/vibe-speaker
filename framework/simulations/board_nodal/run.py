@@ -123,17 +123,41 @@ def solve(f, components, wires, sources, loads, mode, load_z, scale=None):
     n = len(unknown)
     matrix = np.zeros((len(f), n, n), complex)
     rhs = np.zeros((len(f), n), complex)
-    for _, a, b, z, _ in edges:
-        ra, rb = nodes.root(a), nodes.root(b)
-        y = 1 / z
-        for u, v in ((ra, rb), (rb, ra)):
-            if u in index:
-                i = index[u]
-                matrix[:, i, i] += y
-                if v in index:
-                    matrix[:, i, index[v]] -= y
-                else:
-                    rhs[:, i] += y * fixed[v]
+    # Branch impedance admits mutual inductance without changing the circuit graph.
+    impedance = np.zeros((len(f), len(edges), len(edges)), complex)
+    for ei, edge in enumerate(edges):
+        impedance[:, ei, ei] = edge[3]
+    edge_index = {edge[0]: i for i, edge in enumerate(edges)}
+    coils = {c["id"]: c for c in components if c["type"] == "L"}
+    applied = {}
+    for cid, coil in coils.items():
+        for other, coupling in coil.get("mutual_with", {}).items():
+            if other not in coils or other == cid or abs(float(coupling)) >= 1:
+                raise cli.InputError("mutual_with needs another coil and -1 < coupling < 1")
+            pair = tuple(sorted((cid, other)))
+            if pair in applied and applied[pair] != coupling:
+                raise cli.InputError("conflicting mutual coupling declarations")
+            applied[pair] = coupling
+            l1 = float(coil["value_mh"]) * (1 if not scale else scale.get(cid,1)) * 1e-3
+            l2 = float(coils[other]["value_mh"]) * (1 if not scale else scale.get(other,1)) * 1e-3
+            mutual = float(coupling) * np.sqrt(l1*l2)
+            impedance[:,edge_index[cid],edge_index[other]] = 2j*np.pi*f*mutual
+            impedance[:,edge_index[other],edge_index[cid]] = 2j*np.pi*f*mutual
+    if coils:
+        ci=[edge_index[k] for k in coils]
+        inductance=impedance[0][np.ix_(ci,ci)].imag/(2*np.pi*f[0])
+        if np.linalg.eigvalsh(inductance).min() <= 0:
+            raise cli.InputError("coupled inductance matrix is not positive definite")
+    branch_y = np.linalg.inv(impedance)
+    incidence = np.zeros((n,len(edges)))
+    fixed_drop = np.zeros((len(f),len(edges)),complex)
+    for ei,(_,a,b,_,_) in enumerate(edges):
+        for pin, sign in ((a,1),(b,-1)):
+            root=nodes.root(pin)
+            if root in index: incidence[index[root],ei]+=sign
+            else: fixed_drop[:,ei]+=sign*fixed[root]
+    matrix = np.einsum('ie,fej,kj->fik',incidence,branch_y,incidence)
+    rhs = -np.einsum('ie,fej,fj->fi',incidence,branch_y,fixed_drop)
     if n:
         try:
             values = np.linalg.solve(matrix, rhs[..., None])[..., 0]
@@ -150,9 +174,11 @@ def solve(f, components, wires, sources, loads, mode, load_z, scale=None):
 
     states = {}
     boundary = {root: np.zeros(len(f), complex) for root in fixed}
-    for name, a, b, z, kind in edges:
-        drop = voltage(a) - voltage(b)
-        current = drop / z
+    drops = np.array([voltage(a)-voltage(b) for _,a,b,_,_ in edges]).T
+    currents = (branch_y @ drops[...,None])[...,0]
+    for ei, (name, a, b, z, kind) in enumerate(edges):
+        drop = drops[:,ei]
+        current = currents[:,ei]
         states[name] = dict(kind=kind, voltage=drop, current=current, power=np.abs(current) ** 2 * z.real)
         for pin, sign in ((a, 1), (b, -1)):
             root = nodes.root(pin)
@@ -167,10 +193,10 @@ def solve(f, components, wires, sources, loads, mode, load_z, scale=None):
             src_rows.append(dict(id=src["id"], active=False))
             continue
         current = boundary[nodes.root(src["plus"])]
-        v = float(src.get("voltage_rms", 1.0))
+        v = float(src.get("voltage_rms", 1.0)) * np.exp(1j*np.deg2rad(float(src.get("phase_deg",0))))
         with np.errstate(divide="ignore", invalid="ignore"):
             zin = np.where(np.abs(current) > 1e-15, v / current, np.inf)
-        src_rows.append(dict(id=src["id"], active=True, voltage_rms=v, current_rms_a=np.abs(current), input_z_ohm=zin))
+        src_rows.append(dict(id=src["id"], active=True, voltage_rms=abs(v), current_rms_a=np.abs(current), input_z_ohm=zin))
     reference_v = next((float(s.get("voltage_rms", 1.0)) for s in sources if s["id"] in active), 1.0)
     load_rows = [dict(id=load["id"], transfer=states[load["id"]]["voltage"] / reference_v, voltage_rms=np.abs(states[load["id"]]["voltage"]),
                       current_rms_a=np.abs(states[load["id"]]["current"]), power_w=states[load["id"]]["power"]) for load in loads]
@@ -180,14 +206,22 @@ def solve(f, components, wires, sources, loads, mode, load_z, scale=None):
 
 VALIDITY = [
     "Lumped nodal solve: valid while every part and every wire run is short compared with a wavelength. At 20 kHz that is about 17 mm per degree of phase, so the board layout, not the netlist, is the limit at the top of the band.",
-    "Coil coupling, stray capacitance and the magnetic field around a coil are not in the netlist. Space the coils and cross their axes; the model cannot tell you that you did not.",
+    "Declared mutual inductance and finite-magnetizing-inductance transformers are modeled. Geometry does not determine coupling automatically; stray fields and nonlinear core saturation are outside this AC solve.",
     "The residuals reported are the solver's own consistency, not agreement with a measurement.",
 ]
 
 
 def compute(params, base_dir):
     f = cli.frequency_grid(params.get("frequencies"), 10.0, 40000.0, 600)
-    components = cli.require(params, "components")
+    components = list(cli.require(params, "components"))
+    for transformer in params.get("transformers", []):
+        pid,sid=transformer["id"]+":primary",transformer["id"]+":secondary"
+        lp=cli.positive(transformer["primary_inductance_mh"],"primary_inductance_mh")
+        ratio=cli.positive(transformer["turns_ratio"],"turns_ratio")
+        components.extend([dict(id=pid,type="L",nodes=transformer["primary_nodes"],value_mh=lp,
+                                dcr_ohm=transformer["primary_dcr_ohm"],mutual_with={sid:transformer["coupling"]}),
+                           dict(id=sid,type="L",nodes=transformer["secondary_nodes"],value_mh=lp/ratio**2,
+                                dcr_ohm=transformer["secondary_dcr_ohm"])])
     wires = params.get("wires") or []
     sources = cli.require(params, "sources")
     loads = cli.require(params, "loads")

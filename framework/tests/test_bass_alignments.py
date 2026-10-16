@@ -158,7 +158,7 @@ def test_lf_box_example_reports_the_new_blocks():
     flare = r["vent_physics"]["flare"]
     assert flare["tuning_hz"] == pytest.approx(flare["requested_tuning_hz"], rel=0.02)
     assert flare["effective_length_m"] * 1000 > r["vent"]["physical_length_mm"]
-    assert r["vent_physics"]["edge_radius"]["meets_requirement"] is True
+    assert r["vent_physics"]["edge_radius"]["radius_minus_reference_mm"] >= 0
 
 
 def test_every_document_carries_a_validity_block_and_constants():

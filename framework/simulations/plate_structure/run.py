@@ -10,15 +10,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _common import cli, panels  # noqa: E402
 
 NAME = "plate_structure"
-VERSION = "1.1"
+VERSION = "1.2"
 NOTES = [
     "Isotropic or orthotropic thin plate, simply supported on the bay edges (brace lines are ideal supports, joints rigid), Navier sine modes, uniform RMS pressure over the bay.",
     "Displacements are RMS when the pressure is RMS; the modal-sum bound is an upper estimate that does not miss antinodes between sample points.",
     "No fluid-structure coupling, no panel radiation, no joint compliance, no aperture-bearing panels; comparative screening of panel thickness, material and brace spacing.",
     "The mode band is Leissa's frequency parameter evaluated at both edge conditions: pinned from the exact closed form lambda = pi^2 (1 + (a/b)^2), clamped interpolated from his tabulated values. The band is the deliverable - the edge condition alone moves the fundamental by a factor of 1.8 to 2.2 and a real glued joint is neither condition.",
     "Material data is the BBC's measured E at 250 Hz, density and maximum Q, with the Wood Handbook's static-bending moduli for the products the BBC did not measure. Plywood is orthotropic and this is isotropic plate theory applied with a geometric-mean E; E itself varies 10 to 20 percent across the band.",
-    "Damping treatments are the BBC's measured loss factors on a 9 mm birch plywood substrate. The rank order transfers to another panel and the absolute values do not.",
-    "The audibility criterion is the BBC's measured perceptibility curve, reported against a RELATIVE panel output. No absolute panel SPL is computed here and none should be: the BBC established that the panels, the driver and the enclosed air are coupled and that the coupling sets the radiated level, so an overall measurement is the only way to get it.",
+    "Damping treatments are the BBC's measured loss factors on a 9 mm birch plywood substrate. Transfer to other substrates, temperatures and bond conditions is a scenario assumption, not a universal ranking.",
+    "The audibility criterion is the BBC's measured perceptibility curve, reported against a RELATIVE panel output. No absolute panel SPL is computed here: a model of coupled panels, driver, enclosed air and exterior radiation is needed for that quantity. The current volume-velocity ratio is a screening proxy.",
 ]
 
 
@@ -30,7 +30,11 @@ def plate_modes(a_m, b_m, thickness_m, e_pa, rho, nu=.3, order=7, orthotropic=No
     if orthotropic:
         ex, ey, g = float(orthotropic["E_parallel_pa"]), float(orthotropic["E_perpendicular_pa"]), float(orthotropic["G_inplane_pa"])
         nu_xy = float(orthotropic.get("nu_parallel_perp", .3))
+        if min(ex, ey, g) <= 0 or not np.all(np.isfinite([ex, ey, g, nu_xy])):
+            raise cli.InputError("orthotropic moduli need positive finite values")
         nu_yx = nu_xy * ey / ex
+        if 1 - nu_xy * nu_yx <= 0:
+            raise cli.InputError("orthotropic compliance matrix is not positive definite")
         factor = thickness_m ** 3 / (12 * (1 - nu_xy * nu_yx))
         d11, d22, d12, d66 = ex * factor, ey * factor, nu_xy * ey * factor, g * thickness_m ** 3 / 12
         if orientation_deg == 90:
@@ -106,8 +110,7 @@ def audibility_overlay(f, panel_volume_velocity, cone, scatter_db=1.0):
     worst = int(np.argmin(margin))
     return dict(relative_to_cone_db=relative, criterion_db=criterion, margin_db=margin,
                 worst_margin_db=float(margin[worst]), worst_margin_hz=float(f[worst]),
-                above_criterion=bool(margin[worst] < 0),
-                above_criterion_with_scatter=bool(margin[worst] < scatter_db),
+                worst_margin_after_scatter_db=float(margin[worst]-scatter_db),
                 scatter_db=scatter_db,
                 basis="a RATIO OF VOLUME VELOCITIES, panel against cone, not a measured panel-to-direct pressure ratio. "
                       "It holds while both radiators are small compared with a wavelength and flatters the panel above "
@@ -213,12 +216,14 @@ def compute(params, base_dir):
                         "400 Hz, so moving a panel mode up in frequency moves it into the least forgiving part of the "
                         "curve - which is why a thicker wall with a higher Q radiated MORE in the BBC's own experiment.")
             rows.append(dict(name=panel.get("name"), a_mm=a * 1000, b_mm=b * 1000, thickness_mm=t * 1000, count=panel.get("count", 1), note=panel.get("note"),
-                             mode_band=band, audibility=criterion,
+                             mode_band=None if ortho else band, isotropic_comparison=band,
+                             audibility=criterion if not ortho else None,
+                             band_coverage=dict(first_mode_hz=float(natural[0]), analysis_band_hz=[float(f0[0]), float(f0[-1])],
+                                                modes_below_band=int(np.sum(natural < f0[0])), modes_above_band=int(np.sum(natural > f0[-1]))),
                              grain_orientation_deg=orientation if ortho else None, f_hz=f, pressure_rms_pa=p,
                              natural_modes_hz=natural[:15], mode_indices=modes["indices"][:15],
                              first_mode_hz=float(natural[0]),
-                             first_mode_note="the Navier solve is simply supported, so this is the pinned bound of "
-                                             "mode_band and not a prediction of where the panel resonates",
+                             first_mode_note="Simply supported Navier mode. The isotropic comparison is not an orthotropic restraint bound.",
                              static_center_mm_at_max_pressure=float(np.abs(static["center_m"][0]) * 1000),
                              static_sampled_max_mm=float(static["sampled_max_m"][0] * 1000), bending_stiffness_nm=modes["bending_stiffness_nm"],
                              loss_variants=variants))
@@ -240,8 +245,8 @@ def compute(params, base_dir):
                                                       "the first mode or two."),
                 pressure_source=pressure, panels=rows,
                 summary=dict(min_first_mode_hz=float(min(r["first_mode_hz"] for r in rows)),
-                             lowest_mode_band_hz=min(rows, key=lambda r: r["mode_band"]["pinned_hz"])["mode_band"]["band_hz"],
-                             lowest_mode_band_panel=min(rows, key=lambda r: r["mode_band"]["pinned_hz"])["name"],
+                             lowest_mode_band_hz=None if ortho else min(rows, key=lambda r: r["mode_band"]["pinned_hz"])["mode_band"]["band_hz"],
+                             lowest_mode_band_panel=None if ortho else min(rows, key=lambda r: r["mode_band"]["pinned_hz"])["name"],
                              worst_panel_by_peak_bound=max(rows, key=lambda r: next(v for v in r["loss_variants"] if v["loss_factor"] == nominal)["peak_bound_rms_mm"])["name"],
                              max_peak_bound_rms_mm_at_nominal_loss=float(max(next(v for v in r["loss_variants"] if v["loss_factor"] == nominal)["peak_bound_rms_mm"] for r in rows)),
                              max_static_center_mm=float(max(r["static_center_mm_at_max_pressure"] for r in rows)), nominal_loss_factor=nominal))

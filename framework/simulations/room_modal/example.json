@@ -1,0 +1,43 @@
+{
+  "frequencies": {
+    "min_hz": 20,
+    "max_hz": 200,
+    "points": 20
+  },
+  "room": {
+    "dimensions_m": [
+      4,
+      5,
+      3
+    ],
+    "walls": {
+      "x_min": {
+        "resistance_pa_s_m": 4000
+      }
+    }
+  },
+  "mode_order": 2,
+  "modal_loss_factor": 0.01,
+  "sources": [
+    {
+      "position_m": [
+        1,
+        1,
+        1
+      ],
+      "volume_velocity_m3_s": 0.0001
+    }
+  ],
+  "receivers_m": [
+    [
+      2,
+      3,
+      1
+    ],
+    [
+      2.2,
+      3,
+      1
+    ]
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "draws": 3,
+  "seed": 9,
+  "variables": [
+    {
+      "name": "resistor",
+      "path": "0.parameters.components.0.value_ohm",
+      "nominal": 4,
+      "spread": 0.2,
+      "distribution": "uniform"
+    }
+  ],
+  "steps": [
+    {
+      "id": "board",
+      "app": "board_nodal",
+      "parameters": {
+        "frequencies": {
+          "min_hz": 30,
+          "max_hz": 1000,
+          "points": 30
+        },
+        "components": [
+          {
+            "id": "R1",
+            "type": "R",
+            "value_ohm": 4,
+            "nodes": [
+              "in",
+              "out"
+            ]
+          }
+        ],
+        "sources": [
+          {
+            "id": "amp",
+            "plus": "in",
+            "minus": "0",
+            "voltage_rms": 1
+          }
+        ],
+        "loads": [
+          {
+            "id": "driver",
+            "plus": "out",
+            "minus": "0",
+            "impedance": {
+              "kind": "resistive",
+              "r_ohm": 8
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "observables": [
+    {
+      "name": "minimum_impedance",
+      "step": "board",
+      "path": "results.modes.0.sources.0.input_z_min_ohm"
+    }
+  ]
+}

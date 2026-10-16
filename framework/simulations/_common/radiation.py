@@ -8,7 +8,7 @@ reference distance removed, so the sum reads like an SPL at 1 m equivalent.
 """
 import numpy as np
 
-from . import acoustics, cli
+from . import acoustics, cli, geometry
 from .acoustics import C
 
 
@@ -18,7 +18,17 @@ def load_sections(params, f, base_dir):
     floor_offset = float(cabinet.get("floor_offset_mm", 0.0)) / 1000
     depth_m = float(cabinet.get("depth_mm", 0.0)) / 1000
     sections = []
-    for section in cli.require(params, "sections"):
+    assembly = geometry.load_assembly(params["assembly"],base_dir) if params.get("assembly") else None
+    for original in cli.require(params, "sections"):
+        section = dict(original)
+        if section.get("assembly_source"):
+            if not assembly: raise cli.InputError("assembly_source needs a shared assembly")
+            src = next(s for s in assembly["sources"] if s["id"] == section["assembly_source"])
+            obj = next(o for o in assembly["objects"] if o["id"] == src["object_id"])
+            rotation, origin = geometry.transform(obj)
+            point = rotation @ np.asarray(src["local_position_m"]) + origin
+            section["position"] = dict(x_mm=point[0]*1000,depth_mm=-point[1]*1000,z_mm=point[2]*1000)
+            section["normal"] = (rotation @ np.asarray(src.get("local_normal",[0,1,0]))).tolist()
         source_doc = None
         pressure = None
         if section.get("source"):
@@ -37,8 +47,18 @@ def load_sections(params, f, base_dir):
         if depth is None and source_doc:
             depth = cli.dotted(source_doc, "results.acoustic_depth_mm")
         depth = float(depth or 0.0)
+        contract = (source_doc or {}).get("results", {}).get("source_contract", {})
+        if contract.get("baffle") == "included" and section.get("baffle"):
+            raise cli.InputError("source already includes the baffle correction")
         position = cli.require(section, "position", label=f"section {section.get('name')}")
         centre = np.array([float(position.get("x_mm", 0.0)) / 1000, -depth / 1000, float(position["z_mm"]) / 1000 + floor_offset])
+        if contract.get("phase_reference") == "common_observer":
+            reference = np.asarray(contract.get("observer_position_m"),float)
+            if reference.shape != (3,):raise cli.InputError("common-observer source needs observer_position_m")
+            r0=float(contract["reference_distance_m"])
+            measured_path=float(np.linalg.norm(reference-centre))
+            if measured_path<=0:raise cli.InputError("common observer coincides with source centre")
+            pressure=pressure*(measured_path/r0)*np.exp(2j*np.pi*f*(measured_path-r0)/C)
         transfer = transfer_curve(section.get("transfer"), f, base_dir)
         baffle = np.ones(len(f), complex)
         if section.get("baffle"):
@@ -48,7 +68,7 @@ def load_sections(params, f, base_dir):
         entry = dict(name=section.get("name"), pressure=pressure, directivity=directivity, centre=centre, transfer=transfer, baffle=baffle,
                      acoustic_depth_mm=depth,
                      rear=rear_prior(section.get("rear_radiation"), cabinet.get("baffle_width_mm")),
-                     tilt_rad=np.deg2rad(float(section.get("tilt_deg", 0.0))), outlets=[])
+                     axis=section.get("normal"), tilt_rad=np.deg2rad(float(section.get("tilt_deg", 0.0))), outlets=[])
         for outlet in section.get("rear_outlets", []) or []:
             ref = dict(outlet["pressure"])
             ref.setdefault("frequency_path", "results.f_hz")
@@ -63,10 +83,11 @@ def load_sections(params, f, base_dir):
             elif face == "rear":
                 o_baffle = np.full(len(f), 0.5, complex)
             for pos in positions:
-                y = -depth_m if face == "rear" else 0.0
+                y = float(pos["y_mm"])/1000 if "y_mm" in pos else -float(pos["depth_mm"])/1000 if "depth_mm" in pos else -depth_m if face == "rear" else 0.0
                 entry["outlets"].append(dict(pressure=p_out / len(positions), baffle=o_baffle, face=face,
                                              centre=np.array([float(pos.get("x_mm", 0.0)) / 1000, y, float(pos["z_mm"]) / 1000 + floor_offset]),
                                              rear=rear_prior(outlet.get("rear_radiation"), cabinet.get("baffle_width_mm")),
+                                             axis=outlet.get("normal", [0,-1,0] if face=="rear" else [0,1,0]),
                                              directivity=outlet.get("directivity") or {"kind": "omni"}))
         sections.append(entry)
     return sections
@@ -133,7 +154,7 @@ def rear_gain(prior, f):
     return floor + (1 - floor) / (1 + (np.asarray(f, float) / prior["corner_hz"]) ** prior["order"])
 
 
-def _propagate(f, source, centre, directivity, tilt_rad, points, reference_m, mirror=False, reflection=1.0, rear=None):
+def _propagate(f, source, centre, directivity, tilt_rad, points, reference_m, mirror=False, reflection=1.0, rear=None, axis=None):
     """Pressure of one source at each point (points x f), optionally its floor image."""
     c = centre.copy()
     if mirror:
@@ -145,12 +166,20 @@ def _propagate(f, source, centre, directivity, tilt_rad, points, reference_m, mi
     pitch = -tilt_rad if mirror else tilt_rad
     axial = vector[:, 1] * np.cos(pitch) + vector[:, 2] * np.sin(pitch)
     up = -vector[:, 1] * np.sin(pitch) + vector[:, 2] * np.cos(pitch)
-    h = np.arctan2(vector[:, 0], axial)
-    v = np.arctan2(up, np.hypot(vector[:, 0], axial))
+    lateral = vector[:,0]
+    if axis is not None:
+        forward = np.asarray(axis,float); forward = forward/np.linalg.norm(forward)
+        if mirror: forward[2] *= -1
+        right = np.cross(forward,[0,0,1] if abs(forward[2])<.99 else [0,1,0]); right/=np.linalg.norm(right)
+        vertical = np.cross(right,forward)
+        axial=vector@forward;up=vector@vertical;lateral=vector@right
+    h = np.arctan2(lateral, axial)
+    v = np.arctan2(up, np.hypot(lateral, axial))
     d = acoustics.directivity(directivity, f[None, :], h[:, None], v[:, None])
-    if rear is None:
+    complete_pattern = directivity.get("kind") in ("omni", "dipole", "cardioid", "complex_grid")
+    if rear is None and not complete_pattern:
         d = d * (axial > 0)[:, None]
-    else:
+    elif rear is not None and not complete_pattern:
         # Blend linearly in cos(polar angle) from the front hemisphere to the shadowed rear one, so the
         # pattern is continuous at 90 degrees instead of stepping to silence there.
         mu = np.clip(axial / distance, -1.0, 1.0)
@@ -168,24 +197,19 @@ def pressure(sections, f, points, reference_m, transfers=None, floor_reflection=
     for index, section in enumerate(sections):
         h = section["transfer"] if transfers is None else transfers[index]
         section_rear = section.get("rear")
-        direct = _propagate(f, section["pressure"] * section["baffle"] * h, section["centre"], section["directivity"], section["tilt_rad"], points, reference_m, rear=section_rear)
+        direct = _propagate(f, section["pressure"] * section["baffle"] * h, section["centre"], section["directivity"], section["tilt_rad"], points, reference_m, rear=section_rear, axis=section.get("axis"))
         if floor_reflection:
-            direct = direct + _propagate(f, section["pressure"] * section["baffle"] * h, section["centre"], section["directivity"], section["tilt_rad"], points, reference_m, True, floor_reflection, section_rear)
+            direct = direct + _propagate(f, section["pressure"] * section["baffle"] * h, section["centre"], section["directivity"], section["tilt_rad"], points, reference_m, True, floor_reflection, section_rear, section.get("axis"))
         for outlet in section["outlets"]:
             rear = outlet["face"] == "rear"
             src = outlet["pressure"] * outlet["baffle"] * h
             pts = points.copy()
             centre = outlet["centre"].copy()
-            if rear:
-                pts[:, 1] = -pts[:, 1] + 2 * centre[1]
-            # The mirrored observation points are behind the cabinet. Rotate the
-            # source axis with that transform; otherwise _propagate's forward
-            # hemisphere mask silently discards every rear outlet.
             outlet_pitch = np.pi if rear else 0.0
             outlet_rear = outlet.get("rear")
-            direct = direct + _propagate(f, src, centre, outlet["directivity"], outlet_pitch, pts, reference_m, rear=outlet_rear)
+            direct = direct + _propagate(f, src, centre, outlet["directivity"], outlet_pitch, pts, reference_m, rear=outlet_rear, axis=outlet.get("axis"))
             if floor_reflection:
-                direct = direct + _propagate(f, src, centre, outlet["directivity"], outlet_pitch, pts, reference_m, True, floor_reflection, outlet_rear)
+                direct = direct + _propagate(f, src, centre, outlet["directivity"], outlet_pitch, pts, reference_m, True, floor_reflection, outlet_rear, outlet.get("axis"))
         contributions.append(direct)
     contributions = np.stack(contributions, axis=0)
     return contributions.sum(axis=0), contributions

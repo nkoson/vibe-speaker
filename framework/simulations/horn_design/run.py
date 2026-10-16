@@ -83,7 +83,7 @@ def compute(params, base_dir):
             waveguide.get("axial_positions_mm"))
 
     results["validity"] = dict(statements=list(VALIDITY), cutoff_hz=fc,
-                               driver_suitable=design["suitability"]["suitable"],
+                               cutoff_minus_fs_qts_hz=design["suitability"]["cutoff_minus_fs_qts_hz"],
                                usable_band_hz=[design["band"]["resistance_controlled_low_hz"],
                                                design["band"]["resistance_controlled_high_hz"]],
                                throat_impedance_computed=False,

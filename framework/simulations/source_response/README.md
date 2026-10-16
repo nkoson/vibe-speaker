@@ -43,3 +43,23 @@ python framework/simulations/source_response/run.py --input params.json --out re
 A gated impulse response is valid only above roughly `1 / t_gate`: a 5.6 ms gate is trustworthy above about 180 Hz, and below that the data is not merely noisy, it is absent — replaced by whatever the near-field splice or the roll-off prior put there. Give `acoustic.gate_ms` with any `measured` or `frd_file` source and the document's `validity` block reports `gated_valid_above_hz` with a sentence saying so. Omit it and the block says the low-frequency validity limit is unknown, which is what a response quoted without its gate actually means.
 
 `piston_radius_mm` is optional and adds the `ka = 1` frequency to the same block.
+
+## Explicit LF drive basis and acoustic calibration
+
+`acoustic.voltage_basis` for `lf_box` is `source` (legacy default) or `driver_terminal`. The legacy pressure includes any box-drive series loss and says so in `pressure_basis`. Use `driver_terminal` when applying the physical crossover downstream: it removes the box's external series resistance by the complex factor `(Zdriver + Rs)/Zdriver`, keeping the exported impedance unchanged. The selected `results.curves.<index>` supplies its own drive voltage. A prefiltered box with `terminal_transfer` is rejected for terminal normalization; generate an unfiltered source and apply the network downstream. Prefer a zero-external-resistance source run and keep allowance/stress runs separately.
+
+Optional `acoustic.level_calibration: {"gain_db": -2.0, "basis": "source, conditions, band and derivation"}` scales acoustic pressure only and is echoed in the output. It does not scale impedance, current, excursion, thermal predictions or ratings. The gain is an explicit prior/calibration, not evidence that a driver is mechanically different.
+
+For LF boxes with an outlet, `results.outlet_pressure_per_volt_pa` carries the same drive normalization and calibration. It retains the box outlet shape rather than the cone's published upper-band replacement. When placing an outlet separately in `whole_speaker`, take the cone-only field as the source and reference this outlet output with `voltage_rms: 1`. Apply baffle/placement factors to both. Referencing raw box pressure instead bypasses the normalization/calibration and can silently misbalance the sum.
+
+Before fitting, compare graph anchors and upper slope, deep bass, a unity source and a known resistor case. `framework/templates/simulation-audit.md` describes the evidence to retain.
+
+`examples/section_lf_terminal.json` demonstrates terminal normalization and a declared acoustic calibration alongside the legacy multiplication and replacement examples. Its -2 dB gain is illustrative, not a measured driver claim.
+
+## Phase, baffle and simulation-source contract
+
+`acoustic.kind: simulation` reads a canonical `reference` pressure curve (default path `results.pressure_per_volt_pa`) and inherits its `source_contract`. The impedance input remains explicit, commonly a reference to that same model's `results.z_ohm`. This connects cavity and geometry-derived sources without another box correction.
+
+`acoustic.contract.phase_reference` is `intrinsic` by default. For supplied common-observer complex data, set `common_observer`, `reference_distance_m` and `observer_position_m` in cabinet coordinates. The source removes the common reference delay; the radiation loader removes the reference geometry before propagating to a new observer, so relative path effects occur once. Magnitude-only reconstructed/zero-phase data does not contain that supplied timing information.
+
+`contract.baffle` is `external` or `included`; applying an external baffle reference to an included source is a conflicting input. `measured` magnitude-only input defaults to reconstructed minimum phase, or uses `phase_assumption: zero` when explicitly supplied. FRD output identifies supplied, reconstructed or zero phase. `delay_s` separates a known delay during complex interpolation. Native source conditions and the exported contract remain part of interpretation.

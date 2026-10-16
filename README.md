@@ -35,7 +35,7 @@ This creates `.speaker-venv/` inside the repository (with the project-local uv i
 | `framework/skills/speaker-documentation/` | How to write cabinet, crossover, performance and reference-comparison documents |
 | `framework/skills/speaker-learnings/` | Consult past learnings, write the postmortem, distill new learnings |
 | `framework/learnings/` | Advice from past projects, one file per learning, indexed |
-| `framework/simulations/` | Eighteen standalone simulation apps, each with `run.py`, `README.md` and `example.json`; see its [README](framework/simulations/README.md) for the inventory |
+| `framework/simulations/` | Twenty-nine standalone simulation apps, each with `run.py`, `README.md` and `example.json`; see its [README](framework/simulations/README.md) for the inventory |
 | `framework/tools/` | Plotting, cabinet drawing and cut list, crossover schematic and board netlist, PDF assembly of the final package |
 | `framework/templates/` | Project, reference, part, candidate and evaluation templates |
 | `framework/tests/` | pytest suite running the example chain |
@@ -44,14 +44,16 @@ This creates `.speaker-venv/` inside the repository (with the project-local uv i
 
 ## Simulations
 
-All models are linear and small-signal with declared assumptions, and every result document carries the model notes. They cover the lumped bass alignment (sealed, vented, passive radiator) and its tolerance spread, per-section acoustic and electrical source models from datasheets or measurements, source directivity, finite-baffle diffraction, loaded passive crossover ladders and their fitting to a target, the physical board as a netlist in every connection mode, the coherent whole-speaker response on and off axis with floor image and polarity studies, the internal cavity acoustics with lining and braces, panel vibration, and descriptive response statistics with reference comparison.
+The core models are linear and small-signal; dedicated apps add declared nonlinear, coupled and thermal scenarios. Every result document carries its model notes. They cover the lumped bass alignment (sealed, vented, passive radiator) and its tolerance spread, per-section acoustic and electrical source models from datasheets or measurements, source directivity, finite-baffle diffraction, loaded passive crossover ladders and their fitting to a target, the physical board as a netlist in every connection mode, the coherent whole-speaker response on and off axis with floor image and polarity studies, the internal cavity acoustics with lining and braces, panel vibration, and descriptive response statistics with reference comparison.
 
 The applications output results only. Thresholds are parameters; interpretation is the agent's job and is written into the project's evaluations with the file path of every figure.
 
 ## Scope and limits
 
-Nothing produced here is a measurement. Digitized datasheet curves carry reading uncertainty, horn and tweeter phase is reconstructed, and distortion, compression, port noise, breakup beyond published data, room effects and thermal behaviour are not simulated. A first-build package from this framework is a starting point that a builder verifies by measuring drivers, tuning and the crossover.
+Performance is reported as predicted or simulated. The framework combines linear source/network models with optional mesh-based radiation, coupled cabinet acoustics, room modes/reflections, nonlinear driver/port states and electrothermal scenarios. It delivers complete simulation-designed construction packages using explicit inputs, linked model contracts and numerical verification. Additional measurements can be used when supplied or requested; they are not a prerequisite for completing a design.
 
 ## License
 
 See `LICENSE`.
+
+Incorporated project findings are tracked in [the improvement plan](framework/plans/incorporate-learnings-2026-09-28.md). `learnings/` may have no active records after verified incorporation; its index and authoring format remain for future findings.

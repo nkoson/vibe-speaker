@@ -13,6 +13,7 @@
  "nominal_impedance_ohm": 8,
  "power_w": {"aes": 400, "program": 800},
  "frequency_range_hz": [40, 3500],
+ "source_audit": {"graph_anchors": [], "test_horn_or_baffle": null, "phase_provenance": "unknown until sourced", "chosen_level_basis": null, "level_basis_derivation": null},
  "published_response": {"voltage_rms": 2.83, "distance_m": 1.0, "condition": "manufacturer, infinite baffle", "reading_uncertainty_db": 1.0,
                         "points": [[50, 92], [100, 99], [300, 99], [800, 100], [1500, 101], [2500, 98], [4000, 92]]},
  "mechanical": {"overall_diameter_mm": 393, "cutout_mm": 356, "depth_mm": 165, "displacement_l": 3.0, "mass_kg": 3.6, "bolt_holes": 8, "bolt_circle_mm": 372},
@@ -36,5 +37,5 @@
                     "saturation_current_a": "not published",
                     "saturation_note": "the supplier states it has not measured power handling or saturation points for its coils. Record 'not published' rather than leaving the field blank, and see framework/references/crossover-design.md section 12 for the 1.2 kHz frequency rule that replaces it",
                     "alternatives_note": "record the cheaper and dearer series that cover the same value, so a substitution can be tried rather than argued. The cheaper generally available part is the default; a dearer one earns its place by changing a tolerance, an ESR or DCR, a rating or a size that the model can see - see framework/references/crossover-design.md section 7"},
- "notes": "xmax_standard is one of geometric, aes2_1984, iec_62458, aes2_2012 or not_stated - four definitions are in circulation and only the last two measure the same quantity, so a figure without its definition cannot be compared with another driver's. Fill displacement_limits where the manufacturer or a measurement gives them; the smallest binds. Measure a sample before final tuning."
+ "notes": "xmax_standard is one of geometric, aes2_1984, iec_62458, aes2_2012 or not_stated - four definitions are in circulation and only the last two measure the same quantity, so a figure without its definition cannot be compared with another driver's. Fill displacement_limits where the manufacturer or a measurement gives them; the smallest binds. Carry published parameter spread or explicit uncertainty scenarios into final alignment and crossover selection."
 }

@@ -1,0 +1,29 @@
+{
+  "frequencies": {
+    "values_hz": [
+      100,
+      500,
+      1000
+    ]
+  },
+  "surface": {
+    "shape": "sphere",
+    "radius_m": 0.1,
+    "subdivisions": 1
+  },
+  "drive": {
+    "normal_velocity_m_s": 0.001
+  },
+  "observers_m": [
+    [
+      0,
+      1,
+      0
+    ],
+    [
+      1,
+      0,
+      0
+    ]
+  ]
+}

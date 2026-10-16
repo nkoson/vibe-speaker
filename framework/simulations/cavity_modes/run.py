@@ -11,7 +11,7 @@ from scipy.sparse.linalg import eigsh, splu
 from scipy.special import j1
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from _common import cli, acoustics  # noqa: E402
+from _common import cli, acoustics, geometry  # noqa: E402
 from _common.acoustics import C, RHO, P0  # noqa: E402
 
 NAME = "cavity_modes"
@@ -100,6 +100,8 @@ def finite_volume_modes(g, mesh_mm, max_hz, include_braces=True, include_tubes=T
     X, Y, Z = np.meshgrid(*centers, indexing="ij")
     shape = X.shape
     fluid = np.ones(shape, bool)
+    if g.get("assembly"):
+        fluid &= geometry.air_mask(g["assembly"], np.stack([X,Y,Z],axis=-1))
     if include_braces:
         for brace in g["braces"]:
             rim = float(brace.get("rim_mm", 60.0)) / 1000
@@ -363,6 +365,8 @@ VALIDITY = [
 def compute(params, base_dir):
     params = dict(params, _base_dir=base_dir)
     g = _geometry(params)
+    if params.get("assembly"):
+        g["assembly"] = geometry.load_assembly(params["assembly"], base_dir)
     g["unlined_background_q"] = float((params.get("cavity") or {}).get("unlined_background_q", 30.0))
     method = params.get("method") or {}
     kind = method.get("kind", "rectangular")
@@ -388,6 +392,14 @@ def compute(params, base_dir):
                    cone_deviation_db=fine["cone_deviation_db"], outlet_relative_db=fine["outlet_relative_db"],
                    cavity_spl_db=fine["cavity_spl_db"], lumped_spl_db=fine["lumped_spl_db"], driver_z_ohm=fine["driver_z_ohm"],
                    box_pressure_at_cone_pa=fine["box_pressure_at_cone_pa"], pressure_envelope_rms_pa=results_envelope(bases, responses, f))
+    terminal_params = dict(params, drive=dict(voltage_rms=1., series_resistance_ohm=0.))
+    terminal = acoustic_response(g, terminal_params, fine_basis, f)
+    results.update(pressure_per_volt_pa=terminal["cone_pressure_pa"],
+                   outlet_pressure_per_volt_pa=terminal["outlet_pressure_pa"], z_ohm=terminal["driver_z_ohm"],
+                   source_contract=dict(phase_reference="intrinsic", pressure_reference_m=1.,
+                                        baffle="external", normalization="driver_terminal_volt", radiation_space="half"))
+    if params.get("export_complex_field") and "psi" in fine_basis:
+        results["complex_field"] = dict(coordinates_m=fine_basis["coords"], pressure_pa=pressure_field(fine_basis, fine, np.arange(len(f))).T)
     if "radiator_excursion_peak_mm" in fine:
         results["radiator_excursion_peak_mm"] = fine["radiator_excursion_peak_mm"]
     unlined = acoustic_response(g, params, fine_basis, f, lined=False)

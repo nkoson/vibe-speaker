@@ -219,4 +219,4 @@ def test_transmission_line_taper_factor_and_stuffing():
     # the geometric quarter-wave frequency of the length divided by the tuning is exactly SF
     assert r["tuning_hz"] / r["modes"]["geometric_quarter_wave_hz"]["stuffed"] == pytest.approx(r["taper"]["factor"], rel=1e-6)
     offsets = {o["suppresses_mode"]: o["fraction_from_closed_end"] for o in r["driver_offset"]["options"]}
-    assert offsets["3/4 wave"] == pytest.approx(2 / 3)
+    assert np.cos(3 * np.pi * offsets["3/4 wave"] / 2) == pytest.approx(0, abs=1e-12)

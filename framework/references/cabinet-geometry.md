@@ -1,7 +1,7 @@
 ---
 id: cabinet-geometry
 applies_when: Sizing or placing anything inside or on a cabinet - drivers, horns, ports, braces, boards, terminals - and before claiming that something does or does not fit
-updated: 2026-09-15
+updated: 2026-09-28
 ---
 
 # Cabinet geometry: the interior is a volume
@@ -58,7 +58,7 @@ Keep the list in the candidate's `notes.md` and carry the objects that displace 
 
 ## Clearances, and the reason for each
 
-- **Duct inner end to the nearest surface**, commonly held at about one duct diameter: a duct that ends close to a wall or a cone sees a constricted opening, which raises losses, shifts tuning away from the model and adds noise. The value is practice; the reason is the constriction.
+- **Duct inner end to the nearest surface**, commonly held at one to two duct diameters: JBL's documents give both "one port diameter" and "about twice the port dimension", and no measured threshold was found. The reason is the constriction. Air leaving a duct of diameter `D` toward a wall at distance `h` passes through a curtain of area `π D h`, which equals the bore area at `h = D/4` and is four times it at `h = D`. A closer surface raises losses, shifts tuning away from the model and adds noise. The value is practice; the reason is geometry (`cabinet-construction.md` section 13).
 - **Duct mouth on the outside** away from the floor, a wall or a grille for the same reason, and away from the listener when chuffing matters.
 - **Around the magnet**, a clear path so the rear of the cone loads into the chamber rather than a trapped pocket. The `lf_box` model assumes the cone sees the box volume; a magnet pressed against a brace or a rear wall is a different acoustic problem than the one that was simulated.
 - **Brace windows** large enough that the bays are acoustically one chamber, which is also what the volume accounting assumes.
@@ -130,7 +130,7 @@ Two habits protect the derivation:
 
 ## What the applications do not model
 
-`cabinet_drawing.py` draws a rectangular box with rectangular panels and does no interference checking, no depth placement of front objects, no elbows, no non-rectangular cabinets, no chamfers and no grilles. `lf_box` models a straight round vent with an end correction, not a flared, bent or slotted one. `cavity_modes` and `plate_structure` take the chamber as you describe it. Where your cabinet departs from those assumptions, the numbers are estimates: say so in the candidate notes and in the documentation, next to the figure they affect.
+`cabinet_drawing.py` draws a rectangular box with rectangular panels and does no interference checking, no depth placement of front objects, no elbows, no non-rectangular cabinets, no chamfers and no grilles. `lf_box` supports declared straight/flared round-duct geometry; bends and slots remain equivalent-geometry estimates. `cavity_modes` and `plate_structure` take the chamber as you describe it. Where your cabinet departs from those assumptions, the numbers are estimates: say so in the candidate notes and in the documentation, next to the figure they affect.
 
 ## Panel treatment, and how little is established here
 
@@ -139,17 +139,19 @@ is what is and is not known about damping those modes once they exist.
 
 **Constrained-layer damping, and its mechanism.** The dissipation in a constrained-layer treatment is
 transverse **shear** strain in the viscoelastic layer, which only develops when a stiff skin forces
-the layer into shear instead of letting it bend freely with the panel. A free layer of damping
-compound troweled onto a wall largely does not engage the intended mechanism. The stack is
-panel / viscoelastic adhesive / stiff constraining skin.
+the layer into shear instead of letting it bend freely with the panel. The stack is
+panel / viscoelastic adhesive / stiff constraining skin. A free layer works by extension instead,
+and works best on a thin, low-impedance panel: the BBC measured free layers bringing a 9 mm plywood
+panel from `Q = 70` to 8.5-10 and a constrained felt-and-steel layer to `Q = 7`
+(`cabinet-materials-and-panels.md` section 1).
 
-**The magnitude is smaller than the marketing.** In the one study available here — a finite-element
-model of a 0.4 x 0.3 m clamped **steel** plate, 1 mm base with a 0.4 mm damping layer and a 0.1 mm
-constraining skin — full coverage gave a first-mode modal loss factor of 0.023, and a topology-
-optimised partial coverage gave 0.024 while using 60 to 80 percent of the material. A loss factor of
-0.023 is a modal Q of roughly 43. Read the consequence carefully: constrained-layer damping is a
-Q-reducer applied on top of stiffness and bracing, not a way to remove a panel resonance, and the
-value of optimising patch placement is material saving rather than a meaningful increase in damping.
+**The magnitude depends on the substrate.** One finite-element study of a 0.4 x 0.3 m clamped
+**steel** plate, 1 mm base with a 0.4 mm damping layer and a 0.1 mm constraining skin, found a
+first-mode modal loss factor of 0.023 at full coverage and 0.024 for topology-optimised partial
+coverage using 60 to 80 percent of the material. The same order of loss factor is not what the BBC
+measured on wood, and KEF reports a theoretical 30 dB from damping placed between braces and walls.
+Where damping does its work, and the constructions that deliver it, are in
+`cabinet-construction.md` sections 3 and 4.
 
 **Do not transfer the layer thicknesses.** The 40 percent and 10 percent thickness ratios belong to a
 1 mm steel substrate. A loudspeaker wall of 18 to 25 mm MDF is twenty times thicker and several times
@@ -157,27 +159,26 @@ lower in modulus, and constrained-layer effectiveness depends on a shear paramet
 layer thickness, shear modulus and bending wavelength — none of which the source sweeps. The
 transferable parts are the topology (shear layer under a stiff skin) and the order of magnitude.
 
-**What the framework does.** `plate_structure` treats panel bays as simply supported plates under the
-internal pressure spectrum, which makes its output a **relative** indicator — this bay is worse than
-that one, this brace helped — rather than an absolute prediction of radiated sound. Nothing here
-converts a panel velocity into a radiated level or into an audibility judgement.
+**Current model boundary.** `plate_structure` reports pinned-to-clamped mode bands, material/treatment priors and a relative audibility comparison when a cone reference is supplied. It does not establish absolute radiated SPL or the restraint of a particular glued joint. The available material data and their limits are recorded in `cabinet-materials-and-panels.md`; use that reference and `simulations/plate_structure/README.md` rather than interpreting a brace-spacing rule as acoustic qualification.
 
-**What no source consulted supplies.** There is no Young's modulus, density or internal loss factor
-here for MDF, HDF, Baltic birch plywood or particle board; no closed-form panel-mode frequency with
-boundary-condition coefficients, and no guidance on which boundary condition a glued cabinet joint
-approximates; no brace-spacing rule beyond the 300 to 400 mm practice already stated, and no measured
-before-and-after figures for any bracing scheme; no radiated-SPL contribution of a vibrating wall
-relative to the driver's output; and no audibility threshold for a panel resonance. A claim that a
-panel is adequately braced is therefore an argument from stiffness and geometry, not a quantified
-acoustic result, and should be written that way.
+## Installation datums and early geometry review
+
+**Practice.** Draw the occupied front, rear and side sections as soon as the driver set is fixed, before fitting the crossover. Use `framework/templates/geometry-audit.md`. Separate flange projection, recess depth, through-cut and overall installed body depth; the acoustic center is a separate model coordinate. Read both ends of each dimension arrow in the manufacturer's drawing.
+
+Track wooden, static assembled and moving/service bounds separately. A passive radiator's diaphragm can project beyond a flush flange. Track duct acoustic path, wall traversal and internal protrusion separately; the tool's `ports.length` is the internal length as defined above. A slot or bent duct equivalence carries tuning uncertainty.
+
+Include fasteners, leads, cable insulation, straps, spacers, adhesive, motor supports and sealed service spaces in the installation reserve. Check individual bolt coordinates and access against panel edges and supports; check wire entries against support grids. When detailing an object, replace its reserve rather than adding both displacements. Intersecting supports need specified joinery, and their solid union is counted once. State view direction separately from datum, especially on rear-mounted boards.
+
+A conservative bounding overlap is a reason to inspect the actual shapes, not proof of interference; likewise a nominal box clearance does not establish fastener access or moving clearance. After a net-air correction, rerun the alignment and the complete fixed-network chain before retaining the old score.
 
 ## Sources
 
 - Thiele, A. N., "Loudspeakers in Vented Boxes, Parts I and II", *Journal of the Audio Engineering Society*, vol. 19, nos. 5 and 6, 1971 - the alignment the duct length comes from.
 - Small, R. H., "Vented-Box Loudspeaker Systems, Parts I to IV", *Journal of the Audio Engineering Society*, vol. 21, 1973 - box losses, duct end correction and the limits of the lumped model.
-- Salvatti, A., Devantier, A., Button, D. J., "Maximizing Performance from Loudspeaker Ports", *Journal of the Audio Engineering Society*, vol. 50, no. 1/2, pp. 19-45, 2002 - duct area, flares, proximity to surfaces and the air speeds at which each geometry becomes audible. <https://aes2.org/publications/elibrary-page/?id=11094>
+- Salvatti, A., Devantier, A., Button, D. J., "Maximizing Performance from Loudspeaker Ports", *Journal of the Audio Engineering Society*, vol. 50, no. 1/2, pp. 19-45, 2002 - duct area, flares, edge radii and the air speeds at which each geometry becomes audible. The convention-paper version read here does not address a duct's distance from surfaces. <https://aes2.org/publications/elibrary-page/?id=11094>
+- JBL, D. Daniels, "Notes on porting", 1985, and the JBL GTO/P1000-series subwoofer owner's manual - the two- and one-diameter duct-end clearances, stated as practice without measurements. Archived copy of the notes: <http://www.cieri.net/Documenti/JBL/Documenti%20tecnici/JBL%20-%20Ports%20and%20Vents.pdf>
 - Olson, H. F., "Direct Radiator Loudspeaker Enclosures", *Journal of the Audio Engineering Society*, vol. 17, no. 1, pp. 22-29, 1969 - the outside shape of the box is part of the response, not only the inside volume.
-- Constrained-layer damping topology optimisation study, *Materials* (MDPI), vol. 15, no. 10, 3512, 2022 - the shear mechanism, the modal-strain-energy loss-factor method, the representative viscoelastic properties and the modal loss factors quoted above. A steel-plate finite-element study with no loudspeaker context and no measured validation; it is the only source this repository has on panel damping. <https://doi.org/10.3390/ma15103512>
+- Constrained-layer damping topology optimisation study, *Materials* (MDPI), vol. 15, no. 10, 3512, 2022 - the shear mechanism, the modal-strain-energy loss-factor method, the representative viscoelastic properties and the modal loss factors quoted above. A steel-plate finite-element study with no loudspeaker context and no measured validation; the measured wood-panel damping data are the BBC's, in `cabinet-materials-and-panels.md`. <https://doi.org/10.3390/ma15103512>
 - IEC 60268-5, *Sound system equipment - Part 5: Loudspeakers*, clause 14 "Marking of terminals and controls", including the positive terminal. The clause title is from the contents page of the publicly available preview; the clause text is paywalled and has not been read here. <https://webstore.iec.ch/en/publication/1223>
 - Neutrik, speakON NL4MP and NL4MPXX product documentation - 30 A rms continuous, 250 V ac, contact resistance at most 3 milliohms, and the manufacturer's statement that speakON is not to be used as an AC mains connector. Manufacturer documentation for one connector family. <https://www.neutrik.com/en/product/nl4mp>
 - Wikipedia, "Banana connector" and "Binding post" - the 19.05 mm double-banana centre spacing and its General Radio origin, the connection types a five-way post accepts, the red-positive convention, and the European practice of shipping audio equipment with those sockets blocked. A tertiary source, used here only for conventions that are not published as a standard anyone can cite.

@@ -1,7 +1,7 @@
 ---
 id: cabinet-materials-and-panels
 applies_when: Choosing a cabinet material or wall thickness, predicting or judging a panel resonance, specifying damping treatment, or deciding whether panel radiation will be audible
-updated: 2026-09-15
+updated: 2026-10-15
 ---
 
 # Cabinet materials and panel radiation
@@ -37,8 +37,7 @@ function of frequency across the audio band*, which is what a panel-mode calcula
 | White oak (clear) | 0.68 | 12.27 | 104.8 |
 | Douglas-fir, coastal (clear) | 0.48 | 13.44 | 85.5 |
 
-**MDF is the least stiff of the panel products in this table and roughly half the modulus of
-plywood.** Its attraction is uniformity and machinability, not stiffness.
+**This table places MDF below plywood in stiffness, but some hardboard and particleboard values are lower still.** Its attraction is uniformity and machinability, not stiffness.
 
 **BBC measured data (Tables 1 and 2), density in g/cm3, `E` in GPa at 250 Hz, `Q` the maximum
 measured quality factor, and `sqrt(E rho)/Q` the BBC's own figure of merit — higher is better:**
@@ -63,7 +62,7 @@ measured quality factor, and `sqrt(E rho)/Q` the BBC's own figure of merit — h
 
 Read four things off this table:
 
-- **Solid timber is the worst choice and the numbers say why.** Oak's modulus is 14.7 GPa along the
+- **Solid timber needs explicit anisotropy and variability assumptions.** Oak's modulus is 14.7 GPa along the
   grain and 0.97 across it — a factor of 15 — and its `Q` runs to 96. Beech and deal reach `Q = 125`
   and `Q = 120`. A resonance with `Q = 120` rings for a long time. The BBC's conclusion is explicit:
   "plain timber is an unreliable material because of its variability and its inherent anisotropy."
@@ -117,7 +116,7 @@ The pattern is the engineering, not the brand names (which are 1977 products):
   `eta = 0.026`; Aquaplas at 2.9 mm buys `eta = 0.100`. Rank by `eta` per millimetre, not by `eta`.
 - The BBC caution: these `Q` figures are **not absolute**, because damping depends on the mechanical
   impedance of the substrate, so they hold for a panel of about this size, thickness and material.
-  **The rank order always holds; the absolute values do not transfer** to a different panel.
+  **Neither the absolute values nor an invariant rank order is established for arbitrary substrates, temperatures and bond conditions.** Use the reported ranking as evidence for comparable specimens.
 
 ## 2. Where a panel's modes will land
 
@@ -186,12 +185,9 @@ approximation whose error is not established by any source here. Say so when you
 
 ## 3. From panel vibration to audibility
 
-**Do not build a panel-radiation-to-SPL model.** The BBC tried and stated the reason it cannot be
-done: "it is not possible to calculate the output resulting from the complex coupling of all the
+**The isolated-panel model does not establish absolute radiated SPL.** The BBC stated the limit of its analytical treatment: "it is not possible to calculate the output resulting from the complex coupling of all the
 panels and loudspeaker unit together, so some form of overall test is required." The panels, the
-driver and the enclosed air are coupled, and the coupling is what sets the radiated level. That is a
-finding with a source, not an absence of effort — it is why the framework's `plate_structure` app
-reports relative panel behaviour and stops there.
+driver and the enclosed air are coupled, and the coupling is what sets the radiated level. That limits the present `plate_structure` relative-panel proxy; `coupled_cabinet` separately implements coupled structural/acoustic equations with explicit geometry, boundary conditions and verification.
 
 What exists instead is a measured audibility criterion. The BBC assembled it from listening tests on
 real cabinets, plotting panel output level relative to the direct axial response against frequency,
@@ -219,8 +215,8 @@ Its stated limits, which travel with it:
   so the cone's radiation falls in its null.
 
 Even so it is the only published quantitative threshold obtained here, and it is decision-changing:
-it says a panel resonance at 150 Hz has to be **13 dB** below the direct sound to be inaudible, while
-one at 1 kHz needs **30 dB**. Low-frequency panel resonances get much more latitude than intuition
+it says the interpolated comparison level at 150 Hz is about **18 dB** below the direct sound, while
+the curve is **30 dB** below direct sound at 1 kHz. Low-frequency panel resonances get much more latitude than intuition
 suggests, and midband ones get much less.
 
 ## 4. What this settles about wall thickness
@@ -245,9 +241,11 @@ expensive, damping material" to comply.
 
 ## 5. Not covered
 
-Bracing: no source here quantifies what a brace does to `lambda`, and a brace changes both the
-effective panel dimensions and the edge condition, so neither the aspect-ratio table nor the pinned/
-clamped bracket can be applied to a braced panel without an assumption that is stated. Curved and
+Bracing as a frequency parameter: no source here gives `lambda` for a braced panel, and a brace
+changes both the effective panel dimensions and the edge condition, so neither the aspect-ratio
+table nor the pinned/clamped bracket can be applied to a braced panel without an assumption that is
+stated. What bracing does and does not achieve, and when braced bays stop acting together, is in
+`cabinet-construction.md` section 3. Curved and
 non-rectangular panels. Joint stiffness as a number. Cabinet wall transmission loss as distinct from
 panel resonance. The audibility of panel radiation under programme material other than the BBC's.
 

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Run every simulation example in dependency order into examples/out and print one line per result."""
-import json
-import subprocess
 import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 SIMS = HERE.parent
 OUT = HERE / "out"
+sys.path.insert(0, str(SIMS.parent / "tools"))
+from run_simulation import run_simulation  # noqa: E402
 
 # (simulation folder, parameter file, result name)
 CHAIN = [
@@ -22,6 +22,7 @@ CHAIN = [
     # the same woofer section and the same datasheet curve with published_shape mode "replace", so the
     # two result documents can be read side by side to see what the option does
     ("source_response", HERE / "section_lf_replace.json", "section_lf_replace"),
+    ("source_response", HERE / "section_lf_terminal.json", "section_lf_terminal"),
     ("source_response", SIMS / "source_response" / "example.json", "section_mf"),
     ("source_response", HERE / "section_uhf.json", "section_uhf"),
     ("directivity", SIMS / "directivity" / "example.json", "directivity"),
@@ -30,6 +31,7 @@ CHAIN = [
     ("crossover_fit", SIMS / "crossover_fit" / "example.json", "crossover_fit"),
     ("board_nodal", SIMS / "board_nodal" / "example.json", "board_nodal"),
     ("whole_speaker", SIMS / "whole_speaker" / "example.json", "whole_speaker"),
+    ("room_response", SIMS / "room_response" / "example.json", "room_response"),
     # the full orbit has to exist before response_metrics can take an LFX from its sound power curve
     ("spinorama", SIMS / "spinorama" / "example.json", "spinorama"),
     ("cavity_modes", SIMS / "cavity_modes" / "example.json", "cavity_modes"),
@@ -40,6 +42,16 @@ CHAIN = [
     ("horn_design", SIMS / "horn_design" / "example.json", "horn_design"),
     ("open_baffle", SIMS / "open_baffle" / "example.json", "open_baffle"),
     ("transmission_line", SIMS / "transmission_line" / "example.json", "transmission_line"),
+    ("assembly_geometry", SIMS / "assembly_geometry" / "example.json", "assembly_geometry"),
+    ("exterior_bem", SIMS / "exterior_bem" / "example.json", "exterior_bem"),
+    ("room_modal", SIMS / "room_modal" / "example.json", "room_modal"),
+    ("room_rays", SIMS / "room_rays" / "example.json", "room_rays"),
+    ("coupled_cabinet", SIMS / "coupled_cabinet" / "example.json", "coupled_cabinet"),
+    ("distributed_loading", SIMS / "distributed_loading" / "example.json", "distributed_loading"),
+    ("nonlinear_driver", SIMS / "nonlinear_driver" / "example.json", "nonlinear_driver"),
+    ("electrothermal_network", SIMS / "electrothermal_network" / "example.json", "electrothermal_network"),
+    ("network_fit", SIMS / "network_fit" / "example.json", "network_fit"),
+    ("system_scenarios", SIMS / "system_scenarios" / "example.json", "system_scenarios"),
 ]
 
 
@@ -51,20 +63,17 @@ def main(selection=None):
             continue
         script = SIMS / folder / "run.py"
         if not script.exists() or not params.exists():
-            print(f"skip {folder}: missing script or example")
+            print(f"FAIL {folder}: missing script or example")
+            failures += 1
             continue
-        proc = subprocess.run([sys.executable, str(script), "--input", str(params), "--out", str(OUT), "--name", name],
-                              capture_output=True, text=True)
         path = OUT / f"{name}.json"
-        status = "missing"
-        if path.exists():
-            status = json.loads(path.read_text()).get("status")
-        ok = proc.returncode == 0 and status == "computed"
-        failures += 0 if ok else 1
-        print(f"{'ok  ' if ok else 'FAIL'} {folder:20s} -> {path.name} ({status})")
-        if not ok:
-            print(proc.stdout[-2000:])
-            print(proc.stderr[-4000:])
+        try:
+            run_simulation(folder, params, OUT, name)
+        except (ValueError, RuntimeError, OSError) as exc:
+            failures += 1
+            print(f"FAIL {folder:20s} -> {path.name}: {exc}")
+        else:
+            print(f"ok   {folder:20s} -> {path.name} (computed)")
     return 1 if failures else 0
 
 

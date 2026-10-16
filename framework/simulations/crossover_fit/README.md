@@ -36,7 +36,7 @@ python framework/simulations/crossover_fit/run.py --input params.json --out resu
 - `statistics`: in-band RMS error and ripple after the fit, input impedance minimum, objective calls used, variable count.
 - `fitted_efficiency` and `fitted_parts`: what the fitted network loses and how many bodies it asks for, on the same definitions `crossover_network` uses, so both are visible while the topology can still change rather than after it is quantized.
 - `ablation` when requested: `reference` (the fitted network's own error) and one `trials[]` row per element with `delta_rms_db` — what the rest of the network cannot recover once that element is gone.
-- `quantization` when stock lists are given: each fitted value snapped to the nearest stock value with its error, the whole-network error and impedance minimum after snapping, and `sections` ready to paste.
+- `quantization` when stock lists are given: joint stock trials with per-value deviations, whole-network error/load, combination counts and the minimum-cost trial's realized sections.
 
 ## Asking what an element is worth
 
@@ -48,7 +48,7 @@ The pass costs roughly one fit per element. The call budget defaults to `max_nfe
 
 ## Quantizing to stock
 
-Values are **not** constrained to the stock grid during the search: a fit pinned to a grid hides which direction a value wanted to move, and `values_at_bound` becomes unreadable. Instead the fit runs free and `quantization` snaps each value afterwards to the nearest stock value in log space, then evaluates the snapped network as a whole, because the errors interact and are not the sum of the individual snap errors.
+The continuous fit shows the numerical direction within its bounds. `quantization` then evaluates joint combinations from the supplied stock records, preserving actual losses and identities. It reports the finite search size and every evaluated trial rather than assuming independent nearest choices capture interactions.
 
 A large `error_percent` on a small value is the usual sign that the stock list does not carry what this topology wants — a tweeter coil of 0.015 mH against a grid starting at 0.1 mH is a topology finding, not a rounding detail. Rerun `crossover_network` on `quantization.sections` with the real DCR and ESR of the parts before treating any of it as the design.
 
@@ -58,4 +58,12 @@ The fit searches the topology and bounds you give it against the source files yo
 
 `results.fitted_network_audit[]` runs `crossover_network`'s compensation audit and insertion loss on the **fitted** values, so the two questions that decide whether a fit is worth quantizing are answered in the same document: does each driver still look resistive across its crossover, and what did the real parts cost in level. Mark a Zobel or a notch with `"role": "compensation"` and name the crossover with `sections[].compensation_audit = {crossover_hz, octaves}`; add `sections[].passband_hz` for the insertion-loss figures.
 
-Read it with `statistics.values_at_bound` before anything else: a value resting on a bound means the topology or the bound is wrong, not that the optimizer finished.
+Read it with `statistics.values_at_bound` before anything else: a value resting on a bound needs investigation of the stock range, topology and target; a constrained optimum may legitimately rest there.
+
+Use explicit fit bounds derived from actual stock values or realizable banks when designing a build. The default bounds around a seed are numerical conveniences. Set an explicit target from the bass-supported level; `auto` inherits the starting network's losses. After snapping, put the actual stock DCR, ESR and ratings into the realized parameter file and rerun the network and whole speaker. Record any missing stock fallback. For an impedance/level trade, compare actual coil/DCR choices rather than assuming lower DCR is always preferable.
+
+## Retained trials and joint stock
+
+The fit retains its lowest evaluated objective, including the initial point, when a call budget ends. Reported RMS belongs to the retained realization. Quantization evaluates joint combinations from the supplied lists, up to `max_stock_trials` (default 256), and reports evaluated/total counts. Stock entries can be numeric values or records containing the value, `sku`, DCR/ESR, rating and price together. Circuit IDs and connectivity stay fixed. Monetary output separates known subtotal and unpriced items.
+
+For explicit numerical constraints, seeded global search or general nodal networks, use `network_fit`. Neither app's numerical minimum is a final design selection.

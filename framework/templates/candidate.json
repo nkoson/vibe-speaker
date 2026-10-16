@@ -21,7 +21,7 @@
   "uhf": {"x_mm": 0, "z_mm": 900, "depth_mm": 15, "tilt_deg": 0},
   "ports": [{"x_mm": -150, "z_mm": 250}, {"x_mm": 150, "z_mm": 250}]
  },
- "crossover": {"file": "sim/crossover_network.json", "targets_hz": [600, 8000], "polarity": [1, -1, 1]},
+ "crossover": {"file": "sim/crossover_network.json", "parameter_file": "sim/crossover_network.params.json", "targets_hz": [600, 8000], "polarity": [1, -1, 1]},
  "simulation_files": {
   "lf_box": "sim/lf_box.json", "sections": ["sim/section_lf.json", "sim/section_mf.json", "sim/section_uhf.json"], "baffle": "sim/baffle.json",
   "crossover_fit": "sim/crossover_fit.json", "crossover_network": "sim/crossover_network.json", "whole_speaker": "sim/whole_speaker.json",

@@ -27,3 +27,9 @@ python framework/simulations/board_nodal/run.py --input board.json --out results
 Per mode: `sources[]` (active flag, `current_rms_a`, `input_z_ohm` complex record, minimum in 20 to 20000 Hz), `loads[]` (`transfer` = load voltage per active-source volt, complex record; `voltage_rms`, `current_rms_a`, `power_w`), `components[]` (curves and maxima with the frequency of maximum power, `rating` echoed), `wires[]` maxima, `kcl_relative_residual` and `power_relative_residual` (numerical health of the solve), and `tolerance` percentiles of each load transfer when draws were requested.
 
 Compare `modes[].loads[].transfer` with `crossover_network` `results.sections[].transfer` (sign included: note the polarity is realized by wiring here) to confirm the board matches the intended ladder in every mode. Feed a load transfer into `whole_speaker` as a section `transfer` to hear the board rather than the ideal ladder.
+
+## Mutual inductance and finite transformers
+
+An inductor can declare `mutual_with: {other_coil_id: coupling}` with signed `-1 < coupling < 1`. The branch impedance matrix includes `j omega k sqrt(L1 L2)` and is checked for positive-definite inductance. Coupling values are explicit inputs, not inferred from board coordinates.
+
+`transformers[]` supplies `id`, `primary_nodes`, `secondary_nodes`, `primary_inductance_mh`, `turns_ratio` (Np/Ns), `coupling`, `primary_dcr_ohm` and `secondary_dcr_ohm`. It expands to two coupled winding records and retains finite magnetizing/leakage behavior. An ideal transformer is approached as an explicit parameter limit; no silent perfect-coupling substitution is made. Current and power conservation are evaluated from the coupled solution.

@@ -21,7 +21,7 @@ NOTES = [
     "The near/far-field border is computed for a line source of the declared coherent radiating height. A conventional multiway is not an isophasic line source, so the border is an indication of where far-field assumptions become safe and not a computed property of this geometry.",
 ]
 VALIDITY = [
-    "Every angle map here is a far-field construction. Where the observation distance sits inside the near-field border reported in results.arrays, level falls 3 dB per doubling of distance rather than 6 and the polar data is not a far-field property at all.",
+    "Responses are sampled at the declared distance using per-source propagation. A finite array has no universal near-field distance law; compare explicit distance sweeps. Analytical source directivity retains its own far-field approximation.",
     "Point sources with analytical directivity: no cabinet scattering beyond the supplied baffle factors, no enclosure reflections, no BEM. The crossover region on a real cabinet is shaped by exactly those effects.",
     "The sum is valid where each section's own directivity model is valid. A piston pattern assumes pistonic behaviour, which stops at break-up; a horn coverage prior carries no throat or mouth physics.",
     "The forward hemisphere only: a section at or behind 90 degrees from its axis contributes nothing unless a rear-hemisphere prior is declared. Sound power and any directivity index computed from this model without one are front-hemisphere figures.",

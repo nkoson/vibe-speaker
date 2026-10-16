@@ -1,0 +1,33 @@
+{
+  "driver": {
+    "ts": {
+      "fs_hz": 35,
+      "vas_l": 248.9,
+      "qms": 6.0,
+      "qes": 0.34,
+      "re_ohm": 5.1,
+      "le_mh": 0.72,
+      "sd_cm2": 857,
+      "xmax_mm": 5.75,
+      "xmax_standard": "geometric",
+      "mms_g": 85.2,
+      "bl_tm": 16.7,
+      "displacement_limits": {
+        "xbl_mm": 6.4,
+        "xc_mm": 7.1,
+        "xl_mm": 5.2
+      }
+    }
+  },
+  "drive": {
+    "tones": [
+      {
+        "frequency_hz": 80,
+        "voltage_rms": 1
+      }
+    ]
+  },
+  "duration_s": 0.05,
+  "sample_rate_hz": 5000,
+  "sealed_volume_l": 50
+}
