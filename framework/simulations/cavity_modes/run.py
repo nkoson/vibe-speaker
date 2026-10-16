@@ -15,7 +15,7 @@ from _common import cli, acoustics, geometry  # noqa: E402
 from _common.acoustics import C, RHO, P0  # noqa: E402
 
 NAME = "cavity_modes"
-VERSION = "1.1"
+VERSION = "1.2"
 NOTES = [
     "Rigid-wall modal model of the rectangular bass chamber: an analytical mode basis (fast) or a 3D finite-volume basis that masks brace windows and port tubes (slower). Lining enters as Miki surface admittance damping on the lined walls only.",
     "cone_deviation_db compares the cone velocity through the cavity model with the lumped box model of lf_box at the same drive; outlet_relative_db is the outlet pressure relative to the cone's mean level in 150 to 300 Hz.",
@@ -35,6 +35,7 @@ def _geometry(params):
     radius = math.sqrt(float(driver["ts"]["sd_cm2"]) * 1e-4 / math.pi)
     outlet = params.get("outlet")
     patches = []
+    patch_axes, patch_signs = [], []
     o_radius = 0.0
     if outlet:
         kind = outlet.get("type", "port")
@@ -42,18 +43,52 @@ def _geometry(params):
         if kind == "port":
             o_radius = cli.positive(outlet.get("inner_diameter_mm"), "outlet.inner_diameter_mm") / 2000
             length = cli.positive(outlet.get("length_mm"), "outlet.length_mm") / 1000
-            inner_y = dims[1] - length if face == "rear" else length
             for p in cli.require(outlet, "positions", label="outlet"):
-                patches.append(np.array([float(p["x_mm"]) / 1000, inner_y, float(p["z_mm"]) / 1000]))
+                pf = p.get("face", face)
+                faces = {"front": (1, 1), "rear": (1, -1), "left": (0, 1), "right": (0, -1)}
+                if pf not in faces:
+                    raise cli.InputError("port face must be front, rear, left or right")
+                axis, sign = faces[pf]
+                inside = float(outlet.get("internal_length_mm", length * 1000)) / 1000
+                if not 0 < inside < dims[axis]:
+                    raise cli.InputError("internal port length must fit inside its cavity axis")
+                tangent = 1 - axis
+                point = np.zeros(3)
+                point[axis] = inside if sign > 0 else dims[axis] - inside
+                point[tangent] = float(p["y_mm" if tangent == 1 else "x_mm"]) / 1000
+                point[2] = float(p["z_mm"]) / 1000
+                patches.append(point)
+                patch_axes.append(axis)
+                patch_signs.append(sign)
         elif kind == "passive_radiator":
             pr = acoustics.pr_elements(cli.require(outlet, "radiator", label="outlet"))
             o_radius = math.sqrt(pr["sd"] / math.pi)
             p = cli.require(outlet, "position", label="outlet")
             patches.append(np.array([float(p["x_mm"]) / 1000, dims[1] if face == "rear" else 0.0, float(p["z_mm"]) / 1000]))
+            patch_axes.append(1)
+            patch_signs.append(-1 if face == "rear" else 1)
         else:
             raise cli.InputError(f"unknown outlet.type '{kind}'")
     return dict(dims=dims, braces=braces, lining=lining, cone=cone, cone_radius=radius, patches=patches, outlet_radius=o_radius,
+                patch_axes=patch_axes, patch_signs=patch_signs,
                 outlet=outlet, wall_thickness=float(cav.get("wall_thickness_mm", 18.0)) / 1000)
+
+
+def brace_solid_mask(brace, X, Y, Z, dims):
+    """Solid slab minus the declared apertures; coordinates are cavity-local."""
+    z0 = float(brace["z_mm"]) / 1000
+    slab = (Z >= z0) & (Z < z0 + float(brace.get("thickness_mm", 18)) / 1000)
+    if "holes" in brace:
+        opening = np.zeros(np.broadcast_shapes(X.shape, Y.shape, Z.shape), bool)
+        for hole in brace["holes"]:
+            r = cli.positive(hole.get("diameter_mm"), "brace hole diameter_mm") / 2000
+            x, y = float(hole["x_mm"]) / 1000, float(hole["y_mm"]) / 1000
+            if x-r < 0 or x+r > dims[0] or y-r < 0 or y+r > dims[1]:
+                raise cli.InputError("brace hole extends beyond the cavity footprint")
+            opening |= (X-x)**2 + (Y-y)**2 < r*r
+        return slab & ~opening
+    rim = float(brace.get("rim_mm", 60)) / 1000
+    return slab & ((X < rim) | (X > dims[0]-rim) | (Y < rim) | (Y > dims[1]-rim))
 
 
 def rectangular_modes(g, max_hz):
@@ -66,15 +101,16 @@ def rectangular_modes(g, max_hz):
     indices, k, fn = indices[keep][order], k[keep][order], fn[keep][order]
     norm = np.sqrt(np.prod(np.where(indices == 0, 1., 2.), axis=1))
 
-    def disk(center, radius):
-        q = np.hypot(k[:, 0], k[:, 2]) * radius
+    def disk(center, radius, axis=1):
+        tangents = [i for i in range(3) if i != axis]
+        q = np.linalg.norm(k[:, tangents], axis=1) * radius
         average = np.ones_like(q)
         nz = q > 1e-10
         average[nz] = 2 * j1(q[nz]) / q[nz]
         return norm * np.prod(np.cos(k * center), axis=1) * average
 
     e0 = disk(g["cone"], g["cone_radius"])
-    ep = sum(disk(p, g["outlet_radius"]) for p in g["patches"]) / len(g["patches"]) if g["patches"] else np.zeros_like(fn)
+    ep = sum(disk(p, g["outlet_radius"], axis) for p, axis in zip(g["patches"], g["patch_axes"])) / len(g["patches"]) if g["patches"] else np.zeros_like(fn)
     # Lined: both side walls, rear, top and bottom; the front is unlined.
     boundary = 2 * np.where(indices[:, 0] == 0, 1, 2) / L[0] + np.where(indices[:, 1] == 0, 1, 2) / L[1] + 2 * np.where(indices[:, 2] == 0, 1, 2) / L[2]
     return dict(frequency_hz=fn, cone=e0, outlet=ep, boundary_ratio_m_inv=boundary, indices=indices, method="rectangular analytical modes",
@@ -89,9 +125,9 @@ def finite_volume_modes(g, mesh_mm, max_hz, include_braces=True, include_tubes=T
         if include_braces:
             for brace in g["braces"]:
                 rim = float(brace.get("rim_mm", 60.0)) / 1000
-                if axis < 2:
+                if axis < 2 and "holes" not in brace:
                     v += [rim, L - rim]
-                else:
+                elif axis == 2:
                     z0 = float(brace["z_mm"]) / 1000
                     v += [z0, z0 + float(brace.get("thickness_mm", 18.0)) / 1000]
         edges.append(np.array(sorted(set(round(x, 9) for x in v if 0 <= x <= L))))
@@ -104,17 +140,14 @@ def finite_volume_modes(g, mesh_mm, max_hz, include_braces=True, include_tubes=T
         fluid &= geometry.air_mask(g["assembly"], np.stack([X,Y,Z],axis=-1))
     if include_braces:
         for brace in g["braces"]:
-            rim = float(brace.get("rim_mm", 60.0)) / 1000
-            z0 = float(brace["z_mm"]) / 1000
-            z1 = z0 + float(brace.get("thickness_mm", 18.0)) / 1000
-            rim_mask = (X < rim) | (X > dims[0] - rim) | (Y < rim) | (Y > dims[1] - rim)
-            fluid &= ~((Z >= z0) & (Z < z1) & rim_mask)
+            fluid &= ~brace_solid_mask(brace, X, Y, Z, dims)
     outlet = g["outlet"] or {}
     if include_tubes and outlet.get("type") == "port":
         od = float(outlet.get("outer_diameter_mm", outlet["inner_diameter_mm"] * 1.06)) / 2000
-        for p in g["patches"]:
-            inside_tube = (X - p[0]) ** 2 + (Z - p[2]) ** 2 < od ** 2
-            along = (Y > p[1]) if outlet.get("face", "rear") == "rear" else (Y < p[1])
+        coordinates = [X, Y, Z]
+        for p, axis, sign in zip(g["patches"], g["patch_axes"], g["patch_signs"]):
+            inside_tube = sum((coordinates[j]-p[j])**2 for j in range(3) if j != axis) < od**2
+            along = coordinates[axis] < p[axis] if sign > 0 else coordinates[axis] > p[axis]
             fluid &= ~(inside_tube & along)
     ids = np.full(shape, -1, int)
     ids[fluid] = np.arange(np.count_nonzero(fluid))
@@ -168,24 +201,26 @@ def finite_volume_modes(g, mesh_mm, max_hz, include_braces=True, include_tubes=T
     face_area = (widths[0][:, None, None] * np.ones(shape) * widths[2][None, None, :])[fluid]
     patch_vectors = []
 
-    def average_patch(x, z, r, y, front=False):
-        plane = 0 if front else min(len(centers[1]) - 1, max(0, np.searchsorted(centers[1], y) - (0 if y >= dims[1] else 0)))
-        if not front and y < dims[1]:
-            plane = max(0, np.searchsorted(centers[1], y) - 1)
-        if not front and y >= dims[1]:
-            plane = len(centers[1]) - 1
-        choose = (np.abs(coords[:, 1] - centers[1][plane]) < 1e-8) & ((coords[:, 0] - x) ** 2 + (coords[:, 2] - z) ** 2 <= r * r)
+    def average_patch(center, r, axis=1, sign=1):
+        plane = np.searchsorted(centers[axis], center[axis]) - (1 if sign < 0 else 0)
+        plane = int(np.clip(plane, 0, len(centers[axis])-1))
+        tangents = [j for j in range(3) if j != axis]
+        choose = (np.abs(coords[:, axis]-centers[axis][plane]) < 1e-8) & (np.sum((coords[:, tangents]-center[tangents])**2, axis=1) <= r*r)
         if not np.any(choose):
             raise cli.InputError("a source patch found no fluid cells; check positions against braces and tubes")
-        weight = face_area[choose]
+        areas = np.ones(shape)
+        for j in tangents:
+            ash = [1, 1, 1]; ash[j] = len(widths[j])
+            areas *= widths[j].reshape(ash)
+        weight = areas[fluid][choose]
         vector = np.zeros(n)
         vector[choose] = weight / weight.sum()
         patch_vectors.append(vector)
         return vector @ psi
 
-    e0 = average_patch(g["cone"][0], g["cone"][2], g["cone_radius"], 0.0, True)
+    e0 = average_patch(g["cone"], g["cone_radius"])
     if g["patches"]:
-        ep = sum(average_patch(p[0], p[2], g["outlet_radius"], p[1], p[1] <= 1e-9) for p in g["patches"]) / len(g["patches"])
+        ep = sum(average_patch(p, g["outlet_radius"], axis, sign) for p, axis, sign in zip(g["patches"], g["patch_axes"], g["patch_signs"])) / len(g["patches"])
         patches = np.column_stack([patch_vectors[0], np.mean(patch_vectors[1:], axis=0)])
     else:
         ep = np.zeros_like(fn)
