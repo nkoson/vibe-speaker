@@ -156,8 +156,10 @@ def solve(f, components, wires, sources, loads, mode, load_z, scale=None):
             root=nodes.root(pin)
             if root in index: incidence[index[root],ei]+=sign
             else: fixed_drop[:,ei]+=sign*fixed[root]
-    matrix = np.einsum('ie,fej,kj->fik',incidence,branch_y,incidence)
-    rhs = -np.einsum('ie,fej,fj->fi',incidence,branch_y,fixed_drop)
+    # Contract in stages rather than enumerating the full five-index product.
+    # This is the same nodal stamp, including declared mutual inductance.
+    matrix = np.einsum('ie,fej,kj->fik',incidence,branch_y,incidence,optimize=True)
+    rhs = -np.einsum('ie,fej,fj->fi',incidence,branch_y,fixed_drop,optimize=True)
     if n:
         try:
             values = np.linalg.solve(matrix, rhs[..., None])[..., 0]
