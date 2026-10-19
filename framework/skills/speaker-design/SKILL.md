@@ -19,7 +19,7 @@ The companion skills cover candidate creation (`speaker-designer`), comparison (
 
 ## Interpret the brief and establish a baseline
 
-Start from `framework/templates/project.json`. Record the user's quantitative targets, qualitative priorities, physical constraints and authorized iteration budget. If no iteration count was given, three rounds of three candidates is a useful starting budget, with detailed work focused on finalists. Clarify only ambiguities that materially change the speaker.
+Start from `framework/templates/project.json`. Record the user's quantitative targets, qualitative priorities, physical constraints and authorized iteration budget. If no iteration count was given, three rounds of three detailed candidates is a useful starting budget, with expensive analysis focused on finalists. This is not a limit on researched parts, catalogue coverage, inexpensive screening or stock alternatives. An explicit user research/time limit still governs. Clarify only ambiguities that materially change the speaker.
 
 Use [brief-to-experiments](references/brief-to-experiments.md) to turn qualitative goals into observable comparisons. Record each objective's band, curve, drive, units, direction, tolerance, priority and evidence. Separate user constraints from designer diagnostics. Preserve the user's targets through corrections; a missed objective is evidence to interpret rather than a reason to move the target.
 
@@ -31,9 +31,11 @@ For inherited work or changed input conventions, use [simulation integrity](refe
 
 Record reference-product quantities with source and conditions: voltage or power basis, distance, radiation environment, band, smoothing and whether the quantity was published directly or derived from a plot. Keep unknown values explicit. Circuit/construction facts, response data and subjective claims are different evidence types.
 
-For bass-critical briefs, use `framework/templates/feasibility.md` to compare plausible drivers, alignments and sizes before choosing upper drivers. Include finite-baffle/outlet output, real electrical loss, sustained extension and physical output limits. Research enough alternatives across manufacturers to expose meaningful tradeoffs; six to ten candidates per important role is a useful initial breadth rather than a quota.
+Follow [component research and search expansion](references/component-research.md) before shortlisting and whenever an inventory gap affects a design decision. Start an `inventory/search-review.md` from `framework/templates/inventory-search.md`. Cover every required component role, including drivers, horns/waveguides, passive radiators, complete or modular ports, crossover stock and other performance- or construction-critical parts. A previous project's inventory, one retailer or one familiar manufacturer is a seed, not the search boundary.
 
-Crossover stock belongs in the inventory too. Preserve exact SKU, value, tolerance, losses, ratings, package size, price basis and availability together. Include affordable alternatives and actual catalogue ranges. Prefer the generally available part meeting the modeled need; evaluate a premium alternative through a concrete electrical, thermal or packaging difference.
+For an open major driver role, research roughly 15–25 materially distinct models across at least four manufacturers where the relevant market permits. These are starting breadth targets, not a cap, a substitute for catalogue coverage, or a reason to pad the list with duplicates. For narrower markets or user-fixed choices, record the applicable catalogue search and why the meaningful pool is smaller. Survey loading hardware and crossover catalogue families by their physical/electrical coverage, following the component-specific procedure; a driver-count target is not a useful stock-value limit.
+
+For bass-critical briefs, use `framework/templates/feasibility.md` to compare plausible drivers, alignments and sizes before committing to upper drivers. Research upper-driver and loading alternatives in parallel with this screen so an early LF choice does not silently fix the rest of the system. Include finite-baffle/outlet output, real electrical loss, sustained extension and physical output limits. Preserve broad research records separately from the smaller simulation shortlist, with reasons and evidence for exclusions.
 
 ## Iterate through connected simulations
 
@@ -47,7 +49,7 @@ When a model/input correction changes earlier evidence, record the cause, affect
 
 ## Select and deliver
 
-Make a definite recommendation using the user's central priorities, realized construction and robustness evidence. Explain genuine tradeoffs and residual misses. The best numerical objective alone is not the selection. When useful iterations remain, work on a central miss before polishing construction details that would be discarded after a concept change.
+Make a definite recommendation using the user's central priorities, realized construction and robustness evidence. Check the inventory search review: unresolved coverage gaps and triggered expansion requests need a follow-up search or an explicit user-scope/budget limitation before claiming a best available choice. Explain genuine tradeoffs and residual misses. The best numerical objective alone is not the selection. When useful iterations remain, work on a central miss before polishing construction details that would be discarded after a concept change.
 
 For a selected construction design, use `speaker-documentation` to produce a complete PDF with source drawings and plots alongside it. Deliver final stock values, machining dimensions, wiring and useful placement guidance. If the available work does not approach the central brief, explain the closest option and alternatives honestly; respect the user's requested deliverable and budget.
 

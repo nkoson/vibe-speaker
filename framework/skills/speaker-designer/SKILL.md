@@ -15,6 +15,8 @@ Start with the simplest physical model that resolves the decision, then add deta
 
 ## Prepare a candidate
 
+Read the project's inventory search review and [component research procedure](../speaker-design/references/component-research.md). The inventory is expandable: request or perform a targeted search when fit, loading, cost or physical realization exposes a gap. A candidate's selected parts are not a restriction on alternatives for the next comparison.
+
 1. Populate `candidate.json` from the template, including parent, design intent and chosen parts.
 2. Establish the LF envelope with `lf_box` and appropriate loss/volume/tuning scenarios. Inspect driver parameter basis, efficiency/extension trade, sustained cutoffs, current, excursion and outlet limits at the actual drive. For lines, folded horns or chamber networks, use `distributed_loading` to retain the motor load and separate radiating paths.
 3. Define cabinet geometry before fitting. Use `assembly_geometry` and `framework/templates/geometry-audit.md` for shared IDs, solids, air domains, joints, treatment zones, source normals and installed clearances. Reconcile actual net volume with the alignment. Consult `framework/references/cabinet-construction.md` and [construction audit](../speaker-documentation/references/construction-audit.md) for machining and assembly.
@@ -29,7 +31,7 @@ Use `framework/references/crossover-design.md` and [crossover search](references
 
 `crossover_fit` handles ladders and returns continuous and joint-stock numerical trials. `network_fit` uses `board_nodal` for general netlists and explicit numerical constraints, including terminal exposure, load and component power. Targets and constraint values come from the brief and sourced physical conditions. The returned minima and margin signs are evidence for your selection, not a design verdict.
 
-Test known and perturbed starts, preserve the incumbent, examine active bounds and inventory gaps, and inspect all evaluated stock combinations when a sparse series matters. Keep losses, SKU, dimensions and ratings attached to the actual selected values. A response score that omits the top octave, branch leakage or a competing bass/level objective can hide a material trade.
+Test known and perturbed starts, preserve the incumbent, examine active bounds and inventory gaps, and inspect all evaluated stock combinations when a sparse series matters. Before freezing a bank, search single-body and nearby-stock alternatives and refit them as needed under the component research procedure. Count actual bodies, cost and installation size during selection. Keep losses, SKU, dimensions and ratings attached to the actual selected values. A response score that omits the top octave, branch leakage or a competing bass/level objective can hide a material trade.
 
 Run the realized network through `crossover_network` or `board_nodal` with tolerances and the relevant drive. Read frequency-coincident power, physical-leaf stress, terminal transfer and complex input load. For mutual coils or transformers, use explicit coupling parameters and compare plausible coupling scenarios; a drawing does not determine coupling automatically. Use `framework/references/crossover-assembly.md` to connect the circuit to the physical board.
 

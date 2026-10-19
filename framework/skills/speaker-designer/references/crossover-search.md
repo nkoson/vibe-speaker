@@ -16,7 +16,7 @@ If the user requests a build-up from zero, simulate the zero-part state. Add one
 
 ## Stock and optimization
 
-Derive stock ranges from this driver's impedance, desired shelf, notch frequencies and level mismatch. Check catalogue coverage and internal gaps as well as endpoints; an inherited list's endpoint is not a manufacturer's limit. Investigate meaningful boundary optima before claiming infeasibility. Keep electrical losses, price and package dimensions attached to one exact SKU; do not combine attributes from different coil shapes or wire gauges.
+Derive stock ranges from this driver's impedance, desired shelf, notch frequencies and level mismatch. Follow [component research and search expansion](../../speaker-design/references/component-research.md) to populate actual catalogue series across suppliers, investigate internal gaps and endpoints, and compare single-body realizations before freezing banks. Template values, an inherited shortlist and an optimizer's bounds are not catalogue limits. Keep electrical losses, price and package dimensions attached to one exact SKU; do not combine attributes from different coil shapes or wire gauges.
 
 Compare continuous and realized values. For sparse series, fit with the critical part held at actual stock, or evaluate joint combinations bracketing the fitted values and refine several promising combinations. Independent nearest snapping can miss interactions. Read the evaluated versus total combination counts; bounded stock enumeration can leave unexplored combinations.
 

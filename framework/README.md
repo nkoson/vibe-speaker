@@ -29,7 +29,7 @@ framework/
 ## How the pieces fit
 
 1. The user describes a speaker and a reference product. The `speaker-design` skill creates `framework/projects/<slug>/` with the brief, the iteration limit and the tolerances the user cares about.
-2. The agent researches the reference and an extensive inventory of candidate drivers, horns, radiators and crossover stock from primary sources, saving each part as JSON in the project's inventory.
+2. The agent researches the reference and a broad inventory covering every required component role: drivers, horns/waveguides, passive radiators, complete/modular ports, crossover stock and other critical parts. The [component research procedure](skills/speaker-design/references/component-research.md) separates catalogue discovery from simulation shortlists, records coverage/exclusions, and requires search expansion when gaps or impractical banks constrain a design. Each project keeps exact part records and an `inventory/search-review.md`; detailed candidate limits do not cap the researched pool.
 3. Following `speaker-designer`, the agent builds candidates: it writes parameter files, runs the simulation apps, reads the result documents and iterates on alignment, cabinet, crossover and placement.
 4. Following `speaker-evaluator`, the agent scores every candidate from the result documents against the brief, the reference and the other candidates, and writes refinement requests.
 5. Design and evaluation alternate until the iteration limit is reached. The best candidate is selected with a written justification.
