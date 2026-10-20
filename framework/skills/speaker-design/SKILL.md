@@ -19,7 +19,7 @@ Projects live in `framework/projects/<slug>/` and remain outside Git. `project.j
 
 Use `.speaker-venv/bin/python` and `framework/tools/run_simulation.py` for project runs. Read `framework/simulations/README.md` and each selected app's contract before its first use. Keep dependency execution in order and inspect command status and fresh result identity before using a result. One app per command makes failures and provenance easier to interpret.
 
-The companion skills cover candidate creation (`speaker-designer`), comparison (`speaker-evaluator`), builder documentation (`speaker-documentation`) and accumulated experience (`speaker-learnings`). Their procedures are guidance to adapt to the brief. Engineering sources live in `framework/references/README.md`; consult the reference covering each physical decision.
+The companion skills cover candidate creation (`speaker-designer`), comparison (`speaker-evaluator`), builder documentation (`speaker-documentation`), accumulated experience (`speaker-learnings`) and fabrication CAD (`cad-drawing`, required by speaker-documentation). Their procedures are guidance to adapt to the brief. Engineering sources live in `framework/references/README.md`; consult the reference covering each physical decision.
 
 ## Interpret the brief and establish a baseline
 

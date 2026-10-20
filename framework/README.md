@@ -11,6 +11,7 @@ framework/
     speaker-designer/        how to build and refine a candidate with the simulations
     speaker-evaluator/       how to score, compare and send candidates back for refinement
     speaker-documentation/   how to write the final construction and performance documents
+    cad-drawing/             dimensioned cabinet fabrication drawings and native CAD exports
     speaker-learnings/       consult past learnings, write the postmortem, distill new learnings
   learnings/                 one advice file per learning from past projects, with INDEX.md
   references/                engineering principles with their sources: cabinet geometry and materials,
@@ -43,7 +44,7 @@ Simulations report; the model decides. No Python code in this folder marks a res
 
 ## Running
 
-`python3 framework/bootstrap.py --tests` creates `.speaker-venv` in the repository root, installs numpy, scipy, matplotlib, reportlab, pypdfium2 and pytest, runs the example chain and the tests. Then use `.speaker-venv/bin/python` for everything.
+`python3 framework/bootstrap.py --tests` creates `.speaker-venv` in the repository root, installs the simulation, plotting, PDF, CAD and test dependencies in `requirements.txt`, runs the example chain and the tests. Then use `.speaker-venv/bin/python` for everything.
 
 ```
 .speaker-venv/bin/python framework/simulations/examples/run_examples.py
@@ -57,3 +58,5 @@ Incorporated project findings are tracked in [the improvement plan](plans/incorp
 Simulation-only design is the default: the agent owns final stock values and construction choices, using sourced inputs and robustness studies. Room-aware work uses [room_response](simulations/room_response/README.md) for 3D rectangular-room reflection and seating scenarios. The [architecture and model coverage procedure](skills/speaker-designer/references/model-coverage.md) connects the available simulations; [cabinet construction](references/cabinet-construction.md) and [crossover assembly](references/crossover-assembly.md) cover physical realization. The [October incorporation record](plans/incorporate-learnings-2026-10-15.md) records the integrated project findings.
 
 The advanced chain includes shared assembly geometry, exterior boundary acoustics, driven room modes, triangulated reflected-energy transport, coupled cabinet radiation, distributed loading, general-network fitting, nonlinear/electrothermal states and correlated scenario replay. See [simulation methods](references/simulation-methods.md) and the designer's [connection guide](skills/speaker-designer/references/advanced-simulation.md). [Generated benchmarks](benchmarks/catalog.json) report equation errors and residuals; design decisions stay with the agent.
+
+Cabinet fabrication drawings use the mandatory [CAD drawing skill](skills/cad-drawing/SKILL.md). The [CAD tool contract](tools/cad-drawings.md) documents reusable PDF/DXF/STEP export from project geometry, native dimensions and interchange checks.

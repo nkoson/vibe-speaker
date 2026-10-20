@@ -1,6 +1,6 @@
 # Agent entry point
 
-This repository is a loudspeaker design framework in which the agent designs, evaluates and documents while standalone Python applications compute the physics. For any request to design, continue, compare or document a loudspeaker, read and follow `framework/skills/speaker-design/SKILL.md`; it names the companion skills (`speaker-designer`, `speaker-evaluator`, `speaker-documentation`, `speaker-learnings`) and when to use them.
+This repository is a loudspeaker design framework in which the agent designs, evaluates and documents while standalone Python applications compute the physics. For any request to design, continue, compare or document a loudspeaker, read and follow `framework/skills/speaker-design/SKILL.md`; it names the companion skills (`speaker-designer`, `speaker-evaluator`, `speaker-documentation`, `speaker-learnings`, `cad-drawing`) and when to use them.
 
 The same skill folders are linked from `.agents/skills/` and `.claude/skills/` so that hosts which discover skills in either location find them. Each skill is a folder with a `SKILL.md` whose frontmatter carries `name` and `description`.
 

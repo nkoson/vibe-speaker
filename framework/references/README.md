@@ -17,6 +17,7 @@ References are not learnings. A learning in `framework/learnings/` says what hap
 | [system-architecture](system-architecture.md) | Deciding how many sections a design needs and where the crossover frequencies go |
 | [transducer-types](transducer-types.md) | Choosing or judging a dome, a compression driver, a horn or a waveguide |
 | [measurement-and-model-limits](measurement-and-model-limits.md) | Reading a simulated result for what it is worth, or saying what measuring it would take |
+| [cad-drawing](cad-drawing.md) | Creating dimensioned fabrication CAD sheets, hole schedules, sections and editable exports |
 | [cabinet-geometry](cabinet-geometry.md) | Sizing or placing anything inside or on a cabinet, and before claiming that something does or does not fit |
 | [crossover-design](crossover-design.md) | Choosing a topology, fitting values, quantizing to stock, reading dissipation or impedance, or judging a crossover result |
 | [baffle-and-driver-placement](baffle-and-driver-placement.md) | Choosing the baffle size, placing the drivers on it, setting the crossover frequencies that spacing has to survive, or judging an off-axis result |
