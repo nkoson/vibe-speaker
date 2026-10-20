@@ -6,7 +6,7 @@
 Project-specific geometry and sheet layout are data. This tool performs geometry,
 annotation, export and geometric checks; it does not choose an acoustic design.
 """
-import argparse, json, math, hashlib
+import argparse, json, math, hashlib, re
 from pathlib import Path
 import ezdxf
 from reportlab.pdfgen import canvas
@@ -16,6 +16,9 @@ from reportlab.pdfbase.pdfmetrics import stringWidth
 PAPERS={'A1':(841,594),'A2':(594,420),'A3':(420,297)}
 WEIGHTS={'OUTLINE':.5,'HIDDEN':.25,'CENTER':.25,'CUT':.5,'DIM':.25,'HATCH':.13,'ENVELOPE':.25,'LINING':.13}
 DASHES={'HIDDEN':[2,1],'CENTER':[6,1,1,1],'CUT':[8,2,1,2],'ENVELOPE':[6,1,1,1,1,1]}
+
+def dimension_text(value):
+    return f'{value:.2f}'.rstrip('0').rstrip('.')
 
 
 def rounded_points(x,y,w,h,r):
@@ -179,7 +182,8 @@ class View:
         if self.scale<=0:raise ValueError('scale must be positive')
         self.doc=ezdxf.new('R2010',setup=True);self.doc.units=4;self.doc.header['$MEASUREMENT']=1;self.doc.header['$LTSCALE']=1/self.scale;self.m=self.doc.modelspace()
         for layer,lw in WEIGHTS.items():self.doc.layers.new(layer,dxfattribs={'color':7,'lineweight':round(lw*100),'linetype':'DASHED' if layer=='HIDDEN' else 'CENTER' if layer in ['CENTER','CUT','ENVELOPE'] else 'CONTINUOUS'})
-        self.style={'dimtxt':2.8/self.scale,'dimasz':2/self.scale,'dimexo':1/self.scale,'dimexe':1.5/self.scale,'dimgap':1/self.scale,'dimtad':1,'dimdec':2,'dimzin':8}
+        self.style={'dimtxt':2.8/self.scale,'dimasz':2/self.scale,'dimexo':1/self.scale,'dimexe':1.5/self.scale,'dimgap':1/self.scale,'dimtad':1,'dimdec':2,'dimzin':8,
+                    'dimlfac':1,'dimscale':1,'dimtsz':0,'dimblk':'','dimtxsty':'Standard','dimlunit':2,'dimdsep':46}
         label=spec.get('label',spec['id'])
         ratio=f'{self.scale:g}:1' if self.scale>=1 else f'1:{1/self.scale:g}'
         self.sheet.text(*spec.get('label_at',[self.at[0],self.at[1]-14]),f"{label}   SCALE {ratio}",3,bold=True)
@@ -234,7 +238,7 @@ class View:
             length=2/self.scale;width=.65/self.scale;x,y=tip
             self.m.add_solid([tip,(x+length*math.cos(a)+width*math.sin(a),y+length*math.sin(a)-width*math.cos(a)),(x+length*math.cos(a)-width*math.sin(a),y+length*math.sin(a)+width*math.cos(a))],dxfattribs={'layer':'DIM'})
     def dimension(self,d):
-        p1,p2=d['p1'],d['p2'];angle=d.get('angle',0);base=d['base'];horizontal=angle==0;value=abs(p2[0]-p1[0]) if horizontal else abs(p2[1]-p1[1]);text=f'{value:g}'+(' REF' if d.get('reference') else '')
+        p1,p2=d['p1'],d['p2'];angle=d.get('angle',0);base=d['base'];horizontal=angle==0;value=abs(p2[0]-p1[0]) if horizontal else abs(p2[1]-p1[1]);text=dimension_text(value)+(' REF' if d.get('reference') else '')
         dim=self.m.add_linear_dim(base=base,p1=p1,p2=p2,angle=angle,text='<>'+(' REF' if d.get('reference') else ''),override=self.style,dxfattribs={'layer':'DIM'});dim.render();self.audit.append({'kind':'linear','value_mm':value,'entity_handle':dim.dimension.dxf.handle})
         a=(p1[0],base[1]) if horizontal else (base[0],p1[1]);b=(p2[0],base[1]) if horizontal else (base[0],p2[1]);gap=1/self.scale;extra=1.5/self.scale
         for p,q in [(p1,a),(p2,b)]:
@@ -249,8 +253,8 @@ class View:
     def diameter(self,d):
         e=self.byid[d['feature']];center=e['center'];radius=e['radius'];angle=math.radians(d.get('angle',30));tip=[center[0]+radius*math.cos(angle),center[1]+radius*math.sin(angle)];target=d['location'];prefix=d.get('prefix','');suffix=d.get('suffix','')
         dim=self.m.add_diameter_dim(center=center,radius=radius,angle=math.degrees(angle),location=target,override=self.style,dxfattribs={'layer':'DIM'})
-        dim.dimension.dxf.text=f'{prefix}%%c<>{suffix}';dim.render();self.audit.append({'kind':'diameter','value_mm':2*radius,'entity_handle':dim.dimension.dxf.handle})
-        self.leader({'points':[tip,target],'text':f'{prefix}D{2*radius:g}{suffix}'},native=False)
+        dim.dimension.dxf.text=f'{prefix}<>{suffix}';dim.render();self.audit.append({'kind':'diameter','value_mm':2*radius,'entity_handle':dim.dimension.dxf.handle})
+        self.leader({'points':[tip,target],'text':f'{prefix}D{dimension_text(2*radius)}{suffix}'},native=False)
     def finish(self):
         folder=self.sheet.out/'dxf';folder.mkdir(exist_ok=True);name=self.sheet.spec['id']+'_'+self.spec['id'];p=folder/(name+'.dxf');self.doc.saveas(p)
         reopened=ezdxf.readfile(p);audit=reopened.audit();
@@ -258,6 +262,11 @@ class View:
         for dim in self.audit:
             entity=reopened.entitydb[dim['entity_handle']];measured=entity.get_measurement()
             if abs(float(measured)-dim['value_mm'])>1e-7:raise ValueError('dimension mismatch: '+name)
+            labels=[e.plain_text() for e in reopened.blocks[entity.dxf.geometry].query('TEXT MTEXT')]
+            number=dimension_text(dim['value_mm'])
+            if not any(re.search(r'(?<![\d.])'+re.escape(number)+r'(?![\d.])',label) for label in labels):
+                raise ValueError('rendered dimension label mismatch: '+name)
+            dim['rendered_text']=labels
         return dict(view=name,scale=self.scale,units='mm',entities=len(self.m),dimensions=self.audit,file=str(p))
 
 

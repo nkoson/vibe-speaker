@@ -68,7 +68,7 @@ Use a CAD application's dimension objects, or a CAD library that creates actual 
 
 Before release:
 
-1. Reopen DXF and STEP exports. Check millimetre units, expected parts/features, positive valid solids, body bounds, hole centres/diameters and every dimension's measured value.
+1. Reopen DXF and STEP exports. Check millimetre units, expected parts/features, positive valid solids, body bounds, hole centres/diameters and every dimension's measured value and rendered numeric label. Set the dimension length factor explicitly to one; a library's default annotation style can scale labels while leaving the geometry unchanged.
 2. Compare drawing features against the selected geometry and bill of materials. Check datum transforms, mirrored panels, brace engagement, recess webs, hole ligaments and screw reach.
 3. Verify paper scales using model lengths and viewport/layout scale. Keep detail scales explicit; label an unscaled illustrative view as such.
 4. Render every sheet. Check overlapping text, crossed dimension strings, hidden-line clarity, section arrows, hatch boundaries and empty/obscured callouts.

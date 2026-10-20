@@ -65,6 +65,8 @@ def test_native_dimension_units_and_step_round_trip(tmp_path):
     assert sorted(float(d.get_measurement()) for d in dxf.modelspace().query('DIMENSION')) == pytest.approx([10, 100])
     # Dimension blocks own their labels; no duplicate hand-drawn labels remain.
     assert len(dxf.modelspace().query('TEXT')) == 0
+    labels = [text for dim in result['views'][0]['dimensions'] for text in dim['rendered_text']]
+    assert labels == ['100', 'Ø10']
     # DXF dimensions and circles stay full size when the PDF uses a 1:2 view.
     assert next(iter(dxf.modelspace().query('CIRCLE'))).dxf.radius == 5
     reopened = cq.importers.importStep(str(tmp_path/'step/cabinet-assembly.step')).val()
