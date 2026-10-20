@@ -35,9 +35,9 @@ def styles():
     return {
         "title": ParagraphStyle("title", parent=base["Title"], fontSize=24, leading=30, spaceAfter=12),
         "subtitle": ParagraphStyle("subtitle", parent=base["Normal"], fontSize=12, leading=16, textColor=colors.HexColor("#444444")),
-        "h1": ParagraphStyle("h1", parent=base["Heading1"], fontSize=18, leading=22, spaceBefore=6, spaceAfter=8),
-        "h2": ParagraphStyle("h2", parent=base["Heading2"], fontSize=14, leading=18, spaceBefore=10, spaceAfter=6),
-        "h3": ParagraphStyle("h3", parent=base["Heading3"], fontSize=11.5, leading=15, spaceBefore=8, spaceAfter=4),
+        "h1": ParagraphStyle("h1", parent=base["Heading1"], fontSize=18, leading=22, spaceBefore=6, spaceAfter=8, keepWithNext=True),
+        "h2": ParagraphStyle("h2", parent=base["Heading2"], fontSize=14, leading=18, spaceBefore=10, spaceAfter=6, keepWithNext=True),
+        "h3": ParagraphStyle("h3", parent=base["Heading3"], fontSize=11.5, leading=15, spaceBefore=8, spaceAfter=4, keepWithNext=True),
         "body": ParagraphStyle("body", parent=base["Normal"], fontSize=9.5, leading=13, alignment=TA_LEFT, spaceAfter=5),
         "cell": ParagraphStyle("cell", parent=base["Normal"], fontSize=8, leading=10),
         "cellhead": ParagraphStyle("cellhead", parent=base["Normal"], fontSize=8, leading=10, fontName="Helvetica-Bold"),
@@ -52,7 +52,14 @@ def inline(text):
     text = re.sub(r"`([^`]+)`", r'<font face="Courier">\1</font>', text)
     text = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", text)
     text = re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"<i>\1</i>", text)
-    text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'\1 (<font face="Courier">\2</font>)', text)
+    def link(match):
+        label, target = match.groups()
+        if target.startswith(("https://", "http://")):
+            # XML text was escaped above; quote attribute delimiters as well.
+            target = target.replace('"', "&quot;")
+            return f'<link href="{target}" color="#167895">{label}</link>'
+        return f'{label} (<font face="Courier">{target}</font>)'
+    text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", link, text)
     return text
 
 
@@ -138,6 +145,10 @@ def render_markdown(path, st, warnings):
             flush_all()
             code = []
             continue
+        if line.strip() == "<!-- pagebreak -->":
+            flush_all()
+            flow.append(PageBreak())
+            continue
         if not line.strip():
             flush_all()
             continue
@@ -198,7 +209,9 @@ def build(out, title, subtitle, files):
     story.append(Spacer(1, 24))
     story.append(Paragraph(inline("Contents"), st["h2"]))
     for f in files:
-        story.append(Paragraph(inline(Path(f).stem.replace("-", " ").replace("_", " ")), st["body"]))
+        heading = re.search(r"^#\s+(.+)$", Path(f).read_text(), re.MULTILINE)
+        label = heading.group(1) if heading else Path(f).stem.replace("-", " ").replace("_", " ")
+        story.append(Paragraph(inline(label), st["body"]))
     for f in files:
         story.append(PageBreak())
         story.extend(render_markdown(f, st, warnings))
