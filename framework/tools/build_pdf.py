@@ -9,6 +9,8 @@ lists, | tables |, ![alt](image.png), fenced code blocks, **bold**, *italic*,
 `code`. Image paths resolve relative to the Markdown file. Each document starts
 on a new page; page numbers and the title sit in the footer. --preview DIR
 renders every page to PNG so the result can be inspected as images.
+HTTP(S) Markdown links retain clickable labels. A standalone
+<!-- pagebreak --> inserts an explicit page break.
 """
 import argparse
 import re
