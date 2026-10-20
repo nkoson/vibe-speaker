@@ -177,8 +177,11 @@ def compute(params, base_dir):
     z, z_basis = _impedance(params, f, base_dir)
     model = params.get("acoustic") or {}
     inherited_contract = {}
+    inherited_directivity = None
     if model.get("kind") == "simulation":
-        inherited_contract = cli.load_json(cli.resolve_path(model["reference"]["file"],base_dir)).get("results",{}).get("source_contract",{})
+        upstream = cli.load_json(cli.resolve_path(model["reference"]["file"],base_dir)).get("results",{})
+        inherited_contract = upstream.get("source_contract",{})
+        inherited_directivity = upstream.get("directivity")
     contract = dict(inherited_contract, **(model.get("contract") or {}))
     phase_reference = contract.get("phase_reference", "intrinsic")
     if phase_reference not in ("intrinsic", "common_observer"):
@@ -247,7 +250,7 @@ def compute(params, base_dir):
     if radius:
         validity["piston_ka_unity_hz"] = acoustics.C / (2 * np.pi * float(radius) / 1000)
     return dict(f_hz=f, name=params.get("name"), pressure_per_volt_pa=p, z_ohm=z, pressure_basis=p_basis, impedance_basis=z_basis,
-                directivity=params.get("directivity"), acoustic_depth_mm=params.get("acoustic_depth_mm"), statistics=stats,
+                directivity=params.get("directivity", inherited_directivity), acoustic_depth_mm=params.get("acoustic_depth_mm"), statistics=stats,
                 validity=validity, source_contract=contract, **extra)
 
 

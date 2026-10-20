@@ -354,8 +354,8 @@ def acoustic_response(g, params, basis, f, lined=True):
         termination = None
         box = zcc
     e = acoustics.driver_elements(ts)
-    zm = e["rms"] + s * e["mms"] + 1 / (s * e["cms"]) + e["sd"] ** 2 * box
-    ze = e["re"] + series_r + s * e["le"]
+    zm = acoustics.mechanical_impedance(ts, f, e) + e["sd"] ** 2 * box
+    ze = acoustics.blocked_impedance(ts, f) + series_r
     transfer = np.ones_like(s)
     if drive.get("terminal_transfer"):
         transfer = cli.curve_from_reference(drive["terminal_transfer"], params["_base_dir"], f)

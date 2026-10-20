@@ -176,7 +176,7 @@ def _propagate(f, source, centre, directivity, tilt_rad, points, reference_m, mi
     h = np.arctan2(lateral, axial)
     v = np.arctan2(up, np.hypot(lateral, axial))
     d = acoustics.directivity(directivity, f[None, :], h[:, None], v[:, None])
-    complete_pattern = directivity.get("kind") in ("omni", "dipole", "cardioid", "complex_grid")
+    complete_pattern = directivity.get("kind") in ("omni", "dipole", "cardioid", "complex_grid", "measured_planes")
     if rear is None and not complete_pattern:
         d = d * (axial > 0)[:, None]
     elif rear is not None and not complete_pattern:

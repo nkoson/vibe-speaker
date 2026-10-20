@@ -58,6 +58,9 @@ def compute(params, base_dir):
         model = record.get("directivity") or {}
         if model.get("kind") in ("omni", "dipole", "cardioid"):
             return True
+        if model.get("kind") == "measured_planes":
+            from _common.response_data import full_sphere
+            return full_sphere(model)
         if model.get("kind") == "complex_grid":
             return (min(model["horizontal_deg"]) <= -180 and max(model["horizontal_deg"]) >= 180
                     and min(model["vertical_deg"]) <= -90 and max(model["vertical_deg"]) >= 90)

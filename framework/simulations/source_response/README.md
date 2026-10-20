@@ -63,3 +63,12 @@ Before fitting, compare graph anchors and upper slope, deep bass, a unity source
 `acoustic.contract.phase_reference` is `intrinsic` by default. For supplied common-observer complex data, set `common_observer`, `reference_distance_m` and `observer_position_m` in cabinet coordinates. The source removes the common reference delay; the radiation loader removes the reference geometry before propagating to a new observer, so relative path effects occur once. Magnitude-only reconstructed/zero-phase data does not contain that supplied timing information.
 
 `contract.baffle` is `external` or `included`; applying an external baffle reference to an included source is a conflicting input. `measured` magnitude-only input defaults to reconstructed minimum phase, or uses `phase_assumption: zero` when explicitly supplied. FRD output identifies supplied, reconstructed or zero phase. `delay_s` separates a known delay during complex interpolation. Native source conditions and the exported contract remain part of interpretation.
+
+Simulation imports inherit their angular directivity as well as their source
+contract. `polar_import` supplies a measured two-plane source with explicit coverage
+and acquisition timing. See [response preparation](../response_prepare/README.md)
+and [polar import](../polar_import/README.md).
+
+T/S inputs support `inductance_model` (`constant`, `leach`, `lr2`,
+`semi_inductance`) and `creep`; the same laws feed the linear box, cavity, room
+and distributed-loading solves. See [driver impedance](../../references/driver-impedance-identification.md).

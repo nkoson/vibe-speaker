@@ -9,6 +9,7 @@ import numpy as np
 from scipy.special import j1, struve
 
 from .cli import InputError, positive, RHO, C, P0, MU  # noqa: F401  (re-exported: one definition, in cli)
+from .driver_models import blocked_impedance, mechanical_impedance
 
 
 def driver_elements(ts):
@@ -169,8 +170,8 @@ def bandpass_response(ts, enclosure, f, voltage_rms=2.83, series_r=0.0, space="h
         reference = tuning or float(ts["fs_hz"]) * math.sqrt(1 + float(ts["vas_l"]) / float(spec["volume_l"]))
         chambers[name] = chamber_network(spec, f, reference, name)
     z_load = chambers["rear"]["z"] + chambers["front"]["z"]
-    zm = d["rms"] + s * d["mms"] + 1 / (s * d["cms"]) + d["sd"] ** 2 * z_load
-    ze = d["re"] + series_r + s * d["le"]
+    zm = mechanical_impedance(ts, f, d) + d["sd"] ** 2 * z_load
+    ze = blocked_impedance(ts, f) + series_r
     vin = voltage_rms * (np.ones_like(s) if terminal_transfer is None else np.asarray(terminal_transfer, complex))
     v = d["bl"] * vin / (ze * zm + d["bl"] ** 2)
     current = (vin - d["bl"] * v) / ze
@@ -278,8 +279,8 @@ def box_response(ts, enclosure, f, voltage_rms=2.83, series_r=0.0, space="half",
         else:
             raise InputError(f"unknown enclosure.type '{kind}'")
         zb = 1 / (s * cb + 1 / rl + 1 / zp)
-    zm = d["rms"] + s * d["mms"] + 1 / (s * d["cms"]) + d["sd"] ** 2 * zb
-    ze = d["re"] + series_r + s * d["le"]
+    zm = mechanical_impedance(ts, f, d) + d["sd"] ** 2 * zb
+    ze = blocked_impedance(ts, f) + series_r
     vin = voltage_rms * (np.ones_like(s) if terminal_transfer is None else np.asarray(terminal_transfer, complex))
     v = d["bl"] * vin / (ze * zm + d["bl"] ** 2)
     current = (vin - d["bl"] * v) / ze
@@ -387,6 +388,9 @@ def directivity(model, f, h_rad, v_rad):
     """
     kind = (model or {}).get("kind", "omni")
     f = np.asarray(f, float)
+    if kind == "measured_planes":
+        from .response_data import measured_directivity
+        return measured_directivity(model, f, h_rad, v_rad)
     if kind == "omni":
         return np.ones(np.broadcast(f, h_rad, v_rad).shape)
     if kind in ("dipole", "cardioid"):
@@ -533,9 +537,9 @@ def impedance_model(model, f):
             return 1 / (1 / r + 1 / (s * float(lp) * 1e-3))
         return np.full(len(f), r, complex)
     if kind == "free_air":
-        d = driver_elements(require(model, "ts", label="impedance"))
-        zm = d["rms"] + s * d["mms"] + 1 / (s * d["cms"])
-        return d["re"] + s * d["le"] + d["bl"] ** 2 / zm
+        ts = require(model, "ts", label="impedance")
+        d = driver_elements(ts)
+        return blocked_impedance(ts, f) + d["bl"] ** 2 / mechanical_impedance(ts, f, d)
     if kind in ("sealed", "vented", "passive_radiator"):
         ts = require(model, "ts", label="impedance")
         enclosure = dict(model.get("enclosure") or {}, type=kind)
