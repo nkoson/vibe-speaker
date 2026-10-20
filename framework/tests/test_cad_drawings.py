@@ -1,6 +1,7 @@
 """CAD geometry and interchange checks, independent of acoustic judgement."""
 import importlib.util
 import math
+import io
 from pathlib import Path
 
 import cadquery as cq
@@ -88,3 +89,28 @@ def test_aperture_roundover_keeps_the_through_bore():
     assert rounded.Volume() < plain.Volume()
     assert rounded.isInside(cq.Vector(66, 40, -10))
     assert not rounded.isInside(cq.Vector(66, 40, -.1))
+
+
+def test_native_section_hatch_fills_islands_and_leaves_voids(tmp_path):
+    from reportlab.pdfgen import canvas
+    from ezdxf.render.hatching import hatch_entity
+    loops = [
+        [[0, 0], [100, 0], [100, 100], [0, 100]],
+        [[20, 20], [80, 20], [80, 80], [20, 80]],
+        [[150, 0], [180, 0], [180, 100], [150, 100]],
+    ]
+    assert cad.hatch_boundary_flags(loops) == [1, 0, 1]
+    sheet = cad.Sheet(canvas.Canvas(io.BytesIO()), dict(id='C1', title='Section'),
+                      dict(title='Test', drawing_prefix='T', revision='A', date='2026-10-20'),
+                      1, 1, tmp_path)
+    view = cad.View(sheet, dict(id='section', at=[40, 100], scale=1))
+    view.entity(dict(kind='hatch', loops=loops))
+    hatch = next(iter(view.m.query('HATCH')))
+    assert hatch.dxf.hatch_style == 0
+    assert [p.path_type_flags for p in hatch.paths] == [3, 2, 3]
+    segments = list(hatch_entity(hatch))
+    assert len(segments) > 10
+    assert any(a.x > 140 and b.x > 140 for a,b in segments)
+    for a,b in segments:
+        mid=(a+b)*.5
+        assert not (20+1e-6 < mid.x < 80-1e-6 and 20+1e-6 < mid.y < 80-1e-6)

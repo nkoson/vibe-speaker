@@ -20,6 +20,17 @@ DASHES={'HIDDEN':[2,1],'CENTER':[6,1,1,1],'CUT':[8,2,1,2],'ENVELOPE':[6,1,1,1,1,
 def dimension_text(value):
     return f'{value:.2f}'.rstrip('0').rstrip('.')
 
+def hatch_boundary_flags(loops):
+    """External islands are flagged independently of interior void loops."""
+    def contains(point,loop):
+        x,y=point;inside=False
+        for a,b in zip(loop,loop[1:]+loop[:1]):
+            if (a[1]>y)!=(b[1]>y) and x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]:
+                inside=not inside
+        return inside
+    return [1 if sum(contains(loop[0],other) for j,other in enumerate(loops) if j!=i)%2==0 else 0
+            for i,loop in enumerate(loops)]
+
 
 def rounded_points(x,y,w,h,r):
     if not r:return [(x,y,0),(x+w,y,0),(x+w,y+h,0),(x,y+h,0)]
@@ -226,9 +237,9 @@ class View:
                 x=x0-span+i*2*mm;self.c.line(x,y0,x+(span if e.get('angle',45)>0 else -span),y1)
             self.c.restoreState()
             h=self.m.add_hatch(dxfattribs={'layer':'HATCH'});h.set_pattern_fill('ANSI31',scale=1/self.scale,angle=0 if e.get('angle',45)>0 else 90)
-            # All boundaries participate in normal odd/even island detection;
-            # separate material islands must not be mislabelled as holes.
-            for loop in loops:h.paths.add_polyline_path(loop,is_closed=True,flags=0)
+            h.dxf.hatch_style=0
+            for loop,flags in zip(loops,hatch_boundary_flags(loops)):
+                h.paths.add_polyline_path(loop,is_closed=True,flags=flags)
             for loop in loops:self.entity(dict(kind='polyline',points=loop,layer='OUTLINE'))
         else:raise ValueError('unsupported drawing entity '+kind)
     def arrow(self,tip,direction,native=False):
