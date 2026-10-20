@@ -35,3 +35,5 @@ These checks do not replace the agent's reconstruction, datum, feature-count, fa
 A view may supply `flared_duct` to draw a recognisable assembled or exploded port section: bore/mouth/flange diameters, wall/flange/sleeve thicknesses, three piece lengths, sleeve length and optional exploded gap, all in mm. The profiles preserve the declared purchased flare convention; cut lengths apply to straight-tail cuts.
 
 Optional top-level `air_domain` (`origin_mm`, `size_mm`) reports each installed part's actual intrusion into the internal air box. Features marked `role: air_aperture` produce aperture areas, pairwise root ligaments and clearance to the shaped part boundary. These are geometry outputs for the agent's evaluation.
+
+Set `inspect_intersections: true` to report installed-part pairs with positive overlap volume. The report gives part IDs and overlap volumes; the agent distinguishes intentional joints from collisions and decides how to revise the design.
