@@ -52,8 +52,9 @@ Optional `acoustic.level_calibration: {"gain_db": -2.0, "basis": "source, condit
 
 For `lf_box` with `published_shape`, an optional `fixture_response` complex curve
 reference removes the declared fixture's **magnitude** from the published points
-before normalizing their shape and reconstructing minimum phase. The fixture must
-cover all published frequencies and have no null. This does not recover measured
+before normalizing their shape and reconstructing minimum phase. By default the
+fixture must cover all published frequencies; an explicit reference extrapolation
+policy can override that requirement and is recorded. The fixture must have no null. This does not recover measured
 phase. Supply a separately modeled final cabinet baffle downstream; use an unknown
 fixture only as an explicitly named sensitivity case. A constant fixture gain
 cancels in shape normalization and does not calibrate absolute sensitivity.

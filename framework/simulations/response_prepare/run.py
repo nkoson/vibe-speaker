@@ -9,12 +9,12 @@ from scipy.optimize import least_squares
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _common import cli, acoustics, response_data
 NAME = "response_prepare"
-VERSION = "1.1"
+VERSION = "1.2"
 
 
 def curve(record, f, base_dir):
     if "reference" in record:
-        p = cli.curve_from_reference(dict(extrapolation="error", **record["reference"]), base_dir, f)
+        p = cli.curve_from_reference({"extrapolation": "error", **record["reference"]}, base_dir, f)
     elif "file" in record:
         fp, p, _ = response_data.read_table(cli.resolve_path(record["file"], base_dir),
                                           record.get("quantity", "pressure"), record.get("phase_assumption"))
@@ -172,8 +172,20 @@ def compute(params, base_dir):
             extra["overlap_fit"] = dict(gain_db=fitted.x[0], delay_s=fitted.x[1],
                                         normalized_squared_residual=float(np.dot(fitted.fun, fitted.fun)),
                                         interpretation="numerical calibration estimate; not an acceptance decision")
-        response = low*(1-weight)+high*weight
+        domain = params.get("blend_domain", "complex")
+        if domain == "complex":
+            response = low*(1-weight)+high*weight
+        elif domain == "log_magnitude_phase":
+            if np.any(abs(low) < 1e-30) or np.any(abs(high) < 1e-30):
+                raise cli.InputError("log-magnitude/phase merging cannot include a response null")
+            # Relative unwrapped phase retains endpoint delay conventions without
+            # independently choosing incompatible phase branches for each input.
+            ratio = high/low
+            response = low*np.exp(weight*(np.log(abs(ratio))+1j*np.unwrap(np.angle(ratio))))
+        else:
+            raise cli.InputError("blend_domain must be complex or log_magnitude_phase")
         extra["high_weight"] = weight
+        extra["blend_domain"] = domain
     elif operation == "sum":
         response = curves.sum(axis=0)
     elif operation == "average":

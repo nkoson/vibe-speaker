@@ -69,6 +69,14 @@ not recovery of measured timing. An unknown fixture must remain a named hypothes
 simply assuming an infinite baffle does not establish its identity. The relative
 shape normalization also means that this operation cannot identify absolute level.
 
+A multiplicative correction may be withdrawn over a declared band using
+`low * exp(w * (log(abs(high/low)) + j unwrap(arg(high/low))))`, with a stated
+log-frequency weight w. This is geometric interpolation of magnitude with a
+continuous relative-phase branch. It preserves both endpoint responses but is
+not the coherent sum of two sources. Nulls make its logarithm singular. The
+choice between this interpolation and linear complex-pressure merging is a
+modeling assumption, not an accuracy improvement inferred by the processor.
+
 ## Sources
 
 - COMSOL, [Acoustics Module User's Guide, Monopole Point Source](https://doc.comsol.com/5.4/doc/com.comsol.help.aco/AcousticsModuleUsersGuide.pdf),

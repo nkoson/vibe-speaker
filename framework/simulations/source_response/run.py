@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _common import cli, acoustics  # noqa: E402
 
 NAME = "source_response"
-VERSION = "1.5"
+VERSION = "1.6"
 NOTES = [
     "Pressure per volt is the on-axis free-field figure at 1 m for the source alone; directivity, baffle and position are applied later by whole_speaker.",
     "A published curve is turned into a minimum-phase response; the phase is a reconstruction, not a measurement. A bandwidth prior is a flat level with declared roll-offs.",
@@ -115,7 +115,7 @@ def _pressure(params, f, base_dir):
             if record.get("fixture_response"):
                 points = np.asarray(record["points"], float)
                 fixture = cli.curve_from_reference(
-                    dict(extrapolation="error", **record["fixture_response"]),
+                    {"extrapolation": "error", **record["fixture_response"]},
                     base_dir, points[:, 0])
                 if np.any(abs(fixture) < 1e-12):
                     raise cli.InputError("published-shape fixture response contains a null")

@@ -25,6 +25,13 @@ pressure with log-frequency weights. `match_overlap` fits gain/delay within
 it returns all local numerical delay solutions and costs, not a selected acoustic
 centre. Magnitude-only alignment can have multiple solutions.
 
+For an explicitly chosen geometric correction blend, `merge` also accepts
+`blend_domain: log_magnitude_phase`. It interpolates log magnitude and the
+unwrapped relative phase; response nulls are rejected. This preserves each
+endpoint but is a different interpolation assumption from complex-pressure
+addition. It is useful for smoothly withdrawing a multiplicative model correction,
+not for summing independent radiators. No crossover band is selected automatically.
+
 `ir_to_fr` takes `impulse: {samples,sample_rate_hz}` or `{wav_file,channel}`.
 Set `sample_basis: discrete_impulse|continuous_impulse_density`,
 `calibration`, `reference_time_s`, optional `fft_length`, and

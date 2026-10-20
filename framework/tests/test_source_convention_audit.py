@@ -77,7 +77,7 @@ def test_fixture_magnitude_removed_before_relative_shape_normalization(tmp_path)
     observed = copy.deepcopy(p)
     observed["acoustic"]["published_shape"].update(
         points=np.c_[f, measured_db].tolist(),
-        fixture_response={"file": "fixture.json", "path": "results.p"})
+        fixture_response={"file": "fixture.json", "path": "results.p", "extrapolation": "error"})
     np.testing.assert_allclose(module.compute(observed, tmp_path)["pressure_per_volt_pa"], expected, atol=1e-11)
     # Scaling the fixture by a constant cannot identify source sensitivity.
     cli.write_document(tmp_path/"fixture.json", {"results": {"f_hz": f, "p": fixture*2}})
@@ -97,3 +97,32 @@ def test_scenarios_reduce_complex_impedance_magnitude_not_real_part(tmp_path):
     assert row["input_error"] is None
     np.testing.assert_allclose([row["observables"]["z_"+r] for r in ["min","max","mean","rms"]],
                                [5, 10, 7.5, np.sqrt(62.5)])
+
+
+def test_geometric_merge_preserves_endpoints_and_relative_phase(tmp_path):
+    f = np.array([50., 100., 200., 400., 800.])
+    low = np.full(5, 4*np.exp(.5j))
+    high = np.ones(5, complex)
+    params = dict(operation="merge", blend_domain="log_magnitude_phase",
+                  frequencies={"values_hz": f}, blend_band_hz=[100, 400],
+                  responses=[dict(frequency_hz=f, real=z.real, imag=z.imag)
+                             for z in [low, high]])
+    p = apps.module("response_prepare").compute(params, tmp_path)["response"]
+    np.testing.assert_allclose(p, [low[0], low[0], 2*np.exp(.25j), 1, 1])
+    params["responses"][0]["real"] = np.zeros(5)
+    params["responses"][0]["imag"] = np.zeros(5)
+    with pytest.raises(cli.InputError, match="null"):
+        apps.module("response_prepare").compute(params, tmp_path)
+
+
+def test_reference_extrapolation_policy_can_be_explicit(tmp_path):
+    cli.write_document(tmp_path/"curve.json", {"results": {
+        "f_hz": np.array([100., 200.]), "p": np.array([2+0j, 4+0j])}})
+    params = dict(operation="sum", frequencies={"values_hz": [50,100,200,400]},
+                  responses=[dict(reference=dict(file="curve.json", path="results.p",
+                                                  extrapolation="hold"))])
+    result = apps.module("response_prepare").compute(params, tmp_path)
+    np.testing.assert_allclose(result["response"], [2,2,4,4])
+    params["responses"][0]["reference"]["extrapolation"] = "error"
+    with pytest.raises(cli.InputError, match="cover"):
+        apps.module("response_prepare").compute(params, tmp_path)
