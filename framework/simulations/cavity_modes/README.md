@@ -22,7 +22,7 @@ Internal coordinates of the chamber: x from the inside left wall, y from the ins
 |---|---|
 | `cavity.width_mm`, `depth_mm`, `height_mm` | Inside dimensions of the bass chamber |
 | `cavity.braces[]` | Window braces: `z_mm` (bottom of the brace plane), `rim_mm` (solid rim width), `thickness_mm` |
-| `cavity.braces[].holes` | Optional circular apertures `[{x_mm, y_mm, diameter_mm}, ...]`, in cavity-local coordinates. Replaces the rectangular window in the FVM mask. An empty list is a solid partition; keep apertures open to avoid disconnected air domains. |
+| `cavity.braces[].holes` | Circular apertures `[{x_mm, y_mm, diameter_mm}, ...]`, or `shape: rounded_rectangle` with lower-left `x_mm/y_mm`, `width_mm`, `height_mm`, and `corner_radius_mm`, in cavity-local coordinates. Replaces the rectangular window in the FVM mask. An empty list is a solid partition; keep apertures open to avoid disconnected air domains. |
 | `cavity.lining` | `thickness_mm`, `flow_resistivity_pas_m2` from the material's datasheet or a measurement. Measured values found: about 2300 for a light glass wool and 4300 for polyester fibre at 30 kg/m³; lighter loudspeaker fills are lower still ([cabinet construction](../../references/cabinet-construction.md) section 9.2). When omitted it defaults to 10000, which is denser than those measured fills. The Miki lining model is stated valid for `0.01 < f / σ < 1` |
 | `cavity.unlined_background_q` | Background modal Q without lining, default 30 |
 | `driver.ts`, `driver.position {x_mm, z_mm}` | Woofer data and cone centre on the front wall |
@@ -63,3 +63,11 @@ An optional `assembly` record/file uses the shared metre-based geometry schema. 
 For tapered-port occupancy, optional `outlet.outer_segments` gives `{length_mm, diameter_mm}` segments from the inner mouth towards the outer mouth. Only the part inside the chamber is excluded from the FVM air domain. These outside diameters describe solid/duct displacement; they are separate from the acoustic `segments` bore diameters. A manufactured profile that is not fully dimensioned needs explicit profile sensitivity studies, not a claimed exact CFD geometry.
 
 The uniform cavity mode includes the specified leakage loss `ql` for vented boxes as well as sealed/PR boxes. A zero-mode straight-port case recovers the leaky lumped model at low frequency; omitting that damping would silently turn `ql` into an ignored parameter.
+
+## Shaped braces and internal flat parts
+
+`cavity.braces[].reliefs` uses the same aperture shapes but may extend beyond the panel edge, for an open driver-clearance notch. Closed `holes` stay inside the footprint. Circular and rounded-rectangle containment is evaluated directly at the FVM cell centres.
+
+`cavity.internal_panels[]` adds a flat internal part in any principal plane: `normal_axis` (`x`, `y`, `z`), `start_mm`, `thickness_mm`, `origin_uv_mm`, `size_uv_mm`, optional `holes` and `reliefs`. The in-plane coordinates follow the other two global cavity axes in ascending order (X/Z for a Y-normal support). Normal panel faces and outside in-plane boundaries are inserted into the mesh. Use a circular relief plus an open-top rectangular relief for a curved support. Refine the grid to inspect acoustic sensitivity to its occupied volume.
+
+These masks add geometry to the existing rigid-boundary finite-volume Helmholtz model; they do not infer brace strength or choose an aperture pattern. Use the [cabinet geometry](../../references/cabinet-geometry.md), [cabinet construction](../../references/cabinet-construction.md), and [panel mechanics](../../references/cabinet-materials-and-panels.md) references to interpret geometry and panel results.

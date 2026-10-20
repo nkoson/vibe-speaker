@@ -19,6 +19,8 @@ Use aligned orthographic elevations and plan, named cutting planes and sections,
 
 Follow the reference's sheet, line-weight, hatch, scale, title/revision-block and dimension-placement conventions. Model at 1:1; scale the views on the sheet. Use functional datums and baseline/ordinate dimensions for repeated locations. Preserve exact factory patterns and centreline symmetry. Dimensions must derive from geometry, not independently typed labels.
 
+For modular ports, draw a recognisable longitudinal section and an exploded assembly. Show retained flare contours, cut ends, mouth-to-mouth length, wall traversal, abutting joints and sleeve engagement. Label where each cut length starts and ends.
+
 Show complete machining callouts: count, diameter/thread, depth, entry face, recess radius/depth and fixing pattern. Describe supplied-part jig operations explicitly where they are the selected way to locate holes. Do not draw an invented bolt circle. Dimension compressed seals and dry wood contact; keep fastening engagement and tool access visible.
 
 ## Deliver and check

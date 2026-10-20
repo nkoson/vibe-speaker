@@ -49,7 +49,7 @@ Choose the smallest complete set; an attractive isometric is a locator, not a re
 | Loose-panel drawings | Part ID/quantity/material, actual blank and long-point dimensions, local datum, cutouts, pockets, grooves, pilots and entry face |
 | Driver mounting details | Aperture, recess contour/radii/depth, fixing pattern, bearing ledge, compressed seal, nut/insert and fastener stack |
 | Brace details | Blank and housing engagement, each aperture and edge radius, coordinates and thickness |
-| Ports | Purchased pieces, straight cut lengths, sleeve engagement, finished mouth-to-mouth length, recess, fixing operation and mouth clearance |
+| Ports | Recognisable longitudinal and exploded views of purchased pieces; labelled mouth/cut endpoints, abutting joints, sleeve engagement, finished mouth-to-mouth length, recess, fixing operation and mouth clearance |
 | Cradle/support details | Saddle arc/centre, runners, contact surfaces, screw/pilot locations and assembly order |
 | Rear/underside details | Connector relief and hole pattern, board/star mounts, feet and blind fixing depths |
 | Cut list and feature schedule | Matching IDs, quantities, material thickness and sheet/view references |
