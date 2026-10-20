@@ -45,7 +45,7 @@ def draw(document, destination, frequency_limits=None):
     geometry.set(xlabel="x (m)", ylabel="y (m)", zlabel="z (m)",
                  title="3D room: orange sources/arrows, x = seats\nSeat colours follow the response legend")
     geometry.set_box_aspect(dimensions)
-    response.set(title="Simulated SPL at physical seats", ylabel="SPL (dB re 20 µPa)")
+    response.set(title="SPL at listening positions", ylabel="SPL (dB re 20 µPa)")
     response.legend(fontsize=7, ncol=2)
     difference.set(title="Room minus direct sound at each seat", ylabel="Difference (dB)")
     spread.set(title="Seat-to-seat spread", ylabel="Maximum minus minimum (dB)")
@@ -66,9 +66,9 @@ def draw(document, destination, frequency_limits=None):
             axis.axvspan(lo, f[0], color="0.94", zorder=-1)
         if hi > f[-1]:
             axis.axvspan(f[-1], hi, color="0.94", zorder=-1)
-    fig.suptitle(f"Simulated 3D room • reflection order {result['max_order']} • declared wall/source priors\n"
-                 "Finite early-reflection model; curves are unsmoothed and exclude the late reverberant field"
-                 + ("\nShaded frequency bands were not simulated" if frequency_limits else ""), fontsize=12)
+    fig.suptitle("Room response and listening positions\n"
+                 "Direct sound, early reflections and seat-to-seat variation"
+                 + ("\nGray: outside the response-data band" if frequency_limits else ""), fontsize=12)
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(destination, dpi=160)

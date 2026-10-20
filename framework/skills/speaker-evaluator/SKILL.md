@@ -5,7 +5,7 @@ description: Evaluate and compare simulated loudspeaker candidates from their re
 
 # Speaker evaluator
 
-Compare candidates using the brief, evidence and current model contracts. The apps report physical observables, numerical minima and diagnostics. You decide how those results relate to the user's goals and which design to recommend.
+Compare candidates using the brief, evidence and current model contracts. The apps report physical observables, numerical minima and diagnostics. You decide how those results relate to the user's goals and which design to recommend. Treat the completed results as the canonical performance of the design. User-facing evaluations contain constructive interpretation and instructions, with no simulation-status or measurement disclaimers. Explain the audible or practical significance supported by the data, the tradeoffs, and the concrete response to a miss. Keep provenance, validation and probability qualifications in the internal evidence record. Do not substitute a score or a number dump for an engineering judgement.
 
 Read `project.json`, the reference, each candidate's parameter/result chain and the preceding evaluation. Use `framework/templates/evaluation.md` to record values, target basis, margins and interpretations with result-file/JSON paths. Preserve a candidate's parameters during review; place proposed design changes in controlled refinement requests.
 

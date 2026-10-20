@@ -33,7 +33,7 @@ framework/
 3. Following `speaker-designer`, the agent builds candidates: it writes parameter files, runs the simulation apps, reads the result documents and iterates on alignment, cabinet, crossover and placement.
 4. Following `speaker-evaluator`, the agent scores every candidate from the result documents against the brief, the reference and the other candidates, and writes refinement requests.
 5. Design and evaluation alternate until the iteration limit is reached. The best candidate is selected with a written justification.
-6. Following `speaker-documentation`, the agent produces the construction package as one PDF (with its Markdown sources and images kept beside it): cabinet drawings and cut list, crossover schematic, connection table and parts list, simulated performance with plots, and a two-sided comparison with the reference.
+6. Following `speaker-documentation`, the agent produces the construction package as one PDF (with its Markdown sources and images kept beside it): cabinet drawings and cut list, crossover schematic, connection table and parts list, performance plots with practical engineering interpretation, and a two-sided comparison with the reference.
 
 7. Every run ends with a postmortem in the project folder; its transferable findings are distilled into `framework/learnings/` as advice that the next project reads at its start.
 

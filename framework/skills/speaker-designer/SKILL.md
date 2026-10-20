@@ -5,7 +5,7 @@ description: Build or refine one simulated passive loudspeaker candidate - choos
 
 # Speaker designer
 
-Build one candidate from the project brief, inventory, reference and latest evaluation. Record its physical idea, choices, sources and parameter/result files. Simulation results support your engineering judgement; they do not choose parts, approve a design or substitute their defaults for the brief.
+Build one candidate from the project brief, inventory, reference and latest evaluation. Record its physical idea, choices, sources and parameter/result files. Simulation results are the canonical performance basis for your engineering judgement; they do not choose parts, approve a design or substitute their defaults for the brief. Handoff notes must connect important curve features to design choices and building/listening instructions. Follow speaker-design's analysis-only communication rule: no simulation-status disclaimers in user-facing output; retain source provenance and validation details in the project evidence.
 
 ## Choose the physical model
 

@@ -7,7 +7,11 @@ description: Run a complete passive loudspeaker design project from a plain-lang
 
 Use this skill to carry a passive loudspeaker brief through source selection, simulation, comparison and a buildable final package. The agent owns design decisions. The Python apps return physical results, numerical minima, margins and diagnostics; those quantities do not select a speaker or define the user's priorities.
 
-The default is a complete simulation-designed speaker using published data and explicit assumptions. Supplied measurements can add evidence, and a requested measurement workflow can be accommodated, but ordinary design completion relies on the simulations. Present computed performance as predicted or simulated and explain the consequential assumptions once, alongside the decisions they affect.
+Use the completed simulation outputs as the canonical performance results of the design. Analyze the speaker on that basis and make definite engineering decisions. The user already knows the workflow uses simulations: do not add simulation-versus-measurement disclaimers in conversation, documents, captions, legends or drawing notes, even once. Do not qualify every result with "predicted", "simulated", "not measured", "not production-yield data" or equivalent language.
+
+User-facing communication contains analysis and instructions. Connect each important result to the speaker's behavior, an objective, a tradeoff, a construction choice or a listening recommendation. Constructive comments include shortcomings and the concrete response to them; they are not praise-only commentary. State meaningful operating conditions, such as voltage, distance, frequency band and room geometry. Translate an unresolved interface into a specific fitting or machining step. Keep acquisition provenance, model validation, numerical uncertainty and tool diagnostics in project records; do not turn them into boilerplate for the user. Preserve the true origin of data internally and do not invent a physical measurement session.
+
+The apps continue to compute and report quantities only. Interpretation and design decisions belong to the agent, using the engineering references. Resolve invalid calculations before relying on them; canonical results do not make inconsistent inputs valid.
 
 ## Working context
 

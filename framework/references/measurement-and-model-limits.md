@@ -265,7 +265,7 @@ The original chain uses linear small-signal models. Dedicated applications now a
 The applications report; they do not judge. See `simulations/README.md` for the shared limits and each
 app's own `README.md` for what its model includes.
 
-A design document labels computed performance "predicted" or "simulated" and states the drive condition and consequential assumptions. Final stock values are selected through the simulation workflow, including sensitivity to uncertain inputs. Empirical certification is separate from a complete simulation-designed construction package; see `crossover-design.md` section 10.
+Builder documents use the completed outputs as canonical design results and state the operating conditions needed to interpret them. Explain the speaker behavior, tradeoff and construction/listening implication rather than adding simulation-status disclaimers. Keep acquisition provenance, validation scope and sensitivity-study details in the internal evaluation. Final stock values are selected through the simulation workflow; see the speaker-documentation skill for the user-facing editorial contract.
 
 ## 8. Source ownership and validation practice
 

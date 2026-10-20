@@ -50,7 +50,7 @@ The applications output results only. Thresholds are parameters; interpretation 
 
 ## Scope and limits
 
-Performance is reported as predicted or simulated. The framework combines linear source/network models with optional mesh-based radiation, coupled cabinet acoustics, room modes/reflections, nonlinear driver/port states and electrothermal scenarios. It delivers complete simulation-designed construction packages using explicit inputs, linked model contracts and numerical verification. Additional measurements can be used when supplied or requested; they are not a prerequisite for completing a design.
+Completed simulation outputs are the canonical design results. Builder documents explain speaker behavior and give construction/listening instructions, without simulation-status disclaimers; provenance and validation remain in project records. The framework combines linear source/network models with optional mesh-based radiation, coupled cabinet acoustics, room modes/reflections, nonlinear driver/port states and electrothermal scenarios. It delivers complete simulation-designed construction packages using explicit inputs, linked model contracts and numerical verification. Additional measurements can be used when supplied or requested; they are not a prerequisite for completing a design.
 
 ## License
 
