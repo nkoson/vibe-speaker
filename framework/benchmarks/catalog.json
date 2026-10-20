@@ -41,8 +41,51 @@
       "id": "clamped_plate_refinement",
       "reference_data": "framework/benchmarks/clamped-square-reference.json",
       "test": "test_rotational_restraint_converges_toward_clamped_plate_reference"
+    },
+    {
+      "id": "independent_circuit_exports",
+      "test_file": "framework/tests/test_reference_exports.py",
+      "test": "test_board_against_independent_rational_export",
+      "evidence_class": "numerical_equation_verification"
+    },
+    {
+      "id": "two_source_export",
+      "test_file": "framework/tests/test_reference_exports.py",
+      "test": "test_two_source_far_field_against_frozen_export",
+      "evidence_class": "numerical_equation_verification"
+    },
+    {
+      "id": "circular_edge_dipoles",
+      "test_file": "framework/tests/test_angular_diffraction.py",
+      "test": "test_polygon_converges_to_independent_circular_dipole_formula",
+      "evidence_class": "numerical_equation_verification"
+    },
+    {
+      "id": "driver_identification",
+      "test_file": "framework/tests/test_enclosure_identification.py",
+      "test": "test_added_mass_identification_recovers_physical_parameters",
+      "evidence_class": "numerical_equation_verification"
+    },
+    {
+      "id": "ideal_transformer",
+      "test_file": "framework/tests/test_passive_diagnostics.py",
+      "test": "test_ideal_transformer_ratio_reflected_load_and_power",
+      "evidence_class": "numerical_equation_verification"
+    },
+    {
+      "id": "reactive_load",
+      "test_file": "framework/tests/test_passive_diagnostics.py",
+      "test": "test_epdr_resistor_reactive_limit_and_symmetry",
+      "evidence_class": "numerical_equation_verification"
+    },
+    {
+      "id": "linear_time_response",
+      "test_file": "framework/tests/test_passive_diagnostics.py",
+      "test": "test_impulse_reconstruction_discrete_normalization",
+      "evidence_class": "numerical_equation_verification"
     }
   ],
   "test_file": "framework/tests/test_fidelity_models.py",
-  "evidence_scope": "Numerical equation verification. These cases do not assign design quality or establish empirical agreement. Fixtures are generated from equations; no third-party measurement dataset is redistributed."
+  "evidence_scope": "Numerical equation verification. These cases do not assign design quality or establish empirical agreement. Fixtures are generated from equations; no third-party measurement dataset is redistributed.",
+  "reference_export_manifest": "framework/benchmarks/reference_exports/manifest.json"
 }

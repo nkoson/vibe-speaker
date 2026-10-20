@@ -1,0 +1,44 @@
+{
+  "network": {
+    "frequencies": {
+      "min_hz": 20,
+      "max_hz": 20000,
+      "points": 100
+    },
+    "components": [
+      {
+        "id": "R",
+        "type": "R",
+        "value_ohm": 8,
+        "nodes": [
+          "in",
+          "out"
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "amp",
+        "plus": "in",
+        "minus": "0",
+        "voltage_rms": 1
+      }
+    ],
+    "loads": [
+      {
+        "id": "load",
+        "plus": "out",
+        "minus": "0",
+        "impedance": {
+          "kind": "resistive",
+          "r_ohm": 8
+        }
+      }
+    ]
+  },
+  "programme": {
+    "voltage_rms": 4,
+    "spectrum": "pink",
+    "crest_factor": 3
+  }
+}

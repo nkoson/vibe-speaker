@@ -229,3 +229,23 @@ def test_rotational_restraint_converges_toward_clamped_plate_reference(tmp_path)
     # Ritz basis approaches the clamped result from above; coarse modes do not
     # acquire clamped accuracy merely because the spring is extremely stiff.
     assert errors[0]>errors[1]>errors[2]>0
+
+def test_network_fit_curve_target_matches_constant_target(tmp_path):
+    import json,copy
+    root=Path(__file__).resolve().parents[1]/'simulations'
+    p=json.loads((root/'network_fit/example.json').read_text())
+    p['max_evaluations']=1
+    p['system']={'cabinet':{},'observer':{'distance_m':3,'ear_height_m':1},'sections':[
+        {'name':'test','load_id':p['network']['loads'][0]['id'],'source':{'file':'source.json'},'position':{'x_mm':0,'z_mm':1000}}]}
+    source=apps.module('source_response').compute({'acoustic':{'kind':'bandwidth_prior','sensitivity_db_2v83_1m':90},'impedance':{'kind':'resistive','r_ohm':8},'frequencies':{'min_hz':20,'max_hz':20000,'points':100}},tmp_path)
+    cli.write_document(tmp_path/'source.json',{'results':source})
+    p['target']={'spl_db':90,'band_hz':[100,10000],'weights':[{'band_hz':[100,500],'weight':2}]}
+    p['constraints']=[{'quantity':'acoustic_relative_db','band_hz':[100,1000],'reference_band_hz':[300,3000],'minimum':-3}]
+    a=apps.module('network_fit').compute(p,tmp_path)
+    cli.write_document(tmp_path/'target.json',{'f_hz':[20,20000],'db':[90,90]})
+    p['target']['spl_db']={'file':'target.json','frequency_path':'f_hz','path':'db'}
+    b=apps.module('network_fit').compute(p,tmp_path)
+    assert a['trials'][0]['cost']==pytest.approx(b['trials'][0]['cost'],rel=1e-12)
+    f=np.asarray(a['f_hz']);curve=a['trials'][0]['acoustic_spl_db'][0]
+    expected=np.min(curve[(f>=100)&(f<=1000)]-np.mean(curve[(f>=300)&(f<=3000)]))+3
+    assert a['trials'][0]['constraint_margins'][0]==pytest.approx(expected)

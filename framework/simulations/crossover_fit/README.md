@@ -67,3 +67,16 @@ Use explicit fit bounds derived from actual stock values or realizable banks whe
 The fit retains its lowest evaluated objective, including the initial point, when a call budget ends. Reported RMS belongs to the retained realization. Quantization evaluates joint combinations from the supplied lists, up to `max_stock_trials` (default 256), and reports evaluated/total counts. Stock entries can be numeric values or records containing the value, `sku`, DCR/ESR, rating and price together. Circuit IDs and connectivity stay fixed. Monetary output separates known subtotal and unpriced items.
 
 For explicit numerical constraints, seeded global search or general nodal networks, use `network_fit`. Neither app's numerical minimum is a final design selection.
+
+### Optional ladder-search penalties
+
+`target.constraints[]` adds **soft penalties**, not hard feasibility guarantees. Each record supplies
+`quantity`, `band_hz`, `minimum` and/or `maximum`, and optional `weight` (default10).
+Supported quantities are `acoustic_relative_db` (on-axis sum relative to `reference_band_hz`),
+`terminal_relative_db` (a `section_index` transfer relative to its reference-band mean in dB),
+`terminal_voltage_rms` (`section_index`, optional `drive_voltage_rms`), and
+`section_difference_db` (difference between acoustic contributions in `section_indices: [0,1]`).
+These allow a search to retain an intended handover, bass extension and protective attenuation while
+fitting total response. Zero degrees must appear among target angles. Empty bands are errors.
+`constraint_diagnostics` reports unweighted margins on the full output grid; a negative margin is a
+remaining violation. Independently verify realized stock, dense-grid response and terminal transfer.

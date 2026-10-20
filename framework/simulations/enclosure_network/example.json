@@ -1,0 +1,34 @@
+{
+  "preset": "double_tuned_reflex",
+  "driver": {
+    "ts": {
+      "fs_hz": 40,
+      "vas_l": 40,
+      "qms": 4,
+      "qes": 0.4,
+      "re_ohm": 6,
+      "sd_cm2": 220,
+      "le_mh": 0.5
+    }
+  },
+  "rear": {
+    "volume_l": 40,
+    "ql": 10,
+    "loss_reference_hz": 40
+  },
+  "front": {
+    "volume_l": 20,
+    "ql": 10,
+    "loss_reference_hz": 50
+  },
+  "port": {
+    "area_m2": 0.005,
+    "effective_length_m": 0.2,
+    "resistance_pa_s_m3": 100
+  },
+  "outer_port": {
+    "area_m2": 0.005,
+    "effective_length_m": 0.3,
+    "resistance_pa_s_m3": 100
+  }
+}

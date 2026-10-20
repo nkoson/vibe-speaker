@@ -1,0 +1,24 @@
+{
+  "responses": [
+    {
+      "file": "synthetic_0.frd",
+      "plane": "H",
+      "angle_deg": 0
+    },
+    {
+      "file": "synthetic_90.frd",
+      "plane": "H",
+      "angle_deg": 90
+    },
+    {
+      "file": "synthetic_180.frd",
+      "plane": "H",
+      "angle_deg": 180
+    }
+  ],
+  "voltage_rms": 2.83,
+  "distance_m": 1,
+  "phase_reference": "intrinsic",
+  "axial_symmetry": true,
+  "mirror_missing": true
+}

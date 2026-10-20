@@ -1,6 +1,6 @@
 # Simulation applications
 
-Twenty-nine standalone Python programs. Each reads one JSON parameter file, computes a declared engineering model and writes one JSON result document into the folder you name. None of them decides whether a result is good, blocked or viable: they report curves, numbers and the assumptions behind them, and the reader (you, the language model running the design skills) judges.
+Thirty-five standalone Python programs. Each reads one JSON parameter file, computes a declared engineering model and writes one JSON result document into the folder you name. None of them decides whether a result is good, blocked or viable: they report curves, numbers and the assumptions behind them, and the reader (you, the language model running the design skills) judges.
 
 ```
 python framework/simulations/<name>/run.py --input params.json --out <folder> [--name <result-name>]
@@ -12,6 +12,12 @@ Every folder holds `run.py`, a `README.md` with the full input and output contra
 
 | App | Model | Typical question it answers |
 |---|---|---|
+| `polar_import` | Complex measured-plane ingestion with explicit timing, normalization, symmetry and coverage | How can measured angular data become a canonical source without duplicating propagation |
+| `response_prepare` | Windowed impulse conversion, complex merging/arithmetic, delay fitting and coordinate digitization | What processing and calibration produced these response data |
+| `enclosure_network` | General lumped chamber/vent/PR networks with individual motors | What do double-tuned reflex and vent/PR bandpass topologies predict for the specified geometry |
+| `parameter_identification` | Bounded complex-impedance parameter estimation with rank/residual diagnostics | Which driver or passive-diaphragm parameters explain the supplied observations |
+| `network_diagnostics` | Programme-integrated electrical stress and equivalent peak dissipation resistance | What powers/currents and reactive load follow from the stated programme and amplifier model |
+| `response_diagnostics` | Linear normal/minimum/excess phase, group delay, impulse, step and energy-time response | What time behavior follows from the stated complex response and endpoint assumptions |
 | `lf_box` | Lumped sealed, vented, aperiodic, passive-radiator or bandpass bass model at any drive voltages, optionally as an isobaric pair, with duct length, PR mass, excursion, port speed, cutoffs and voltage-to-limit scaling | Which woofer, loading, volume and tuning give the extension and output I want, and what limits it |
 | `lf_uncertainty` | Monte Carlo spread of `lf_box` over driver and build tolerances | How robust is that alignment to production spread |
 | `source_response` | One section's complex pressure per volt (bandwidth prior, digitized datasheet curve with minimum phase, box output, measured data) and load impedance, plus its directivity model and acoustic depth | Turn a driver's published data into the standard section file the other apps read |
@@ -77,6 +83,8 @@ thermal_power ─> lf_box (thermal.coil_temperature_c) and crossover_network (th
 
 - `plot_room_response.py`: room geometry, actual-seat curves, direct/room differences and spatial spread from `room_response`.
 - `plot_curves.py`: curves or angle maps from any result file to PNG.
+- `export_response.py`: complex CSV, FRD, ZMA or float WAV exports with provenance sidecars.
+- `compare_reference_export.py`: frequency-aligned complex export differences without acceptance decisions.
 - `cabinet_drawing.py`: cut list, chamber volume accounting and front, side-section and rear drawings from a cabinet description.
 - `schematic.py`: ladder schematics (labels: reference, part name, value, loss and rating), pin-to-pin connection table and a starting `board_nodal` netlist from a `crossover_network` parameter file or a `crossover_fit` result. `tools/example_crossover.json` is a self-contained example with capacitor banks and resistor arrays.
 - `build_pdf.py`: assembles Markdown documents with their images into one PDF, the final deliverable format.
@@ -112,3 +120,20 @@ See the designer skill's [advanced workflow](../skills/speaker-designer/referenc
 Current outputs replace design-acceptance flags with observables: array spacing has `spacing_limit_margin_hz`, radiating area has `criterion_margin`, the horn cutoff relation has `cutoff_minus_fs_qts_hz`, and vent edge geometry has `radius_minus_reference_mm`. Panel comparison reports `worst_margin_after_scatter_db`; orthotropic `mode_band` is null with a separate `isotropic_comparison`. Interpret these quantities in the evaluator, rather than converting a sign into a universal design verdict.
 
 Complex interpolation defaults to magnitude/residual-phase interpolation, with explicit `delay_s` and optional `cartesian` compatibility mode. Curve references record extrapolation; `error`, `zero` and `hold` are explicit policies. Every CLI result records an implementation digest covering the simulation code and shared numerical library, plus the benchmark catalogue and source-reference diagnostics. Replaying an earlier candidate is useful after a convention or model update; retain both result bases for comparison.
+
+## Additional passive analysis contracts
+
+Linear T/S consumers share `inductance_model` and `creep` laws. Their definitions
+and identification limits are in [driver impedance](../references/driver-impedance-identification.md).
+`baffle_diffraction` also supports a convex-polygon angular edge-dipole model;
+its included piston pattern replaces rather than duplicates section directivity.
+`board_nodal` supports exact ideal transformers as well as finite coupled windings.
+`network_fit` accepts explicitly requested spatial response targets, preference
+regression objectives and EPDR constraints. These are numerical objectives and
+signed margins; none chooses a speaker.
+
+The frozen [reference exports](../benchmarks/README.md) contain independently
+evaluated circuits and analytical fields. They are separate from measurements.
+New raw-measurement workflows accept plain numeric files and WAV; proprietary
+acquisition containers require export to these formats. Active DSP synthesis and
+controller configuration are outside this passive framework.

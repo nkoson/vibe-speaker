@@ -12,10 +12,47 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _common import cli, acoustics, networks, radiation  # noqa: E402
 
 NAME = "crossover_fit"
-VERSION = "1.3"
+VERSION = "1.4"
 
 class EvaluationBudgetExceeded(Exception):
     """Expected termination of a bounded numerical search."""
+
+
+def constraint_penalties(specs, f, axis_db, transfers, branch_db, drive_voltage=2.83):
+    """Soft residuals and unweighted margins; these are not feasibility guarantees."""
+    residuals, diagnostics = [], []
+    for spec in specs:
+        lo, hi = spec.get("band_hz", [f[0], f[-1]])
+        selected = (f >= lo) & (f <= hi)
+        if not np.any(selected):
+            raise cli.InputError("crossover constraint band has no frequency samples")
+        quantity = spec["quantity"]
+        if quantity in ("acoustic_relative_db", "terminal_relative_db"):
+            ref = spec.get("reference_band_hz", [300, 3000])
+            reference = (f >= ref[0]) & (f <= ref[1])
+            if not np.any(reference):
+                raise cli.InputError("crossover constraint reference band has no frequency samples")
+            curve = axis_db if quantity == "acoustic_relative_db" else acoustics.db(np.abs(transfers[int(spec["section_index"])]))
+            curve = curve - np.mean(curve[reference])
+        elif quantity == "terminal_voltage_rms":
+            curve = np.abs(transfers[int(spec["section_index"])]) * float(spec.get("drive_voltage_rms", drive_voltage))
+        elif quantity == "section_difference_db":
+            indices = spec["section_indices"]
+            curve = branch_db[int(indices[0])] - branch_db[int(indices[1])]
+        else:
+            raise cli.InputError(f"unknown crossover constraint quantity {quantity}")
+        values = curve[selected]
+        margins = []
+        if "minimum" in spec:
+            margins.append(float(np.min(values) - spec["minimum"]))
+            residuals.extend((float(spec.get("weight", 10)) * np.maximum(spec["minimum"] - values, 0)).tolist())
+        if "maximum" in spec:
+            margins.append(float(spec["maximum"] - np.max(values)))
+            residuals.extend((float(spec.get("weight", 10)) * np.maximum(values - spec["maximum"], 0)).tolist())
+        if not margins:
+            raise cli.InputError("crossover constraint requires a minimum or maximum")
+        diagnostics.append(dict(quantity=quantity, band_hz=[lo, hi], margins=margins))
+    return np.asarray(residuals), diagnostics
 
 NOTES = [
     "Log-space bounded least squares on the marked element values; the target curve and weights are yours. The result is a local optimum inside the bounds within the evaluation budget, not a proof of the best crossover.",
@@ -104,6 +141,10 @@ def compute(params, base_dir):
     ear = float(observer.get("ear_height_m", 1.0))
     voltage = float(params.get("input_voltage_rms", 2.83))
     angles = target.get("vertical_angles_deg", [0.0])
+    constraint_specs = target.get("constraints", [])
+    if constraint_specs and 0 not in angles:
+        raise cli.InputError("crossover constraints require zero degrees in target.vertical_angles_deg")
+    axis_index = angles.index(0) if 0 in angles else 0
     points = radiation.observation_points(distance, ear, angles, "V")
     geometry = radiation.load_sections(system, fit_f, base_dir)
     loads = [networks.section_load(w, fit_f, base_dir)[0] for w in sections_cfg]
@@ -123,7 +164,7 @@ def compute(params, base_dir):
     scale = voltage / acoustics.P0
     budget = dict(calls=0, max=int(params.get("max_objective_calls", 4000)))
 
-    def evaluate(x, polarity, rows_=None, elements_=None):
+    def evaluate(x, polarity, rows_=None, elements_=None, with_branches=False):
         rows_ = rows if rows_ is None else rows_
         elements_ = elements if elements_ is None else elements_
         _apply(rows_, x)
@@ -133,15 +174,19 @@ def compute(params, base_dir):
             h, z = networks.ladder_transfer(fit_f, loads[wi], elements_[wi])
             transfers.append(h * polarity[wi])
             zin.append(z)
-        total, _ = radiation.pressure(geometry, fit_f, points, distance, transfers)
-        return acoustics.db(total * scale), 1 / np.sum([1 / z for z in zin], axis=0), transfers
+        total, contributions = radiation.pressure(geometry, fit_f, points, distance, transfers)
+        result = (acoustics.db(total * scale), 1 / np.sum([1 / z for z in zin], axis=0), transfers)
+        return result + (acoustics.db(contributions[:, axis_index] * scale),) if with_branches else result
 
     def residual_values(x, polarity, target_db, rows_=None, elements_=None):
-        db_, zin, _ = evaluate(x, polarity, rows_, elements_)
+        db_, zin, transfers, branches = evaluate(x, polarity, rows_, elements_, with_branches=True)
         r = ((db_ - target_db[None, :]) * weights[None, :]).ravel()
         if min_z > 0:
             shortfall = np.maximum(min_z - np.abs(zin[audible]), 0.0) / min_z
             r = np.r_[r, z_weight * 10 * shortfall]
+        if constraint_specs:
+            penalties, _ = constraint_penalties(constraint_specs, fit_f, db_[axis_index], transfers, branches, voltage)
+            r = np.r_[r, penalties]
         return r
 
     def residual(x, polarity, target_db):
@@ -347,7 +392,10 @@ def compute(params, base_dir):
 
     start_curve = start_db[0]
     aud = (full_f >= 20) & (full_f <= 20000)
+    _, constraint_diagnostics = constraint_penalties(constraint_specs, full_f, on_axis, transfers,
+                                                      acoustics.db(parts[:, 0] * scale), voltage)
     return dict(f_hz=full_f, fit_f_hz=fit_f, target_spl_db=target_db, band_hz=list(band), start_spl_db=start_curve,
+                constraint_diagnostics=constraint_diagnostics, constraints_are_soft_penalties=True,
                 ablation=ablation, quantization=quantization, fitted_efficiency=fitted_efficiency, fitted_parts=fitted_parts,
                 attempts=attempts, selected_polarity=best["polarity"], fitted_values=fitted_values, fitted_sections=fitted_sections,
                 on_axis_spl_db=on_axis, sections=[dict(name=w.get("name"), transfer=transfers[i], spl_db=acoustics.db(parts[i, 0] * scale)) for i, w in enumerate(sections_cfg)],

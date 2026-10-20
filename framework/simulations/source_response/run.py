@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _common import cli, acoustics  # noqa: E402
 
 NAME = "source_response"
-VERSION = "1.3"
+VERSION = "1.6"
 NOTES = [
     "Pressure per volt is the on-axis free-field figure at 1 m for the source alone; directivity, baffle and position are applied later by whole_speaker.",
     "A published curve is turned into a minimum-phase response; the phase is a reconstruction, not a measurement. A bandwidth prior is a flat level with declared roll-offs.",
@@ -111,7 +111,16 @@ def _pressure(params, f, base_dir):
             raise cli.InputError("published_shape mode must be 'multiply' or 'replace'")
         p, basis = _box_pressure(model, f, base_dir)
         if model.get("published_shape"):
-            record = model["published_shape"]
+            record = dict(model["published_shape"])
+            if record.get("fixture_response"):
+                points = np.asarray(record["points"], float)
+                fixture = cli.curve_from_reference(
+                    {"extrapolation": "error", **record["fixture_response"]},
+                    base_dir, points[:, 0])
+                if np.any(abs(fixture) < 1e-12):
+                    raise cli.InputError("published-shape fixture response contains a null")
+                record["points"] = np.c_[points[:, 0], points[:, 1]-acoustics.db(fixture)].tolist()
+                basis += "; declared fixture magnitude removed before shape normalization and phase reconstruction"
             blend = tuple(model.get("blend_band_hz", [150.0, 300.0]))
             shape = _shape_above(record, f, blend)
             if mode == "replace":
@@ -124,7 +133,9 @@ def _pressure(params, f, base_dir):
     if kind == "simulation":
         ref = dict(model["reference"])
         ref.setdefault("path", "results.pressure_per_volt_pa")
-        return cli.curve_from_reference(ref, base_dir, f), "canonical simulated source per terminal volt"
+        upstream=cli.load_json(cli.resolve_path(ref["file"],base_dir))
+        origin=upstream.get("simulation","external")
+        return cli.curve_from_reference(ref, base_dir, f), f"canonical source imported from {origin}; normalization follows its source contract"
     if kind == "measured":
         fr = np.asarray(model["frequency_hz"], float)
         if "spl_db" in model:
@@ -177,14 +188,20 @@ def compute(params, base_dir):
     z, z_basis = _impedance(params, f, base_dir)
     model = params.get("acoustic") or {}
     inherited_contract = {}
+    inherited_directivity = None
     if model.get("kind") == "simulation":
-        inherited_contract = cli.load_json(cli.resolve_path(model["reference"]["file"],base_dir)).get("results",{}).get("source_contract",{})
+        upstream = cli.load_json(cli.resolve_path(model["reference"]["file"],base_dir)).get("results",{})
+        inherited_contract = upstream.get("source_contract",{})
+        inherited_directivity = upstream.get("directivity")
     contract = dict(inherited_contract, **(model.get("contract") or {}))
     phase_reference = contract.get("phase_reference", "intrinsic")
+    if contract.get("baffle","external") not in ("external","included"):
+        raise cli.InputError("contract.baffle needs external or included")
     if phase_reference not in ("intrinsic", "common_observer"):
         raise cli.InputError("contract.phase_reference needs intrinsic or common_observer")
     if phase_reference == "common_observer":
-        if "reconstructed" in p_basis or "assumed zero" in p_basis:
+        phase_evidence=str(contract.get("phase_basis",""))+" "+p_basis
+        if "reconstructed" in phase_evidence or "assumed zero" in phase_evidence or "assumed_zero" in phase_evidence:
             raise cli.InputError("common_observer phase needs supplied complex timing information")
         reference_m = cli.positive(contract.get("reference_distance_m"), "contract.reference_distance_m")
         observer = np.asarray(contract.get("observer_position_m"),float)
@@ -194,7 +211,7 @@ def compute(params, base_dir):
             p *= np.exp(2j * np.pi * f * reference_m / acoustics.C)
         contract["common_delay_removed"] = True
     contract.update(phase_reference=phase_reference, pressure_reference_m=1.,
-                    baffle=contract.get("baffle", "external"), phase_basis=p_basis,
+                    baffle=contract.get("baffle", "external"), phase_basis=contract.get("phase_basis",p_basis),
                     normalization=contract.get("normalization", "driver_terminal_volt" if model.get("voltage_basis") == "driver_terminal" else "declared_volt"))
     calibration = model.get("level_calibration")
     gain = 1.0
@@ -247,7 +264,7 @@ def compute(params, base_dir):
     if radius:
         validity["piston_ka_unity_hz"] = acoustics.C / (2 * np.pi * float(radius) / 1000)
     return dict(f_hz=f, name=params.get("name"), pressure_per_volt_pa=p, z_ohm=z, pressure_basis=p_basis, impedance_basis=z_basis,
-                directivity=params.get("directivity"), acoustic_depth_mm=params.get("acoustic_depth_mm"), statistics=stats,
+                directivity=params.get("directivity", inherited_directivity), acoustic_depth_mm=params.get("acoustic_depth_mm"), statistics=stats,
                 validity=validity, source_contract=contract, **extra)
 
 

@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _common import cli, acoustics  # noqa: E402
 
 NAME = "board_nodal"
-VERSION = "1.0"
+VERSION = "1.1"
 NOTES = [
     "Complex nodal analysis with ideal voltage sources at the active input terminals; zero-ohm wires merge nodes, so their individual currents are indeterminate and finite wire resistances are needed for wire current figures.",
     "An inactive source leaves its terminals open. A floating sub-network without any fixed potential is referenced to 0 V at one node so the matrix stays solvable; it carries no current.",
@@ -39,18 +39,7 @@ class Nodes:
 
 
 def _component_z(component, f, scale=None):
-    kind = component["type"]
-    factor = 1.0 if not scale else float(scale.get(component["id"], 1.0))
-    s = 2j * np.pi * f
-    if kind == "R":
-        return np.full(len(f), float(component["value_ohm"]) * factor, complex)
-    if kind == "L":
-        dcr = component.get("dcr_ohm")
-        l_mh = float(component["value_mh"]) * factor
-        return (acoustics.default_coil_dcr(l_mh) if dcr is None else float(dcr)) + s * l_mh * 1e-3
-    if kind == "C":
-        return float(component.get("esr_ohm", 0.01)) + 1 / (s * float(component["value_uf"]) * 1e-6 * factor)
-    raise cli.InputError(f"component '{component.get('id')}' has unknown type '{kind}'")
+    return acoustics.element_impedance(component, f, scale)
 
 
 def _load_z(load, f, base_dir):
@@ -62,7 +51,7 @@ def _load_z(load, f, base_dir):
     return acoustics.impedance_model(z, f)
 
 
-def solve(f, components, wires, sources, loads, mode, load_z, scale=None):
+def solve(f, components, wires, sources, loads, mode, load_z, scale=None, ideal_transformers=()):
     """Solve one connection mode; returns per-edge states, source currents and load transfers."""
     nodes = Nodes()
     edges = []
@@ -82,6 +71,9 @@ def solve(f, components, wires, sources, loads, mode, load_z, scale=None):
         nodes.add(load["plus"])
         nodes.add(load["minus"])
         edges.append((load["id"], load["plus"], load["minus"], load_z[load["id"]], "load"))
+    for transformer in ideal_transformers:
+        for pin in transformer["primary_nodes"] + transformer["secondary_nodes"]:
+            nodes.add(pin)
     for a, b in mode.get("links", []):
         nodes.join(a, b)
     active = mode.get("active_sources") or [s["id"] for s in sources]
@@ -103,6 +95,10 @@ def solve(f, components, wires, sources, loads, mode, load_z, scale=None):
         ra, rb = nodes.root(a), nodes.root(b)
         adjacency[ra].add(rb)
         adjacency[rb].add(ra)
+    for transformer in ideal_transformers:
+        for key in ("primary_nodes", "secondary_nodes"):
+            a,b=[nodes.root(pin) for pin in transformer[key]]
+            adjacency[a].add(b);adjacency[b].add(a)
     seen = set()
     for r in sorted(roots):
         if r in seen:
@@ -134,6 +130,8 @@ def solve(f, components, wires, sources, loads, mode, load_z, scale=None):
         for other, coupling in coil.get("mutual_with", {}).items():
             if other not in coils or other == cid or abs(float(coupling)) >= 1:
                 raise cli.InputError("mutual_with needs another coil and -1 < coupling < 1")
+            if any(c.get("parallel_r_ohm") is not None or c.get("parallel_c_pf") is not None for c in (coil,coils[other])):
+                raise cli.InputError("coupled winding parasitics must be explicit parallel components")
             pair = tuple(sorted((cid, other)))
             if pair in applied and applied[pair] != coupling:
                 raise cli.InputError("conflicting mutual coupling declarations")
@@ -144,8 +142,11 @@ def solve(f, components, wires, sources, loads, mode, load_z, scale=None):
             impedance[:,edge_index[cid],edge_index[other]] = 2j*np.pi*f*mutual
             impedance[:,edge_index[other],edge_index[cid]] = 2j*np.pi*f*mutual
     if coils:
-        ci=[edge_index[k] for k in coils]
-        inductance=impedance[0][np.ix_(ci,ci)].imag/(2*np.pi*f[0])
+        coil_ids=list(coils)
+        inductance=np.diag([float(coils[k]["value_mh"])*(1 if not scale else scale.get(k,1))*1e-3 for k in coil_ids])
+        for (a,b),coupling in applied.items():
+            i,j=coil_ids.index(a),coil_ids.index(b)
+            inductance[i,j]=inductance[j,i]=coupling*np.sqrt(inductance[i,i]*inductance[j,j])
         if np.linalg.eigvalsh(inductance).min() <= 0:
             raise cli.InputError("coupled inductance matrix is not positive definite")
     branch_y = np.linalg.inv(impedance)
@@ -156,9 +157,27 @@ def solve(f, components, wires, sources, loads, mode, load_z, scale=None):
             root=nodes.root(pin)
             if root in index: incidence[index[root],ei]+=sign
             else: fixed_drop[:,ei]+=sign*fixed[root]
-    matrix = np.einsum('ie,fej,kj->fik',incidence,branch_y,incidence)
-    rhs = -np.einsum('ie,fej,fj->fi',incidence,branch_y,fixed_drop)
-    if n:
+    # Contract in stages rather than enumerating the full five-index product.
+    # This is the same nodal stamp, including declared mutual inductance.
+    matrix = np.einsum('ie,fej,kj->fik',incidence,branch_y,incidence,optimize=True)
+    rhs = -np.einsum('ie,fej,fj->fi',incidence,branch_y,fixed_drop,optimize=True)
+    nt=len(ideal_transformers)
+    constraint=np.zeros((n,nt))
+    fixed_constraint=np.zeros(nt,complex)
+    for ti,transformer in enumerate(ideal_transformers):
+        ratio=cli.positive(transformer["turns_ratio"],"ideal turns_ratio")
+        for pin,sign in zip(transformer["primary_nodes"]+transformer["secondary_nodes"],[1,-1,-ratio,ratio]):
+            root=nodes.root(pin)
+            if root in index:constraint[index[root],ti]+=sign
+            else:fixed_constraint[ti]+=sign*fixed[root]
+    if nt:
+        augmented=np.zeros((len(f),n+nt,n+nt),complex)
+        augmented[:,:n,:n]=matrix
+        augmented[:,:n,n:]=constraint
+        augmented[:,n:,:n]=constraint.T
+        matrix=augmented
+        rhs=np.c_[rhs,np.broadcast_to(-fixed_constraint,(len(f),nt))]
+    if n+nt:
         try:
             values = np.linalg.solve(matrix, rhs[..., None])[..., 0]
         except np.linalg.LinAlgError as exc:
@@ -167,6 +186,8 @@ def solve(f, components, wires, sources, loads, mode, load_z, scale=None):
     else:
         values = np.zeros((len(f), 0), complex)
         residual = np.zeros(len(f))
+    ideal_currents=values[:,n:]
+    values=values[:,:n]
 
     def voltage(pin):
         root = nodes.root(pin)
@@ -184,6 +205,18 @@ def solve(f, components, wires, sources, loads, mode, load_z, scale=None):
             root = nodes.root(pin)
             if root in boundary:
                 boundary[root] += sign * current
+    ideal_rows=[]
+    for ti,transformer in enumerate(ideal_transformers):
+        ratio=float(transformer["turns_ratio"])
+        current=ideal_currents[:,ti]
+        for pin,sign in zip(transformer["primary_nodes"]+transformer["secondary_nodes"],[1,-1,-ratio,ratio]):
+            root=nodes.root(pin)
+            if root in boundary:boundary[root]+=sign*current
+        vp=voltage(transformer["primary_nodes"][0])-voltage(transformer["primary_nodes"][1])
+        vs=voltage(transformer["secondary_nodes"][0])-voltage(transformer["secondary_nodes"][1])
+        ideal_rows.append(dict(id=transformer["id"],primary_voltage=vp,secondary_voltage=vs,
+                               primary_current=current,secondary_current=-ratio*current,
+                               constraint_residual=abs(vp-ratio*vs)))
     supply = sum(np.real(np.conj(current) * fixed[root]) for root, current in boundary.items())
     dissipated = sum(st["power"] for st in states.values())
     power_residual = np.abs(supply - dissipated) / np.maximum(np.abs(supply), 1e-12)
@@ -201,7 +234,8 @@ def solve(f, components, wires, sources, loads, mode, load_z, scale=None):
     load_rows = [dict(id=load["id"], transfer=states[load["id"]]["voltage"] / reference_v, voltage_rms=np.abs(states[load["id"]]["voltage"]),
                       current_rms_a=np.abs(states[load["id"]]["current"]), power_w=states[load["id"]]["power"]) for load in loads]
     return dict(states=states, sources=src_rows, loads=load_rows, kcl_relative_residual=float(residual.max()),
-                power_relative_residual=float(power_residual.max()), reference_voltage_rms=reference_v)
+                power_relative_residual=float(power_residual.max()), reference_voltage_rms=reference_v,
+                ideal_transformers=ideal_rows)
 
 
 VALIDITY = [
@@ -214,7 +248,11 @@ VALIDITY = [
 def compute(params, base_dir):
     f = cli.frequency_grid(params.get("frequencies"), 10.0, 40000.0, 600)
     components = list(cli.require(params, "components"))
+    ideal_transformers=[]
     for transformer in params.get("transformers", []):
+        if transformer.get("kind")=="ideal":
+            ideal_transformers.append(transformer)
+            continue
         pid,sid=transformer["id"]+":primary",transformer["id"]+":secondary"
         lp=cli.positive(transformer["primary_inductance_mh"],"primary_inductance_mh")
         ratio=cli.positive(transformer["turns_ratio"],"turns_ratio")
@@ -236,7 +274,7 @@ def compute(params, base_dir):
     spreads = {"C": float(tol.get("C", 0.05)), "L": float(tol.get("L", 0.03)), "R": float(tol.get("R", 0.02))}
     rows = []
     for mode in modes:
-        sol = solve(f, components, wires, sources, loads, mode, load_z)
+        sol = solve(f, components, wires, sources, loads, mode, load_z, ideal_transformers=ideal_transformers)
         comp_rows = []
         for c in components:
             st = sol["states"][c["id"]]
@@ -250,6 +288,7 @@ def compute(params, base_dir):
                           max_power_w=float(sol["states"][w["id"]]["power"].max())) for w in wires if float(w.get("resistance_ohm", 0.0)) > 0]
         entry = dict(id=mode.get("id"), links=mode.get("links", []), active_sources=mode.get("active_sources") or [s["id"] for s in sources],
                      sources=sol["sources"], loads=sol["loads"], components=comp_rows, wires=wire_rows,
+                     ideal_transformers=sol["ideal_transformers"],
                      kcl_relative_residual=sol["kcl_relative_residual"], power_relative_residual=sol["power_relative_residual"])
         for src in entry["sources"]:
             if src.get("active"):
@@ -261,7 +300,7 @@ def compute(params, base_dir):
             samples = {load["id"]: [] for load in loads}
             for _ in range(draws):
                 scale = {c["id"]: 1 + rng.uniform(-1, 1) * float(c.get("tolerance_fraction", spreads.get(c["type"], 0.0))) for c in components}
-                trial = solve(f, components, wires, sources, loads, mode, load_z, scale)
+                trial = solve(f, components, wires, sources, loads, mode, load_z, scale, ideal_transformers)
                 for row in trial["loads"]:
                     samples[row["id"]].append(acoustics.db(row["transfer"]))
             entry["tolerance"] = dict(draws=draws, loads=[dict(id=k, transfer_db_p5=np.percentile(v, 5, axis=0), transfer_db_p50=np.percentile(v, 50, axis=0),

@@ -42,10 +42,10 @@ def load_sections(params, f, base_dir):
             pressure = cli.curve_from_reference(ref, base_dir, f)
         if pressure is None:
             raise cli.InputError(f"section '{section.get('name')}' needs a source file or a pressure_per_volt reference")
-        directivity = section.get("directivity") or (cli.dotted(source_doc, "results.directivity") if source_doc else None) or {"kind": "omni"}
+        directivity = section.get("directivity") or ((source_doc or {}).get("results", {}).get("directivity")) or {"kind": "omni"}
         depth = section.get("position", {}).get("depth_mm")
         if depth is None and source_doc:
-            depth = cli.dotted(source_doc, "results.acoustic_depth_mm")
+            depth = source_doc.get("results", {}).get("acoustic_depth_mm")
         depth = float(depth or 0.0)
         contract = (source_doc or {}).get("results", {}).get("source_contract", {})
         if contract.get("baffle") == "included" and section.get("baffle"):
@@ -65,6 +65,14 @@ def load_sections(params, f, base_dir):
             ref = dict(section["baffle"])
             ref.setdefault("frequency_path", "results.f_hz")
             baffle = cli.curve_from_reference(ref, base_dir, f)
+            baffle_doc = cli.load_json(cli.resolve_path(ref["file"],base_dir))
+            parent_path = ref["path"].rsplit(".",1)[0]
+            parent = cli.dotted(baffle_doc,parent_path)
+            if isinstance(parent,dict) and parent.get("angular_model"):
+                directivity = parent["angular_model"]
+                baffle = np.ones(len(f),complex)
+                if ref["path"].endswith(".combined_factor") and parent.get("recess_transfer"):
+                    baffle = cli.curve_from_reference(dict(ref,path=parent_path+".recess_transfer"),base_dir,f)
         entry = dict(name=section.get("name"), pressure=pressure, directivity=directivity, centre=centre, transfer=transfer, baffle=baffle,
                      acoustic_depth_mm=depth,
                      rear=rear_prior(section.get("rear_radiation"), cabinet.get("baffle_width_mm")),
@@ -176,7 +184,7 @@ def _propagate(f, source, centre, directivity, tilt_rad, points, reference_m, mi
     h = np.arctan2(lateral, axial)
     v = np.arctan2(up, np.hypot(lateral, axial))
     d = acoustics.directivity(directivity, f[None, :], h[:, None], v[:, None])
-    complete_pattern = directivity.get("kind") in ("omni", "dipole", "cardioid", "complex_grid")
+    complete_pattern = directivity.get("kind") in ("omni", "dipole", "cardioid", "complex_grid", "measured_planes", "distributed_edge_dipole")
     if rear is None and not complete_pattern:
         d = d * (axial > 0)[:, None]
     elif rear is not None and not complete_pattern:

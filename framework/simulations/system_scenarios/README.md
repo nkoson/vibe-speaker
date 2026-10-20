@@ -12,6 +12,10 @@
 
 `observables[]` identifies a step, result path, name and reduction (`scalar`, `min`, `max`, `mean`, `rms`). Outputs preserve all nominal/drawn outcomes, input errors, resolved/unresolved counts and conditional production percentiles per model case. A null/censored value remains unresolved for the statistic rather than disappearing from its denominator. The app computes no ranking, target acceptance or production yield from arbitrary model scenarios.
 
+Complex observables are reduced by magnitude, consistently for in-memory arrays
+and serialized real/imaginary records. To inspect real or imaginary components
+separately, reference an explicitly exported real-valued observable.
+
 Use the same production draw definitions for candidate comparisons, inspect domain errors and nominal recovery, and keep scenario uncertainty distinct from numerical mesh/solver refinement.
 
 See [simulation methods](../../references/simulation-methods.md) for equations, sources and verification scope, and [advanced workflow guidance](../../skills/speaker-designer/references/advanced-simulation.md) for connecting the result to a design.

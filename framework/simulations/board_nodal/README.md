@@ -33,3 +33,14 @@ Compare `modes[].loads[].transfer` with `crossover_network` `results.sections[].
 An inductor can declare `mutual_with: {other_coil_id: coupling}` with signed `-1 < coupling < 1`. The branch impedance matrix includes `j omega k sqrt(L1 L2)` and is checked for positive-definite inductance. Coupling values are explicit inputs, not inferred from board coordinates.
 
 `transformers[]` supplies `id`, `primary_nodes`, `secondary_nodes`, `primary_inductance_mh`, `turns_ratio` (Np/Ns), `coupling`, `primary_dcr_ohm` and `secondary_dcr_ohm`. It expands to two coupled winding records and retains finite magnetizing/leakage behavior. An ideal transformer is approached as an explicit parameter limit; no silent perfect-coupling substitution is made. Current and power conservation are evaluated from the coupled solution.
+
+Alternatively `transformers[].kind: ideal` uses exact constraints
+`Vp = turns_ratio * Vs` and `Is = -turns_ratio * Ip`; only id, winding nodes
+and turns ratio are needed. It has no magnetic loss or finite magnetizing current.
+The solver returns winding voltages/currents and constraint residuals. This is an
+explicit idealization, independent of the finite coupled-winding implementation.
+
+Uncoupled inductors support `parallel_r_ohm` and `parallel_c_pf` across the entire
+series DCR+L branch. For coupled windings represent shunts as separate R/C components.
+Component dissipation includes the real part of the resulting branch impedance.
+See [passive network diagnostics](../../references/passive-network-diagnostics.md).

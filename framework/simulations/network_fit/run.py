@@ -5,9 +5,9 @@ from pathlib import Path
 import numpy as np
 from scipy.optimize import minimize, differential_evolution, NonlinearConstraint
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from _common import cli,apps,radiation,acoustics,networks
+from _common import cli,apps,radiation,acoustics,networks,spatial_objectives,load_diagnostics
 NAME="network_fit"
-VERSION="1.0"
+VERSION = "1.2"
 
 class EvaluationBudgetExceeded(Exception):
     """Stop numerical work while retaining evaluated trials."""
@@ -22,9 +22,29 @@ def compute(params,base_dir):
     bounds=[tuple(np.log(v["bounds"])) for v in variables]
     if any(lo>=hi or not lo<=x<=hi for (lo,hi),x in zip(bounds,x0)):raise cli.InputError("fit start lies outside positive ordered bounds")
     target=params.get("target",{});trials=[];budget=int(params.get("max_evaluations",200));cache={}
+    acoustic_target=target.get("spl_db")
+    if isinstance(acoustic_target,dict):
+        acoustic_target=cli.curve_from_reference(acoustic_target,base_dir,f,kind="real")
+    elif acoustic_target is not None:
+        acoustic_target=np.full(len(f),float(acoustic_target))
+    acoustic_weights=np.ones(len(f))
+    for weight in target.get("weights",[]):
+        acoustic_weights[(f>=weight["band_hz"][0])&(f<=weight["band_hz"][1])]=float(weight["weight"])
     system=params.get("system");sources=radiation.load_sections(system,f,base_dir) if system else None
     angles=target.get("vertical_angles_deg",[0.]);observer=(system or {}).get("observer",{})
     distance=float(observer.get("distance_m",3));ear=float(observer.get("ear_height_m",1))
+    spatial_specs=params.get("spatial_targets",[])
+    preference_weight=float(params.get("preference_objective_weight",0))
+    if preference_weight<0:raise cli.InputError("preference_objective_weight must be nonnegative")
+    spatial_basis=spatial_objectives.basis(sources,f,distance,ear) if sources and (spatial_specs or preference_weight) else None
+    if (spatial_specs or preference_weight) and sources is None:raise cli.InputError("spatial objectives need a system")
+    spatial_targets=[]
+    for spec in spatial_specs:
+        values=spec["target_db"]
+        values=cli.curve_from_reference(values,base_dir,f,"real") if isinstance(values,dict) else np.full(len(f),float(values))
+        sel=(f>=spec["band_hz"][0])&(f<=spec["band_hz"][1])
+        if not np.any(sel):raise cli.InputError("spatial target band has no samples")
+        spatial_targets.append((spec,values,sel))
     def evaluate(x,stock=False):
         key=tuple(x) if not stock else None
         if key is not None and key in cache:return cache[key]
@@ -32,7 +52,7 @@ def compute(params,base_dir):
         for v,k,value in zip(variables,keys,np.exp(x)):components[v["id"]][k]=float(value)
         result=apps.module("board_nodal").compute(board,base_dir)
         mode=result["modes"][int(params.get("mode_index",0))];loads={r["id"]:r for r in mode["loads"]}
-        residual=[]
+        residual=[];objective_terms=[];spatial=None;regression=None
         for spec in target.get("transfers",[]):
             sel=(f>=spec["band_hz"][0])&(f<=spec["band_hz"][1]);db=acoustics.db(loads[spec["load_id"]]["transfer"])
             residual.extend(((db[sel]-float(spec["db"]))*float(spec.get("weight",1))).tolist())
@@ -42,20 +62,46 @@ def compute(params,base_dir):
             p,_=radiation.pressure(sources,f,radiation.observation_points(distance,ear,angles,"V"),distance,transfers)
             acoustic=acoustics.db(p*float(params.get("input_voltage_rms",2.83))/cli.P0)
             band=target.get("band_hz",[f[0],f[-1]]);sel=(f>=band[0])&(f<=band[1])
-            residual.extend((acoustic[:,sel]-float(target["spl_db"])).ravel().tolist())
-        if not residual:raise cli.InputError("network fit needs transfer targets or an acoustic target")
+            if acoustic_target is not None:
+                residual.extend(((acoustic[:,sel]-acoustic_target[None,sel])*acoustic_weights[None,sel]).ravel().tolist())
+            if spatial_basis is not None:
+                spatial=spatial_objectives.curves(spatial_basis,transfers,float(params.get("input_voltage_rms",2.83)),params.get("spatial_options",{}))
+                for spec,values,selection in spatial_targets:
+                    if spec["curve"] not in spatial:raise cli.InputError("unknown spatial target curve")
+                    delta=spatial[spec["curve"]][selection]-values[selection]
+                    offset=float(delta.mean()) if spec.get("shape_only") else 0.
+                    delta=(delta-offset)*cli.positive(spec.get("weight",1),"spatial weight",zero=True)
+                    residual.extend(delta.tolist())
+                    objective_terms.append(dict(curve=spec["curve"],mean_squared_residual=float(np.mean(delta**2)),
+                                                sample_count=len(delta),squared_residual_sum=float(np.sum(delta**2)),level_offset_db=offset))
+                if preference_weight:regression=spatial_objectives.regression(f,spatial)
+        if not residual and not preference_weight:raise cli.InputError("network fit needs transfer, acoustic or spatial objectives")
         margins=[]
         for condition in params.get("constraints",[]):
             band=condition.get("band_hz",[f[0],f[-1]]);sel=(f>=band[0])&(f<=band[1])
+            if not np.any(sel):raise cli.InputError("constraint band has no frequency samples")
             quantity=condition["quantity"]
             if quantity=="input_impedance_ohm":curve=abs(next(s for s in mode["sources"] if s.get("active"))["input_z_ohm"])
+            elif quantity=="epdr_ohm":
+                curve=load_diagnostics.epdr(next(s for s in mode["sources"] if s.get("active"))["input_z_ohm"])
+                if np.any(~np.isfinite(curve[sel])):raise cli.InputError("EPDR constraint needs finite passive input impedance")
             elif quantity=="terminal_voltage_rms":curve=loads[condition["load_id"]]["voltage_rms"]
             elif quantity=="component_power_w":curve=next(c for c in mode["components"] if c["id"]==condition["component_id"])["power_w"]
+            elif quantity=="acoustic_relative_db":
+                if acoustic is None:raise cli.InputError("acoustic_relative_db needs a system acoustic target")
+                axis=int(np.argmin(np.abs(np.asarray(angles,dtype=float))))
+                if float(angles[axis])!=0:raise cli.InputError("acoustic_relative_db needs zero degrees among target.vertical_angles_deg")
+                ref=condition.get("reference_band_hz",[300,3000]);reference=(f>=ref[0])&(f<=ref[1])
+                if not np.any(reference):raise cli.InputError("acoustic reference band has no frequency samples")
+                curve=acoustic[axis]-np.mean(acoustic[axis,reference])
             else:raise cli.InputError(f"unknown fit quantity {quantity}")
             if "minimum" in condition:margins.append(float(np.min(curve[sel])-condition["minimum"]))
             if "maximum" in condition:margins.append(float(condition["maximum"]-np.max(curve[sel])))
-        row=dict(index=len(trials),cost=float(np.mean(np.array(residual)**2)),constraint_margins=margins,
+        cost=float(np.mean(np.array(residual)**2)) if residual else 0.
+        if regression is not None:cost-=preference_weight*regression["score"]
+        row=dict(index=len(trials),cost=cost,constraint_margins=margins,
                  values=np.exp(x).tolist(),components=copy.deepcopy(board["components"]),acoustic_spl_db=acoustic,
+                 spatial_curves_db=spatial,objective_terms=objective_terms,preference_regression=regression,
                  input_z_min_ohm=float(min(abs(s["input_z_ohm"]).min() for s in mode["sources"] if s.get("active"))),
                  inventory_cost=networks.inventory_cost(board["components"]),
                  stock_realization=stock)
@@ -84,6 +130,7 @@ def compute(params,base_dir):
     numerical=min(constrained or trials,key=lambda r:r["cost"])
     stock=[]
     if any(v.get("stock") for v in variables):
+        stock_baseline={c["id"]:copy.deepcopy(c) for c in numerical["components"]}
         choices=[]
         for v,key,value in zip(variables,keys,numerical["values"]):
             choices.append(v.get("stock") or [{key:value}])
@@ -91,6 +138,8 @@ def compute(params,base_dir):
         for combination in itertools.islice(itertools.product(*choices),stock_budget):
             for v,record in zip(variables,combination):
                 if any(k in record for k in ("id","nodes","type")):raise cli.InputError("stock records use sku; circuit identity/type/nodes stay fixed")
+                components[v["id"]].clear()
+                components[v["id"]].update(copy.deepcopy(stock_baseline[v["id"]]))
                 components[v["id"]].update(record)
             values=np.log([components[v["id"]][key] for v,key in zip(variables,keys)])
             stock.append(evaluate(values,True))

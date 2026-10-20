@@ -207,6 +207,12 @@ is measurable.
 
 ## Sources
 
+- SciPy developers, [cheb1ap](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.cheb1ap.html).
+  The optional C4 prototype uses fourth-order analog Chebyshev poles, rescales
+  the polynomial to unit constant coefficient and applies the reciprocal
+  low-pass/high-pass transform. Its declared ripple is a mathematical target,
+  not a recommended loudspeaker response.
+
 - Small, R. H., "Vented-Box Loudspeaker Systems, Parts I to IV", *Journal of the Audio Engineering Society*, vol. 21, nos. 5-8, 1973 — the lossy alignment recipe and its prototype coefficients, the loss decomposition and measured `QP`/`QA`/`QL` ranges, the efficiency limit, and the minimum vent-area rule with its 4.5-percent-of-`c` derivation. <https://sdlabo.jp/archives/Vented_Box_Loudspeaker%20Systems_Part_1-4.pdf>
 - Thiele, A. N., "Loudspeakers in Vented Boxes, Parts I and II", *Journal of the Audio Engineering Society*, vol. 19, nos. 5 and 6, 1971 — the lossless alignment families the lossy recipe reduces to.
 - Salvatti, A., Button, D. J., Devantier, A., "Maximizing Performance from Loudspeaker Ports", *Journal of the Audio Engineering Society*, vol. 50, no. 1/2, pp. 19-45, 2002 — the Reynolds-number compression result, the normalised flare rate and its tuning fit, the flare-rate optimum against level, and the 0.2-diameter edge-radius rule. <http://jahonen.kapsi.fi/Audio/Papers/AES_PortPaper.pdf>

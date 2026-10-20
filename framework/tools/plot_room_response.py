@@ -8,10 +8,11 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.ticker import ScalarFormatter, NullFormatter
 import numpy as np
 
 
-def draw(document, destination):
+def draw(document, destination, frequency_limits=None):
     if document.get("simulation") != "room_response" or document.get("status") != "computed":
         raise ValueError("expected a computed room_response result")
     result = document["results"]
@@ -44,16 +45,30 @@ def draw(document, destination):
     geometry.set(xlabel="x (m)", ylabel="y (m)", zlabel="z (m)",
                  title="3D room: orange sources/arrows, x = seats\nSeat colours follow the response legend")
     geometry.set_box_aspect(dimensions)
-    response.set(title="Simulated SPL at physical seats", ylabel="SPL (dB re 20 µPa)")
+    response.set(title="SPL at listening positions", ylabel="SPL (dB re 20 µPa)")
     response.legend(fontsize=7, ncol=2)
     difference.set(title="Room minus direct sound at each seat", ylabel="Difference (dB)")
     spread.set(title="Seat-to-seat spread", ylabel="Maximum minus minimum (dB)")
     for axis in (response, difference, spread):
         axis.set_xlabel("Frequency (Hz)")
         axis.grid(alpha=.2, which="both")
-        axis.set_xlim(f[0], f[-1])
-    fig.suptitle(f"Simulated 3D room • reflection order {result['max_order']} • declared wall/source priors\n"
-                 "Finite early-reflection model; curves are unsmoothed and exclude the late reverberant field", fontsize=12)
+        lo, hi = frequency_limits or (f[0], f[-1])
+        if not 0 < lo < hi:
+            raise ValueError("frequency limits need positive increasing bounds")
+        axis.set_xlim(lo, hi)
+        ticks = [v for v in (10,20,50,100,200,500,1000,2000,5000,10000,20000,50000)
+                 if lo <= v <= hi]
+        axis.set_xticks(ticks)
+        axis.xaxis.set_major_formatter(ScalarFormatter())
+        axis.xaxis.set_minor_formatter(NullFormatter())
+        axis.tick_params(axis="x", labelsize=8)
+        if lo < f[0]:
+            axis.axvspan(lo, f[0], color="0.94", zorder=-1)
+        if hi > f[-1]:
+            axis.axvspan(f[-1], hi, color="0.94", zorder=-1)
+    fig.suptitle("Room response and listening positions\n"
+                 "Direct sound, early reflections and seat-to-seat variation"
+                 + ("\nGray: outside the response-data band" if frequency_limits else ""), fontsize=12)
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(destination, dpi=160)
@@ -64,5 +79,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", required=True)
     parser.add_argument("--out", required=True)
+    parser.add_argument("--frequency-limits", nargs=2, type=float, metavar=("LOW_HZ", "HIGH_HZ"),
+                        help="Display bounds; unsimulated bands are shaded, never extrapolated")
     args = parser.parse_args()
-    draw(json.loads(Path(args.input).read_text()), args.out)
+    draw(json.loads(Path(args.input).read_text()), args.out, args.frequency_limits)

@@ -6,7 +6,7 @@ import numpy as np
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from _common import cli, geometry
 NAME="exterior_bem"
-VERSION="1.0"
+VERSION="1.1"
 
 def solve(mesh,f,velocity,observers):
     centres,normals,areas=mesh["centres"],mesh["normals"],mesh["areas"]
@@ -40,10 +40,34 @@ def compute(params,base_dir):
         raise cli.InputError("exterior surface needs a closed outward-oriented manifold")
     drive=params.get("drive",{});voltage=cli.positive(drive.get("voltage_rms",1.),"drive.voltage_rms")
     velocity=np.full((len(f),len(mesh["areas"])),complex(drive.get("normal_velocity_m_s",0.)),complex)
+    patch_records=[]
     for patch in drive.get("patches",[]):
         indices=patch.get("triangles",list(range(len(mesh["areas"]))))
-        values=cli.curve_from_reference(patch["velocity"],base_dir,f) if isinstance(patch.get("velocity"),dict) else np.full(len(f),float(patch.get("normal_velocity_m_s",0.)))
+        if "disk" in patch:
+            if "triangles" in patch:
+                raise cli.InputError("a patch uses disk or triangle indices, not both")
+            disk=patch["disk"];centre=np.asarray(disk["centre_m"],float);normal=np.asarray(disk["normal"],float)
+            if centre.shape!=(3,) or normal.shape!=(3,) or not np.all(np.isfinite(centre)) or not np.all(np.isfinite(normal)) or np.linalg.norm(normal)==0:
+                raise cli.InputError("disk needs finite centre and nonzero normal vectors")
+            normal=normal/np.linalg.norm(normal)
+            radius=cli.positive(disk["radius_m"],"disk.radius_m")
+            delta=mesh["centres"]-centre
+            axial=delta@normal
+            radial=np.linalg.norm(delta-axial[:,None]*normal,axis=1)
+            indices=np.flatnonzero((abs(axial)<float(disk.get("plane_tolerance_m",1e-8)))&
+                                  (radial<=radius)&(mesh["normals"]@normal>.99)).tolist()
+        if not indices:
+            raise cli.InputError("patch selects no triangles; refine the mesh")
+        area=float(np.sum(mesh["areas"][indices]))
+        if "volume_velocity_m3_s" in patch or "volume_velocity" in patch:
+            if "velocity" in patch or "normal_velocity_m_s" in patch:
+                raise cli.InputError("patch supplies volume velocity or normal velocity, not both")
+            q=cli.curve_from_reference(patch["volume_velocity"],base_dir,f) if "volume_velocity" in patch else np.full(len(f),float(patch["volume_velocity_m3_s"]))
+            values=q/area
+        else:
+            values=cli.curve_from_reference(patch["velocity"],base_dir,f) if isinstance(patch.get("velocity"),dict) else np.full(len(f),float(patch.get("normal_velocity_m_s",0.)))
         velocity[:,indices]=values[:,None]
+        patch_records.append(dict(triangles=indices,selected_area_m2=area,volume_velocity_m3_s=values*area))
     observers=params.get("observers_m")
     angular=params.get("angular_grid")
     if angular:
@@ -53,7 +77,7 @@ def compute(params,base_dir):
     if not observers:raise cli.InputError("give observers_m or angular_grid")
     pressure,density,residual,condition=solve(mesh,f,velocity,observers)
     result=dict(f_hz=f,observers_m=observers,pressure_pa=pressure,surface_density=density,
-                collocation_relative_residual=residual,condition_number=condition,
+                collocation_relative_residual=residual,condition_number=condition,drive_patches=patch_records,
                 surface=mesh,source_contract=dict(phase_reference="intrinsic",baffle="included",pressure_reference_m=1.),
                 validity=dict(max_element_size_m=mesh["max_edge_m"],elements_per_wavelength=cli.C/f/mesh["max_edge_m"],
                               model="constant triangle centroid quadrature with exterior normal-derivative jump; interior resonances can affect conditioning; refine geometry and frequency independently"))

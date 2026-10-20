@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _common import cli, acoustics, bass, thermal  # noqa: E402
 
 NAME = "lf_box"
-VERSION = "1.2"
+VERSION = "1.3"
 NOTES = [
     "Linear lumped electro-mechanical-acoustic model at small signal; no suspension or Bl nonlinearity, thermal compression, port turbulence or cone breakup.",
     "Pressures are at 1 m in the stated radiation space (half = 2 pi infinite baffle, full = 4 pi free field); excursion and port air speed are sine peak values.",
@@ -96,7 +96,7 @@ def _alignments(ts, spec):
         request = dict(request or {})
         target = request.get("target", "B4")
         for ql in (request.get("ql_values") or [request.get("ql", 7.0)]):
-            rows.append(bass.alignment_for_driver(ts, target, ql, request.get("a2")))
+            rows.append(bass.alignment_for_driver(ts, target, ql, request.get("a2"), request.get("ripple_db",.5)))
     return rows
 
 
@@ -190,6 +190,7 @@ def compute(params, base_dir):
                                     float(scenario.get("reference_c", 20.0)),
                                     float(scenario.get("copper_coefficient_per_c", thermal.COPPER_COEFFICIENT_PER_C)))
         ts["re_ohm"] = hot
+        ts["qes"] *= hot / cold
         thermal_report = dict(coil_temperature_c=float(scenario["coil_temperature_c"]),
                               reference_c=float(scenario.get("reference_c", 20.0)),
                               re_cold_ohm=cold, re_hot_ohm=hot, resistance_ratio=hot / cold,

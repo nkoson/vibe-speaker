@@ -1,0 +1,6 @@
+{
+  "name": "Synthetic angular source",
+  "frequencies": {"min_hz": 20, "max_hz": 20000, "points": 100},
+  "acoustic": {"kind": "simulation", "reference": {"file": "out/polar_import.json"}},
+  "impedance": {"kind": "resistive", "r_ohm": 8}
+}

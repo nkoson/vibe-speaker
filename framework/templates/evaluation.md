@@ -17,9 +17,11 @@ Box-only cutoffs are alignment evidence, not system-objective values. Also recor
 
 ## Per candidate
 
+- Inventory search review: coverage of every required component role, distinct alternatives versus supplier duplicates, exclusion evidence, untested contenders, triggered expansions and affected refits. Identify gaps that could change selection and request the next search.
 - Strengths and central misses with margins and evidence.
 - Section amplitudes and relative phase at each residual feature; coherent attribution before recommending a driver change.
 - Efficiency and octave loss, physical part count, driver/crossover costs, compensation and ablation findings, active fit bounds and actual stock coverage.
+- For each retained bank, the single-body/nearby-stock alternatives searched and tested, with the rating, loss, fit or stress-sharing reason for retaining multiple bodies. Separate an electrical correction's benefit from its physical implementation.
 - Pad/filter voltages, per-leaf stress, frequency-coincident total heat, mounting ratings and unknown coil ratings.
 - Plausible uncertainty scenarios versus deliberate probes; common/relative depth scope and on/off-axis effects. Report total, resolved, censored and no-pass draws. Conditional cutoff percentiles do not establish all-scenario or joint-target robustness.
 - Geometry audit, installed/moving envelope and net-air reconciliation. State what is assumed and what remains to be physically verified.

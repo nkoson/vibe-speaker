@@ -7,7 +7,7 @@ from numpy.polynomial.legendre import leggauss
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from _common import cli,acoustics
 NAME="room_modal"
-VERSION="1.0"
+VERSION = "1.1"
 WALLS=("x_min","x_max","y_min","y_max","z_min","z_max")
 
 def basis(points,modes,dimensions):
@@ -69,8 +69,8 @@ def compute(params,base_dir):
             if source.get("driver"):
                 if not source.get("radius_m"):raise cli.InputError("room-loaded driver needs a finite radius_m aperture")
                 e=acoustics.driver_elements(source["driver"]["ts"])
-                ze=e["re"]+1j*omega*e["le"]
-                zm=e["rms"]+1j*omega*e["mms"]+1/(1j*omega*e["cms"])
+                ze=acoustics.blocked_impedance(source["driver"]["ts"],hz)
+                zm=acoustics.mechanical_impedance(source["driver"]["ts"],hz,e)
                 if source.get("sealed_volume_l"):
                     zm+=e["sd"]**2*cli.RHO*cli.C**2/(1j*omega*float(source["sealed_volume_l"])*.001)
                 voltage=float(source.get("voltage_rms",1))

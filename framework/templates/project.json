@@ -124,6 +124,7 @@
   ]
  },
  "limits": {
+  "scope_note": "Iteration/candidate counts budget detailed design work, not researched parts, catalogue coverage or inexpensive screening. Explicit user research/time limits take precedence.",
   "iterations": 3,
   "candidates_per_iteration": 3,
   "finalists_for_detailed_analysis": 1,
@@ -134,6 +135,7 @@
    "R": 0.02
   }
  },
+ "inventory_review_file": "inventory/search-review.md",
  "listening": {
   "distance_m": 3.0,
   "ear_height_m": 1.0,

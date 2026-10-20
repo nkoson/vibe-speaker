@@ -29,3 +29,23 @@ python framework/simulations/baffle_diffraction/run.py --input params.json --out
 The full 6 dB step belongs to a speaker in free space. In a normal room the walls restore part of the low-frequency support and the realised step is unlikely to exceed about 3 dB, so how much to compensate is a voicing decision to state, with the free-space and in-room endpoints known. Compensating on axis tilts the off-axis and power response the other way.
 
 Downstream reference: `{"file": "baffle.json", "frequency_path": "results.f_hz", "path": "results.sources.0.baffle_factor"}`.
+
+## Angular polygon model
+
+Set a source's `model: distributed_edge_dipole`. Supply `baffle.vertices_mm`
+as convex x,z polygon vertices, or use the existing width/height rectangle.
+`edge_subdivisions` sets quadrature segments per edge (default 24); `far_field: true`
+uses asymptotic paths. Otherwise the declared observer distance is retained.
+`angular_grid: {horizontal_deg,vertical_deg}` exports complex angular curves.
+`baffle.open_baffle: true` computes the opposing thin-baffle dipole sources.
+Circular radiators use `radius_mm`/`sd_cm2`; rectangles use
+`radiator_width_mm`, `radiator_height_mm`.
+
+Each source also exports `angular_model`. Referencing its baffle factor from
+`whole_speaker` or `network_fit` automatically uses the angular model, which includes
+piston directivity already. A `combined_factor` reference retains the separate
+recess transfer. Do not add a second cabinet correction to measured cabinet data.
+The earlier on-axis models retain their original behavior.
+
+See [angular diffraction](../../references/angular-diffraction.md) for the equations,
+analytical circular benchmark and polygon/finite-distance approximation limits.

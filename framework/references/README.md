@@ -6,11 +6,18 @@ References are not learnings. A learning in `framework/learnings/` says what hap
 
 | Reference | Read it when |
 |---|---|
+| [passive-analysis](passive-analysis.md) | Comparing independent exports, checking numerical evidence and preserving source conventions |
+| [measured-response-processing](measured-response-processing.md) | Importing angular data, preserving timing and normalizing or merging complex responses |
+| [driver-impedance-identification](driver-impedance-identification.md) | Modeling lossy inductance and creep or identifying driver parameters from impedance |
+| [passive-enclosure-networks](passive-enclosure-networks.md) | Connecting chambers, vents and passive diaphragms without assuming an alignment family |
+| [angular-diffraction](angular-diffraction.md) | Evaluating polygonal edge radiation, angular coverage and its approximation limits |
+| [passive-network-diagnostics](passive-network-diagnostics.md) | Interpreting reactive loads, programme dissipation and caller-defined spatial objectives |
 | [driver-selection](driver-selection.md) | Choosing a driver from its parameters, or judging an efficiency, excursion, Xmax or power claim |
 | [enclosure-alignments](enclosure-alignments.md) | Solving a bass alignment, sizing a vent, or considering a loading other than sealed and vented |
 | [system-architecture](system-architecture.md) | Deciding how many sections a design needs and where the crossover frequencies go |
 | [transducer-types](transducer-types.md) | Choosing or judging a dome, a compression driver, a horn or a waveguide |
 | [measurement-and-model-limits](measurement-and-model-limits.md) | Reading a simulated result for what it is worth, or saying what measuring it would take |
+| [cad-drawing](cad-drawing.md) | Creating dimensioned fabrication CAD sheets, hole schedules, sections and editable exports |
 | [cabinet-geometry](cabinet-geometry.md) | Sizing or placing anything inside or on a cabinet, and before claiming that something does or does not fit |
 | [crossover-design](crossover-design.md) | Choosing a topology, fitting values, quantizing to stock, reading dissipation or impedance, or judging a crossover result |
 | [baffle-and-driver-placement](baffle-and-driver-placement.md) | Choosing the baffle size, placing the drivers on it, setting the crossover frequencies that spacing has to survive, or judging an off-axis result |
@@ -60,14 +67,11 @@ recorded.
 **Not covered at all.** Compression ratio, throat-cavity volume and horn efficiency as a function of
 area ratio; bandpass, aperiodic and cardioid **alignment tables** (the equivalent circuits are
 covered, the tabulated alignments are not); a design model for true ribbons, planar-magnetic panels,
-coaxials or full-range drivers, as opposed to the constraints on them; bracing as a frequency
-parameter and the rotational stiffness of glued joints (what bracing and joints do is in
-`cabinet-construction.md`, from manufacturer and university studies of single cabinets); panel
-radiation converted to an absolute SPL, which the BBC established cannot be computed from the panels
-alone; a quantitative intelligibility metric tied to array geometry; and **any published figure for
-how far a simulated response sits from a measured one** - a deliberate search for that figure in
-September 2026 found that the comparison is conventionally reported without a number at all, which is
-recorded in `measurement-and-model-limits.md` section 5.
+coaxials or full-range drivers, as opposed to the constraints on them; a material/joint identification dataset that determines brace and glued-joint stiffness without
+assumptions (the coupled cabinet model accepts explicit stiffness and mass inputs); an empirically
+calibrated absolute panel-radiation model for arbitrary cabinets (the coupled model predicts
+pressure for its supplied structural/acoustic system); a quantitative intelligibility metric tied to array geometry; and **a repository-wide empirical accuracy bound**. Published case studies and local numerical
+benchmarks have conditional scope, described in `measurement-and-model-limits.md` section 5.
 
 **Claims that were checked and failed** are recorded rather than deleted, so that a popular but wrong
 rule does not come back: see `system-architecture.md` section 8 for the lobing and directivity

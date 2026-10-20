@@ -35,7 +35,7 @@ This creates `.speaker-venv/` inside the repository (with the project-local uv i
 | `framework/skills/speaker-documentation/` | How to write cabinet, crossover, performance and reference-comparison documents |
 | `framework/skills/speaker-learnings/` | Consult past learnings, write the postmortem, distill new learnings |
 | `framework/learnings/` | Advice from past projects, one file per learning, indexed |
-| `framework/simulations/` | Twenty-nine standalone simulation apps, each with `run.py`, `README.md` and `example.json`; see its [README](framework/simulations/README.md) for the inventory |
+| `framework/simulations/` | Thirty-five standalone simulation apps, each with `run.py`, `README.md` and `example.json`; see its [README](framework/simulations/README.md) for the inventory |
 | `framework/tools/` | Plotting, cabinet drawing and cut list, crossover schematic and board netlist, PDF assembly of the final package |
 | `framework/templates/` | Project, reference, part, candidate and evaluation templates |
 | `framework/tests/` | pytest suite running the example chain |
@@ -50,7 +50,7 @@ The applications output results only. Thresholds are parameters; interpretation 
 
 ## Scope and limits
 
-Performance is reported as predicted or simulated. The framework combines linear source/network models with optional mesh-based radiation, coupled cabinet acoustics, room modes/reflections, nonlinear driver/port states and electrothermal scenarios. It delivers complete simulation-designed construction packages using explicit inputs, linked model contracts and numerical verification. Additional measurements can be used when supplied or requested; they are not a prerequisite for completing a design.
+Completed simulation outputs are the canonical design results. Builder documents explain speaker behavior and give construction/listening instructions, without simulation-status disclaimers; provenance and validation remain in project records. The framework combines linear source/network models with optional mesh-based radiation, coupled cabinet acoustics, room modes/reflections, nonlinear driver/port states and electrothermal scenarios. It delivers complete simulation-designed construction packages using explicit inputs, linked model contracts and numerical verification. Additional measurements can be used when supplied or requested; they are not a prerequisite for completing a design.
 
 ## License
 

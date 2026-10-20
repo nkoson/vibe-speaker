@@ -6,7 +6,7 @@ import numpy as np
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from _common import cli,acoustics
 NAME="distributed_loading"
-VERSION="1.0"
+VERSION = "1.1"
 
 def compute(params,base_dir):
     f=cli.frequency_grid(params.get("frequencies"),10,4000,600);s=2j*np.pi*f
@@ -36,8 +36,8 @@ def compute(params,base_dir):
     drivers=[]
     for driver in params["drivers"]:
         e=acoustics.driver_elements(driver["ts"]);voltage=float(driver.get("voltage_rms",1.))
-        ze=e["re"]+s*e["le"]+float(driver.get("series_resistance_ohm",0))
-        zm=e["rms"]+s*e["mms"]+1/(s*e["cms"])
+        ze=acoustics.blocked_impedance(driver["ts"],f)+float(driver.get("series_resistance_ohm",0))
+        zm=acoustics.mechanical_impedance(driver["ts"],f,e)
         ya=e["sd"]**2/(zm+e["bl"]**2/ze);q0=e["sd"]*e["bl"]*voltage/(ze*zm+e["bl"]**2)
         incidence=np.zeros(n)
         for key,sign in (("front_node",1),("rear_node",-1)):

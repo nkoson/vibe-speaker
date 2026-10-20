@@ -4,7 +4,7 @@ Assembles the full 70-point two-plane orbit from the same section model `whole_s
 
 **Two levels of confidence apply and must not be conflated.** The curve-assembly geometry — which angles go in which group, and the ring weights — rests on one open-source reimplementation of a paywalled standard, with two known discrepancies exposed as options. The four predictors and the regression that combines them were read at first hand in Harman's own patent, so those formulas are not hedged. What remains hedged is the orbit: it is modelled, not measured.
 
-**Every computational detail of the curve family comes from one open-source reimplementation of ANSI/CTA-2034-A**, not from the standard text, which is paywalled and was not read; the predictors do not, as above. Two of its details are known to differ from the literal standard and are exposed as options; the defaults are the standard's literal reading.
+**Every computational detail of the curve family comes from one open-source reimplementation of ANSI/CTA-2034-A**, not from the standard text, which is paywalled and was not read; the predictors do not, as above. Two of its details are known to differ from the literal standard and are exposed as options; the legacy option named `standard` is retained for compatibility; it is not independent certification against the standard text.
 
 ## Run
 
@@ -31,11 +31,11 @@ The section, cabinet and observer blocks are the same as `whole_speaker`'s, so a
 
 ### The rear-hemisphere prior, and why the score depends on it
 
-Behind the cabinet this framework has no physics. Without a declared `rear_radiation` prior a section contributes nothing at or behind 90 degrees from its axis, which is the infinite-baffle idealisation: correct for an infinite baffle, wrong for a real box at low frequency where the cabinet is small compared with a wavelength and radiates in every direction.
+For a front-only analytic pattern without a declared `rear_radiation` prior, a section contributes nothing at or behind 90 degrees from its axis, which is the infinite-baffle idealisation: correct for an infinite baffle, wrong for a real box at low frequency where the cabinet is small compared with a wavelength and radiates in every direction.
 
 The prior is unity well below its corner and falls to `floor_db` above it, blended linearly in `cos(polar angle)` from the front hemisphere so the pattern is continuous at 90 degrees. The default corner is `c / (2 W)` from the baffle width. It is a declared prior with no measurement behind it, a BEM solve is what would replace it, and the sound power carries about a third of its weight in the 90-degree ring alone — so every figure derived from sound power inherits that uncertainty.
 
-**Where any section declares no prior, the orbit is incomplete and no score is emitted.** The curves are still written, labelled as front-hemisphere approximations, and `results.preference_withheld` names the sections responsible.
+**A section needs a rear prior or a complete radiation model.** Omnidirectional, dipole, cardioid, angular edge-dipole, complete measured-plane and complete complex-grid sources can supply the full orbit without a shadow prior. Otherwise the orbit is incomplete and no score is emitted. The curves are still written, labelled as front-hemisphere approximations, and `results.preference_withheld` names the sections responsible.
 
 ## Output (`results`)
 

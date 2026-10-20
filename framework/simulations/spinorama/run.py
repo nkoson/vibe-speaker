@@ -9,19 +9,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _common import cli, acoustics, preference, radiation  # noqa: E402
 
 NAME = "spinorama"
-VERSION = "1.1"
+VERSION = "1.2"
 NOTES = [
     "The orbit is computed from the same section model whole_speaker sums: point sources with analytical directivity, declared acoustic depths, supplied electrical transfers and baffle factors.",
-    "Every computational detail of the curve family comes from one open-source reimplementation of ANSI/CTA-2034-A, not from the standard text, which is paywalled and was not read. Two of its details differ from the literal standard and are exposed as options; the defaults are the standard's literal reading.",
+    "Every computational detail of the curve family comes from one open-source reimplementation of ANSI/CTA-2034-A, not from the standard text, which is paywalled and was not read. Two of its details differ from the literal standard and are exposed as options; the legacy options are retained for compatibility and do not establish independent standard certification.",
     "Spatial averages are RMS in the pressure domain, not in decibels. Sound power is an area-weighted RMS over the 70-point spin with the published ring weights, and the predicted in-room curve is an energy sum on squared pressure.",
-    "Behind the cabinet the model has no physics, only the declared rear_radiation prior on each section. Where a section declares none it contributes nothing at or behind 90 degrees, the orbit is incomplete, and no preference score is emitted.",
+    "Front-only analytic patterns require a declared rear prior. Complete measured, analytical or geometry-derived patterns supply their own rear radiation.",
     "The preference score is Olive's generalized regression over seventy loudspeakers, read at first hand in Harman's patent and evaluated here on modelled curves rather than on anechoic measurements. It ranks; it does not certify.",
     "Every metric is named with the curve it was computed from - NBD_ON, SM_PIR - because NBD, SM and AAD are each defined over any of the seven curves and a bare NBD names nothing. LFX and LFQ are defined on sound power only.",
     "The score's term contributions are reported beside it as the patent states them: NBD_ON 31.5 percent, LFX 30.5 percent, NBD_PIR 20.5 percent, SM_PIR 17.5 percent. Read which term moved a score before reading the score.",
 ]
 VALIDITY = [
     "A score computed from a modelled orbit is not a measured spinorama. The published research it comes from was fitted to measurements, and the distance between this model and a measurement is unquantified: no source consulted states the error between a simulated and a measured directivity.",
-    "The rear hemisphere rests entirely on a declared prior with no measurement behind it. It carries about a third of the sound-power weight, so the sound power, the directivity indices and every term computed from them inherit that prior's uncertainty.",
+    "Sound-power accuracy depends on the supplied rear radiation, whether measured, geometry-derived or a declared shadow prior. Complete coverage is distinct from empirical accuracy.",
     "LFX carries no penalty for Q, group delay or distortion and SM is blind to tilt. A design optimised against this score alone will exploit both.",
 ]
 
@@ -56,8 +56,11 @@ def compute(params, base_dir):
 
     def full(record):
         model = record.get("directivity") or {}
-        if model.get("kind") in ("omni", "dipole", "cardioid"):
+        if model.get("kind") in ("omni", "dipole", "cardioid", "distributed_edge_dipole"):
             return True
+        if model.get("kind") == "measured_planes":
+            from _common.response_data import full_sphere
+            return full_sphere(model)
         if model.get("kind") == "complex_grid":
             return (min(model["horizontal_deg"]) <= -180 and max(model["horizontal_deg"]) >= 180
                     and min(model["vertical_deg"]) <= -90 and max(model["vertical_deg"]) >= 90)
@@ -82,7 +85,7 @@ def compute(params, base_dir):
                    complete=complete, sections_without_rear_prior=without_prior, silent_points=silent,
                    rear_priors=[dict(section=w["name"], prior=w.get("rear")) for w in sections],
                    note="a complete orbit needs every section's radiation defined over 0 to 180 degrees in both planes. "
-                        "Without a rear_radiation prior a section contributes nothing at or behind 90 degrees, which is the "
+                        "Without a rear prior, a front-only analytic section uses the "
                         "infinite-baffle idealisation and makes the sound power a front-hemisphere figure."),
         options_used=dict(
             rear_wall=rear_wall, double_90_degree_weight=double_90,

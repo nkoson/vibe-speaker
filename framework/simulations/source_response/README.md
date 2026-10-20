@@ -50,6 +50,15 @@ A gated impulse response is valid only above roughly `1 / t_gate`: a 5.6 ms gate
 
 Optional `acoustic.level_calibration: {"gain_db": -2.0, "basis": "source, conditions, band and derivation"}` scales acoustic pressure only and is echoed in the output. It does not scale impedance, current, excursion, thermal predictions or ratings. The gain is an explicit prior/calibration, not evidence that a driver is mechanically different.
 
+For `lf_box` with `published_shape`, an optional `fixture_response` complex curve
+reference removes the declared fixture's **magnitude** from the published points
+before normalizing their shape and reconstructing minimum phase. By default the
+fixture must cover all published frequencies; an explicit reference extrapolation
+policy can override that requirement and is recorded. The fixture must have no null. This does not recover measured
+phase. Supply a separately modeled final cabinet baffle downstream; use an unknown
+fixture only as an explicitly named sensitivity case. A constant fixture gain
+cancels in shape normalization and does not calibrate absolute sensitivity.
+
 For LF boxes with an outlet, `results.outlet_pressure_per_volt_pa` carries the same drive normalization and calibration. It retains the box outlet shape rather than the cone's published upper-band replacement. When placing an outlet separately in `whole_speaker`, take the cone-only field as the source and reference this outlet output with `voltage_rms: 1`. Apply baffle/placement factors to both. Referencing raw box pressure instead bypasses the normalization/calibration and can silently misbalance the sum.
 
 Before fitting, compare graph anchors and upper slope, deep bass, a unity source and a known resistor case. `framework/templates/simulation-audit.md` describes the evidence to retain.
@@ -63,3 +72,12 @@ Before fitting, compare graph anchors and upper slope, deep bass, a unity source
 `acoustic.contract.phase_reference` is `intrinsic` by default. For supplied common-observer complex data, set `common_observer`, `reference_distance_m` and `observer_position_m` in cabinet coordinates. The source removes the common reference delay; the radiation loader removes the reference geometry before propagating to a new observer, so relative path effects occur once. Magnitude-only reconstructed/zero-phase data does not contain that supplied timing information.
 
 `contract.baffle` is `external` or `included`; applying an external baffle reference to an included source is a conflicting input. `measured` magnitude-only input defaults to reconstructed minimum phase, or uses `phase_assumption: zero` when explicitly supplied. FRD output identifies supplied, reconstructed or zero phase. `delay_s` separates a known delay during complex interpolation. Native source conditions and the exported contract remain part of interpretation.
+
+Simulation imports inherit their angular directivity as well as their source
+contract. `polar_import` supplies a measured two-plane source with explicit coverage
+and acquisition timing. See [response preparation](../response_prepare/README.md)
+and [polar import](../polar_import/README.md).
+
+T/S inputs support `inductance_model` (`constant`, `leach`, `lr2`,
+`semi_inductance`) and `creep`; the same laws feed the linear box, cavity, room
+and distributed-loading solves. See [driver impedance](../../references/driver-impedance-identification.md).

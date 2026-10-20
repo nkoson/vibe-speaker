@@ -8,9 +8,12 @@ from numpy.polynomial.polynomial import polyval,polyder
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from _common import cli,acoustics
 NAME="nonlinear_driver"
-VERSION="1.0"
+VERSION = "1.1"
 
 def compute(params,base_dir):
+    ts=params["driver"]["ts"]
+    if ts.get("inductance_model") or ts.get("creep"):
+        raise cli.InputError("frequency-dependent small-signal laws require memory states; this nonlinear solver needs its explicit time-domain laws")
     e=acoustics.driver_elements(params["driver"]["ts"]);law=params.get("nonlinear",{})
     bl=law.get("bl_x",[e["bl"]]);stiff=law.get("stiffness_x",[1/e["cms"]])
     lx=law.get("inductance_x",[max(e["le"],1e-6)]);li=law.get("inductance_i_factor",[1.])
