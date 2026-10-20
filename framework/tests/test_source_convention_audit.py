@@ -57,3 +57,28 @@ def test_bem_patch_flow_is_preserved_across_meshes(tmp_path):
         params["drive"]["patches"][0]["disk"]["centre_m"] = [2, 1, 2]
         with pytest.raises(cli.InputError, match="no triangles"):
             module.compute(params, tmp_path)
+
+
+def test_fixture_magnitude_removed_before_relative_shape_normalization(tmp_path):
+    import copy
+    f = np.geomspace(20, 20000, 120)
+    # Independently construct a one-pole shelf fixture and an intrinsic magnitude.
+    fixture = (1j*f/200+1)/(1j*f/200+2)
+    intrinsic_db = 94-10*np.log10(1+(f/3000)**2)
+    measured_db = intrinsic_db+20*np.log10(abs(fixture))
+    cli.write_document(tmp_path/"base.json", {"results": {"f_hz": f, "p": np.ones(len(f), complex)}})
+    cli.write_document(tmp_path/"fixture.json", {"results": {"f_hz": f, "p": fixture}})
+    p = dict(frequencies={"values_hz": f}, impedance={"kind": "resistive", "r_ohm": 8},
+             acoustic=dict(kind="lf_box", reference={"file": "base.json", "path": "results.p"},
+                           voltage_rms=1, blend_band_hz=[150, 300],
+                           published_shape=dict(mode="replace", points=np.c_[f, intrinsic_db].tolist())))
+    module = apps.module("source_response")
+    expected = module.compute(p, tmp_path)["pressure_per_volt_pa"]
+    observed = copy.deepcopy(p)
+    observed["acoustic"]["published_shape"].update(
+        points=np.c_[f, measured_db].tolist(),
+        fixture_response={"file": "fixture.json", "path": "results.p"})
+    np.testing.assert_allclose(module.compute(observed, tmp_path)["pressure_per_volt_pa"], expected, atol=1e-11)
+    # Scaling the fixture by a constant cannot identify source sensitivity.
+    cli.write_document(tmp_path/"fixture.json", {"results": {"f_hz": f, "p": fixture*2}})
+    np.testing.assert_allclose(module.compute(observed, tmp_path)["pressure_per_volt_pa"], expected, atol=1e-11)

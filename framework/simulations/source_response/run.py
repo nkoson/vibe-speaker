@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _common import cli, acoustics  # noqa: E402
 
 NAME = "source_response"
-VERSION = "1.4"
+VERSION = "1.5"
 NOTES = [
     "Pressure per volt is the on-axis free-field figure at 1 m for the source alone; directivity, baffle and position are applied later by whole_speaker.",
     "A published curve is turned into a minimum-phase response; the phase is a reconstruction, not a measurement. A bandwidth prior is a flat level with declared roll-offs.",
@@ -111,7 +111,16 @@ def _pressure(params, f, base_dir):
             raise cli.InputError("published_shape mode must be 'multiply' or 'replace'")
         p, basis = _box_pressure(model, f, base_dir)
         if model.get("published_shape"):
-            record = model["published_shape"]
+            record = dict(model["published_shape"])
+            if record.get("fixture_response"):
+                points = np.asarray(record["points"], float)
+                fixture = cli.curve_from_reference(
+                    dict(extrapolation="error", **record["fixture_response"]),
+                    base_dir, points[:, 0])
+                if np.any(abs(fixture) < 1e-12):
+                    raise cli.InputError("published-shape fixture response contains a null")
+                record["points"] = np.c_[points[:, 0], points[:, 1]-acoustics.db(fixture)].tolist()
+                basis += "; declared fixture magnitude removed before shape normalization and phase reconstruction"
             blend = tuple(model.get("blend_band_hz", [150.0, 300.0]))
             shape = _shape_above(record, f, blend)
             if mode == "replace":

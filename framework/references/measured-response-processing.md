@@ -61,12 +61,22 @@ be converted to an equivalent room excitation, but its inferred Q cannot certify
 actual diaphragm displacement or port speed. Gain, polarity and added delay apply
 equally to file-referenced and inline curves.
 
+When a published magnitude was acquired on a known finite fixture, remove its
+modeled magnitude before extracting the driver's relative shape, then apply the
+intended cabinet correction once. The two geometries and observation distances
+need not match. With magnitude-only data this remains a minimum-phase reconstruction,
+not recovery of measured timing. An unknown fixture must remain a named hypothesis;
+simply assuming an infinite baffle does not establish its identity. The relative
+shape normalization also means that this operation cannot identify absolute level.
+
 ## Sources
 
 - COMSOL, [Acoustics Module User's Guide, Monopole Point Source](https://doc.comsol.com/5.4/doc/com.comsol.help.aco/AcousticsModuleUsersGuide.pdf),
   p. 112, flow-source strength `S=j omega rho Q/(4 pi)`.
 - COMSOL, [Baffled Piston Radiation](https://doc.comsol.com/6.3/doc/com.comsol.help.models.aco.baffled_piston_radiation/baffled_piston_radiation.html),
   Rayleigh integral and baffled-piston far-field comparison.
+- ARTA Labs, [Application Note 4: Free-field measurements](https://artalabs.hr/AppNotes/AN4-FreeField-Rev03eng.pdf),
+  finite-baffle and observation-distance corrections when merging response data.
 
 - D. B. Keele Jr., “Low-Frequency Loudspeaker Assessment by Nearfield Sound-Pressure
   Measurement,” *JAES*, April 1974; [author's publication archive](https://dbkeele.com/technical-papers-2/).
