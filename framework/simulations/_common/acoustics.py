@@ -388,6 +388,9 @@ def directivity(model, f, h_rad, v_rad):
     """
     kind = (model or {}).get("kind", "omni")
     f = np.asarray(f, float)
+    if kind == "distributed_edge_dipole":
+        from .diffraction import evaluate
+        return evaluate(model, f, h_rad, v_rad)
     if kind == "measured_planes":
         from .response_data import measured_directivity
         return measured_directivity(model, f, h_rad, v_rad)
@@ -581,7 +584,13 @@ def element_impedance(element, f, scale=None):
         l_mh = positive(element.get("value_mh"), "L value_mh") * factor
         dcr = element.get("dcr_ohm")
         dcr = default_coil_dcr(l_mh) if dcr is None else float(dcr)
-        return dcr + s * l_mh * 1e-3
+        z = dcr + s * l_mh * 1e-3
+        admittance = 1 / z
+        if element.get("parallel_r_ohm") is not None:
+            admittance += 1 / positive(element["parallel_r_ohm"], "parallel_r_ohm")
+        if element.get("parallel_c_pf") is not None:
+            admittance += s * positive(element["parallel_c_pf"], "parallel_c_pf", zero=True) * 1e-12
+        return 1 / admittance
     if kind == "C":
         c_uf = positive(element.get("value_uf"), "C value_uf") * factor
         esr = float(element.get("esr_ohm", 0.01))

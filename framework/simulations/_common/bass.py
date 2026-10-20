@@ -422,6 +422,19 @@ def isobaric_pair(ts, wiring="series"):
     pair["re_ohm"] = float(ts["re_ohm"]) * factor
     if ts.get("le_mh"):
         pair["le_mh"] = float(ts["le_mh"]) * factor
+    if ts.get("inductance_model"):
+        model = dict(ts["inductance_model"])
+        for key in ("le_mh", "leb_mh", "l2_mh", "r2_ohm", "rss_ohm", "ke", "k"):
+            if key in model:
+                model[key] *= factor
+        pair["inductance_model"] = model
+    if ts.get("creep"):
+        model = dict(ts["creep"])
+        if "c0_m_per_n" in model:
+            model["c0_m_per_n"] /= 2
+        if "r0_ns_m" in model:
+            model["r0_ns_m"] *= 2
+        pair["creep"] = model
     if ts.get("mms_g"):
         pair["mms_g"] = float(ts["mms_g"]) * 2
     if ts.get("bl_tm"):

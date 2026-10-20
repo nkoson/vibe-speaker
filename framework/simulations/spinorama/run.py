@@ -56,7 +56,7 @@ def compute(params, base_dir):
 
     def full(record):
         model = record.get("directivity") or {}
-        if model.get("kind") in ("omni", "dipole", "cardioid"):
+        if model.get("kind") in ("omni", "dipole", "cardioid", "distributed_edge_dipole"):
             return True
         if model.get("kind") == "measured_planes":
             from _common.response_data import full_sphere

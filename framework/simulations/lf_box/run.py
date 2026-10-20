@@ -190,6 +190,7 @@ def compute(params, base_dir):
                                     float(scenario.get("reference_c", 20.0)),
                                     float(scenario.get("copper_coefficient_per_c", thermal.COPPER_COEFFICIENT_PER_C)))
         ts["re_ohm"] = hot
+        ts["qes"] *= hot / cold
         thermal_report = dict(coil_temperature_c=float(scenario["coil_temperature_c"]),
                               reference_c=float(scenario.get("reference_c", 20.0)),
                               re_cold_ohm=cold, re_hot_ohm=hot, resistance_ratio=hot / cold,

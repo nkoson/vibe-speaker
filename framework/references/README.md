@@ -7,6 +7,11 @@ References are not learnings. A learning in `framework/learnings/` says what hap
 | Reference | Read it when |
 |---|---|
 | [passive-analysis](passive-analysis.md) | Comparing independent exports, checking numerical evidence and preserving source conventions |
+| [measured-response-processing](measured-response-processing.md) | Importing angular data, preserving timing and normalizing or merging complex responses |
+| [driver-impedance-identification](driver-impedance-identification.md) | Modeling lossy inductance and creep or identifying driver parameters from impedance |
+| [passive-enclosure-networks](passive-enclosure-networks.md) | Connecting chambers, vents and passive diaphragms without assuming an alignment family |
+| [angular-diffraction](angular-diffraction.md) | Evaluating polygonal edge radiation, angular coverage and its approximation limits |
+| [passive-network-diagnostics](passive-network-diagnostics.md) | Interpreting reactive loads, programme dissipation and caller-defined spatial objectives |
 | [driver-selection](driver-selection.md) | Choosing a driver from its parameters, or judging an efficiency, excursion, Xmax or power claim |
 | [enclosure-alignments](enclosure-alignments.md) | Solving a bass alignment, sizing a vent, or considering a loading other than sealed and vented |
 | [system-architecture](system-architecture.md) | Deciding how many sections a design needs and where the crossover frequencies go |

@@ -11,6 +11,12 @@ from run_simulation import run_simulation  # noqa: E402
 
 # (simulation folder, parameter file, result name)
 CHAIN = [
+    ("polar_import", SIMS / "polar_import" / "example.json", "polar_import"),
+    ("response_prepare", SIMS / "response_prepare" / "example.json", "response_prepare"),
+    ("enclosure_network", SIMS / "enclosure_network" / "example.json", "enclosure_network"),
+    ("parameter_identification", SIMS / "parameter_identification" / "example.json", "parameter_identification"),
+    ("network_diagnostics", SIMS / "network_diagnostics" / "example.json", "network_diagnostics"),
+    ("response_diagnostics", SIMS / "response_diagnostics" / "example.json", "response_diagnostics"),
     ("lf_box", SIMS / "lf_box" / "example.json", "lf_box"),
     # the same woofer in the three loadings added with the second source round: a fourth-order
     # bandpass, an isobaric pair in half the box, and the aperiodic resistance sweep

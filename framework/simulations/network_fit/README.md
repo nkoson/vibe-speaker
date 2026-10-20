@@ -19,3 +19,18 @@ See [simulation methods](../../references/simulation-methods.md) for equations, 
 `target.spl_db` may also reference a real target curve using `{file, frequency_path, path}`. Optional `target.weights[]` entries `{band_hz, weight}` weight acoustic residuals within named bands, as in `crossover_fit`. These weights do not relax the explicit electrical constraints.
 
 An `acoustic_relative_db` constraint uses the on-axis acoustic sum relative to its mean in `reference_band_hz` (default300-3000Hz). Include zero degrees in the target angles. Setting a minimum over a low-frequency band can enforce a required extension margin during fitting; verify sustained cutoff on the final dense grid and stock realization afterward.
+
+`spatial_targets[]` adds `{curve,target_db,band_hz,weight,shape_only}`. Curve names:
+`on_axis`, `listening_window`, `early_reflections`, `sound_power`,
+`predicted_in_room`, `sound_power_di`, `early_reflections_di`. Targets may be scalars
+or real curve references. Complete angular source coverage is required.
+`spatial_options` records the same rear-wall/ring-weight choices as `spinorama`.
+Every trial retains spatial curves, objective contributions and removed level
+offsets. These weights define a numeric residual, not the importance of a design
+objective unless the caller explicitly assigns it.
+
+`preference_objective_weight` explicitly subtracts that weight times the existing
+preference regression from the objective. It requires resolved LF extension and
+the predictor frequency bands. No component/spatial target is added implicitly.
+An `epdr_ohm` constraint returns a signed margin under the declared class-B model.
+See [passive network diagnostics](../../references/passive-network-diagnostics.md).

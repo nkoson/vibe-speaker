@@ -28,8 +28,9 @@ VALIDITY = [
 def compute(params, base_dir):
     f = cli.frequency_grid(params.get("frequencies"), 20.0, 20000.0, 400)
     baffle = cli.require(params, "baffle")
-    width = cli.positive(baffle.get("width_mm"), "baffle.width_mm")
-    height = cli.positive(baffle.get("height_mm"), "baffle.height_mm")
+    vertices = baffle.get("vertices_mm")
+    width = cli.positive(baffle.get("width_mm", float(np.ptp(np.asarray(vertices)[:,0])) if vertices else None), "baffle.width_mm")
+    height = cli.positive(baffle.get("height_mm", float(np.ptp(np.asarray(vertices)[:,1])) if vertices else None), "baffle.height_mm")
     observer = float(params.get("observer_distance_m", 3.0))
     segments = int(params.get("segments", 96))
     default_edge_radius = float(baffle.get("edge_radius_mm", 0.0)) / 1000
@@ -44,7 +45,27 @@ def compute(params, base_dir):
         edge_radius = float(source["edge_radius_mm"]) / 1000 if source.get("edge_radius_mm") is not None else default_edge_radius
         row = dict(name=source.get("name"), model=model, x_mm=source.get("x_mm"), z_mm=source.get("z_mm"),
                    piston_radius_mm=radius * 1000, edge_radius_mm=edge_radius * 1000)
-        if model == "shelf":
+        if model == "distributed_edge_dipole":
+            from _common import diffraction
+            angular = dict(kind=model,vertices_mm=vertices or [[0,0],[width,0],[width,height],[0,height]],
+                           source_mm=[float(source["x_mm"]),float(source["z_mm"])],
+                           subdivisions=int(params.get("edge_subdivisions",24)),radius_mm=radius*1000,
+                           radiator_width_mm=source.get("radiator_width_mm",0),
+                           radiator_height_mm=source.get("radiator_height_mm",0),
+                           observer_distance_m=None if params.get("far_field",False) else observer,
+                           open_baffle=bool(baffle.get("open_baffle")),edge_radius_mm=edge_radius*1000)
+            factor=diffraction.evaluate(angular,f,0,0)
+            far=diffraction.evaluate(dict(angular,observer_distance_m=None),f,0,0)
+            row["angular_model"]=angular
+            row["angular_contract"]="includes radiator directivity and baffle; replaces the section analytic directivity"
+            if params.get("angular_grid"):
+                grid=params["angular_grid"]
+                for name,key in (("horizontal","horizontal_deg"),("vertical","vertical_deg")):
+                    angles=np.asarray(grid.get(key,[0]),float)
+                    hh=np.deg2rad(angles[:,None]) if name=="horizontal" else 0
+                    vv=np.deg2rad(angles[:,None]) if name=="vertical" else 0
+                    row[name]=dict(angles_deg=angles,factor=diffraction.evaluate(angular,f[None,:],hh,vv))
+        elif model == "shelf":
             factor = acoustics.shelf_baffle(f, width)
             far = factor
         elif model == "edge_diffraction":
