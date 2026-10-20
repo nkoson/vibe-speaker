@@ -8,7 +8,7 @@ from numpy.polynomial.polynomial import polyval,polyder
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from _common import cli,acoustics
 NAME="nonlinear_driver"
-VERSION="1.0"
+VERSION = "1.1"
 
 def compute(params,base_dir):
     ts=params["driver"]["ts"]

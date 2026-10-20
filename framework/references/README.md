@@ -66,14 +66,11 @@ recorded.
 **Not covered at all.** Compression ratio, throat-cavity volume and horn efficiency as a function of
 area ratio; bandpass, aperiodic and cardioid **alignment tables** (the equivalent circuits are
 covered, the tabulated alignments are not); a design model for true ribbons, planar-magnetic panels,
-coaxials or full-range drivers, as opposed to the constraints on them; bracing as a frequency
-parameter and the rotational stiffness of glued joints (what bracing and joints do is in
-`cabinet-construction.md`, from manufacturer and university studies of single cabinets); panel
-radiation converted to an absolute SPL, which the BBC established cannot be computed from the panels
-alone; a quantitative intelligibility metric tied to array geometry; and **any published figure for
-how far a simulated response sits from a measured one** - a deliberate search for that figure in
-September 2026 found that the comparison is conventionally reported without a number at all, which is
-recorded in `measurement-and-model-limits.md` section 5.
+coaxials or full-range drivers, as opposed to the constraints on them; a material/joint identification dataset that determines brace and glued-joint stiffness without
+assumptions (the coupled cabinet model accepts explicit stiffness and mass inputs); an empirically
+calibrated absolute panel-radiation model for arbitrary cabinets (the coupled model predicts
+pressure for its supplied structural/acoustic system); a quantitative intelligibility metric tied to array geometry; and **a repository-wide empirical accuracy bound**. Published case studies and local numerical
+benchmarks have conditional scope, described in `measurement-and-model-limits.md` section 5.
 
 **Claims that were checked and failed** are recorded rather than deleted, so that a popular but wrong
 rule does not come back: see `system-architecture.md` section 8 for the lobing and directivity

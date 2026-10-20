@@ -48,6 +48,14 @@ def test_prototype_half_power_ratios():
     assert bass.f3_over_f0(*bass.PROTOTYPES["BL4"]) == pytest.approx(1.5143, abs=1e-3)
 
 
+def test_chebyshev_alignment_prototype_has_declared_ripple():
+    import numpy as np
+    a1,a2,a3=bass.prototype("C4",ripple_db=.5)
+    s=1j*np.geomspace(1,1000,20000)
+    h=s**4/(s**4+a1*s**3+a2*s**2+a3*s+1)
+    assert np.max(20*np.log10(abs(h)))==pytest.approx(.5,abs=.002)
+
+
 def test_qb3_needs_its_free_coefficient_and_rejects_an_impossible_one():
     with pytest.raises(acoustics.InputError):
         bass.prototype("QB3")

@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _common import cli, acoustics  # noqa: E402
 
 NAME = "board_nodal"
-VERSION = "1.0"
+VERSION = "1.1"
 NOTES = [
     "Complex nodal analysis with ideal voltage sources at the active input terminals; zero-ohm wires merge nodes, so their individual currents are indeterminate and finite wire resistances are needed for wire current figures.",
     "An inactive source leaves its terminals open. A floating sub-network without any fixed potential is referenced to 0 V at one node so the matrix stays solvable; it carries no current.",

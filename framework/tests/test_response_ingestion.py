@@ -81,3 +81,19 @@ def test_digitized_log_axes(tmp_path):
        axes={"x_pixels":[0,100],"frequency_hz":[10,1000],"y_pixels":[0,100],"values":[100,0]}),tmp_path)
     np.testing.assert_allclose(result["f_hz"],[10,100,1000])
     np.testing.assert_allclose(result["values"],[100,50,0])
+
+
+def test_sided_window_preserves_impulse_at_reference(tmp_path):
+    samples=np.zeros(100);samples[20]=1
+    result=apps.module("response_prepare").compute(dict(operation="ir_to_fr",
+        impulse=dict(samples=samples,sample_rate_hz=1000,reference_time_s=.02),
+        window=dict(left_s=.01,right_s=.05,left_kind="hann",right_kind="blackman")),tmp_path)
+    np.testing.assert_allclose(result["response"],1,atol=1e-12)
+
+
+def test_duplicate_physical_rear_measurements_are_checked(tmp_path):
+    p=polar_fixture(tmp_path)
+    path=Path(p["responses"][0]["file"])
+    data=np.loadtxt(path);data[:,1]+=1;np.savetxt(path,data)
+    with pytest.raises(cli.InputError,match="180-degree"):
+        apps.module("polar_import").compute(p,tmp_path)

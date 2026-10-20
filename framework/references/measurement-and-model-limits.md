@@ -6,8 +6,8 @@ updated: 2026-10-15
 
 # What a simulated result is worth, and what measuring it would take
 
-Nothing this framework produces is a measurement. Every curve is a linear, small-signal model
-evaluated over declared priors, and the distance between that and a microphone is the subject of this
+Nothing this framework produces is a measurement. The original chain is linear and small-signal; dedicated applications also evaluate nonlinear,
+thermal and coupled models over declared inputs, and the distance between that and a microphone is the subject of this
 reference. It exists for two jobs: to keep predicted figures honestly labelled, and to say what the
 conditions behind published or user-supplied measurement data. The default design workflow completes the speaker through simulation, research and robustness analysis; the measurement procedures below apply when interpreting such data or when the user requests that work.
 
@@ -198,9 +198,10 @@ model calibrated against one should not be validated against the other.
   which lumped box modelling stops being valid, which is a real gap: cone break-up and internal
   standing waves arrive before anyone announces them.
 - **Frequency-domain wave models** (FEM, BEM, hybrid) solve the Helmholtz equation; **time-domain**
-  models solve the wave equation. They are different equations, so transient and nonlinear behaviour
-  cannot be recovered from a frequency-domain run. Local nonlinear effects such as vortex shedding in
-  a port exist only in the time domain.
+  models solve the wave equation. For a linear time-invariant system, adequately sampled complex frequency response can be
+  transformed into a band-limited impulse response. Finite bandwidth and endpoint extension limit
+  that reconstruction. Nonlinear behavior requires additional constitutive laws; a linear Helmholtz
+  solve does not predict vortex shedding or level-dependent distortion.
 - **Ray methods** are valid only where the wavelength is much smaller than the geometry — that is
   above the loudspeaker's own scale, in room acoustics.
 - **Elements per wavelength — the rule, and why the rule is not enough.** The common rule of thumb
@@ -240,22 +241,14 @@ model calibrated against one should not be validated against the other.
   ones. Record the tool and version in the design record, and re-run anything produced on a build
   later found to be wrong.
 
-**The quantity no source supplied: agreement.** Not one source consulted states the decibel or degree
-error between a simulated and a measured response for any tool. This has now been looked for
-deliberately and the result is worth recording, because the shape of the absence is informative:
-
-- **Numerical accuracy is published and is excellent** — the sub-0.1 % figures above. A solver can be
-  shown to solve its own equation correctly.
-- **Agreement with measurement is described qualitatively even in the review literature.** A 2023
-  review of finite-element methods for room acoustics, surveying decades of work, reports studies
-  comparing predictions with measured data as finding "qualitative agreement" and "good agreement"
-  without attaching a figure to either.
-
-So the gap is not that nobody has compared simulation with measurement; it is that **the comparison
-is conventionally reported without a number.** The two are different quantities and must never be
-substituted for one another: a solver's 0.01 % numerical error says nothing whatever about how far
-its answer sits from a microphone. Every simulated result in this repository therefore carries no
-error bar from the literature, only the model's declared assumptions and its validity range.
+**Empirical agreement is case-specific.** Analytical and independent-solver tests do not
+establish agreement with a microphone. Published experiments can quantify particular
+models under specified geometry, material, operating-level and acquisition conditions;
+those errors cannot be transferred to another implementation or arbitrary speaker.
+The repository benchmark corpus currently contains analytical and independently
+evaluated numerical exports, not an empirical calibration dataset. Report its errors
+with their case and resolution. Do not infer a universal empirical error bar from
+either a small residual or absence of an error figure in a particular literature search.
 
 ## 6. Two effects that ambush validation
 
@@ -293,7 +286,7 @@ When combining a lumped bass model with a published wideband curve, define which
 
 - ARTA Labs, application note AN4, "Free-field measurements" — the near-field and far-field limits, the near-field scaling factor, the baffle-step transfer function with its corner frequencies and rectangular equivalent width, and the gate and mounting-height arithmetic. <https://artalabs.hr/AppNotes/AN4-FreeField-Rev03eng.pdf>
 - ARTA Labs, *LIMP user manual* — impedance jig selection and small-signal drive levels for parameter extraction. <https://artalabs.hr/download/LIMP-user-manual.pdf>
-- Saunisto, K., *VituixCAD Measurement Preparations and Guide* (with REW) — timing offset, measurement distance, angular grids, gating and window choice, the two-diffraction splice procedure and near-field capture practice. <https://kimmosaunisto.net/Software/VituixCAD/VituixCAD_Measurement_REW.pdf>
+- John Mulcahy, REW, [Making Measurements](https://www.roomeqwizard.com/help/help_en-GB/html/makingmeasurements.html) and [Impulse Responses](https://www.roomeqwizard.com/help/help_en-GB/html/impulseresponse.html): acquisition timing, windowing and frequency resolution. Quantitative near-field scaling follows Keele and the ARTA application note above.
 - Klippel GmbH, "Multi-tone distortion" and "Compression of fundamental components" — the THD-versus-multitone argument, the nonlinearity fingerprints, the IEC 60268-21 clause map, and the separation of thermal from nonlinear compression. <https://www.klippel.de/know-how/measurements/nonlinear-distortion/multi-tone-distortion.html>
 - Klippel GmbH, Application Notes AN4, AN5, AN18 and AN28 - the IEC 62458 excursion procedure, the parameter-based displacement limits, the thermal power-test protocol with its 130-percent-`Re` abort, and the pilot-tone method for monitoring a driver's temperature through a passive crossover. <https://www.klippel.de/know-how/literature/application-notes.html>
 - Klippel GmbH, Near Field Scanner product documentation — the spherical-harmonic field reconstruction as a validation reference and the temperature-versus-phase error figure. <https://www.klippel.de/products/rd-system/modules/nfs-near-field-scanner.html>

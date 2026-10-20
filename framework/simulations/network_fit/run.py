@@ -7,7 +7,7 @@ from scipy.optimize import minimize, differential_evolution, NonlinearConstraint
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from _common import cli,apps,radiation,acoustics,networks,spatial_objectives,load_diagnostics
 NAME="network_fit"
-VERSION="1.1"
+VERSION = "1.2"
 
 class EvaluationBudgetExceeded(Exception):
     """Stop numerical work while retaining evaluated trials."""
@@ -72,12 +72,14 @@ def compute(params,base_dir):
                     offset=float(delta.mean()) if spec.get("shape_only") else 0.
                     delta=(delta-offset)*cli.positive(spec.get("weight",1),"spatial weight",zero=True)
                     residual.extend(delta.tolist())
-                    objective_terms.append(dict(curve=spec["curve"],mean_squared_residual=float(np.mean(delta**2)),level_offset_db=offset))
+                    objective_terms.append(dict(curve=spec["curve"],mean_squared_residual=float(np.mean(delta**2)),
+                                                sample_count=len(delta),squared_residual_sum=float(np.sum(delta**2)),level_offset_db=offset))
                 if preference_weight:regression=spatial_objectives.regression(f,spatial)
         if not residual and not preference_weight:raise cli.InputError("network fit needs transfer, acoustic or spatial objectives")
         margins=[]
         for condition in params.get("constraints",[]):
             band=condition.get("band_hz",[f[0],f[-1]]);sel=(f>=band[0])&(f<=band[1])
+            if not np.any(sel):raise cli.InputError("constraint band has no frequency samples")
             quantity=condition["quantity"]
             if quantity=="input_impedance_ohm":curve=abs(next(s for s in mode["sources"] if s.get("active"))["input_z_ohm"])
             elif quantity=="epdr_ohm":
@@ -128,6 +130,7 @@ def compute(params,base_dir):
     numerical=min(constrained or trials,key=lambda r:r["cost"])
     stock=[]
     if any(v.get("stock") for v in variables):
+        stock_baseline={c["id"]:copy.deepcopy(c) for c in numerical["components"]}
         choices=[]
         for v,key,value in zip(variables,keys,numerical["values"]):
             choices.append(v.get("stock") or [{key:value}])
@@ -135,6 +138,8 @@ def compute(params,base_dir):
         for combination in itertools.islice(itertools.product(*choices),stock_budget):
             for v,record in zip(variables,combination):
                 if any(k in record for k in ("id","nodes","type")):raise cli.InputError("stock records use sku; circuit identity/type/nodes stay fixed")
+                components[v["id"]].clear()
+                components[v["id"]].update(copy.deepcopy(stock_baseline[v["id"]]))
                 components[v["id"]].update(record)
             values=np.log([components[v["id"]][key] for v,key in zip(variables,keys)])
             stock.append(evaluate(values,True))

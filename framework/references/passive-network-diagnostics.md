@@ -23,6 +23,11 @@ the equivalent-resistance interpretation. The local implementation is independen
 
 ## Programme dissipation
 
+Ideal transformers use the lossless constraints `Vp=n Vs`, `Is=-n Ip`.
+Finite transformers instead use a positive-definite coupled winding inductance
+matrix. Inductor shunt R/C parasitics are ordinary explicit passive branches.
+Neither ideal constraints nor parasitics infer physical coil layout or core saturation.
+
 Normalize voltage PSD S(f) so its frequency integral is one. If a network run uses
 reference voltage V0, the programme mean component power is
 `(Vrms/V0)² integral(Pcomponent(f) S(f) df)`. Voltage/current RMS follow the same
@@ -56,3 +61,6 @@ mathematical objective, but its score does not certify a design or replace const
   accuracy of simulated response inputs.
 - W. M. Leach Jr., [Georgia Tech Audio Engineering](https://leachlegacy.ece.gatech.edu/ece4445/index.html),
   passive circuit and loudspeaker load analysis.
+- Ngspice authors, [User's Manual](https://ngspice.sourceforge.io/docs/ngspice-manual.pdf),
+  passive RLC devices and controlled-source network equations. The local ideal
+  transformer stamp is derived directly from the two constraints above.

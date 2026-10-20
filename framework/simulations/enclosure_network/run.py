@@ -152,9 +152,19 @@ def compute(params,base_dir):
         if np.any(r<=0):raise cli.InputError("observer coincides with emission")
         emission["pressure_at_1m_pa"]=s*cli.RHO*emission["flow"]/solid
         total+=emission["pressure_at_1m_pa"][None,:]*np.exp(-s[None,:]*r[:,None]/cli.C)/r[:,None]
+    canonical={}
+    if len(motors)==1 and abs(motors[0][-1])>0:
+        # A colocated equivalent is exported explicitly; placed emissions remain separate.
+        voltage=motors[0][-1]
+        canonical=dict(pressure_per_volt_pa=sum((e["pressure_at_1m_pa"] for e in emissions),np.zeros(len(f),complex))/voltage,
+                       z_ohm=driver_rows[0]["z_ohm"],
+                       source_contract=dict(phase_reference="intrinsic",pressure_reference_m=1.,
+                                            normalization="declared_volt",baffle="external",
+                                            spatial_basis="colocated sum; use individual emissions for outlet position effects"))
     return dict(f_hz=f,expanded_network=p,chamber_pressure_pa=pressure,drivers=driver_rows,
                 outlets=outlet_rows,emissions=emissions,observer_pressure_pa=total,
                 relative_residual=residual,
+                **canonical,
                 validity=dict(model="Lumped small-signal chambers, acoustic masses and radiator suspensions. No transverse modes, mutual outlet radiation or flow noise."))
 
 

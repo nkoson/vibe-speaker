@@ -31,4 +31,10 @@ acceleration, reaction force, copper loss, outlet flows/velocities/excursions,
 separate emission pressures, total observer pressure and equation residual.
 Zero-drive impedance is unresolved (null), not inferred from zero/zero.
 
+A single nonzero-drive motor also exports `pressure_per_volt_pa`, `z_ohm` and a
+source contract for `source_response` simulation imports. This is the explicitly
+colocated emission sum. Use individual emissions and their positions for distributed
+outlet effects. External series resistance, if supplied, remains in the acoustic
+source-voltage normalization and must not be applied twice downstream.
+
 See [passive enclosure networks](../../references/passive-enclosure-networks.md).

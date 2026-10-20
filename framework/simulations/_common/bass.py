@@ -92,11 +92,21 @@ ISOBARIC_EXCHANGE = {
 }
 
 
-def prototype(target, a2=None):
+def prototype(target, a2=None, ripple_db=0.5):
     """The a1, a2, a3 of a named fourth-order prototype. QB3 takes its free a2 from the caller."""
     name = str(target).upper()
     if name in PROTOTYPES:
         return PROTOTYPES[name]
+    if name in ("C4", "CHEBYSHEV"):
+        from scipy.signal import cheb1ap
+        ripple = float(ripple_db)
+        if ripple <= 0:
+            raise InputError("Chebyshev ripple_db must be positive")
+        _, poles, _ = cheb1ap(4, ripple)
+        coefficients = np.poly(poles).real
+        natural = coefficients[-1] ** .25
+        # Reciprocal low-pass polynomial gives a high-pass with unit HF gain.
+        return coefficients[3]/natural**3, coefficients[2]/natural**2, coefficients[1]/natural
     if name == "QB3":
         if a2 is None:
             raise InputError("the QB3 family needs alignment.a2; it is the free coefficient of the family")
@@ -105,7 +115,7 @@ def prototype(target, a2=None):
             raise InputError(f"QB3 needs a2 > 2 + sqrt(2) = {2 + math.sqrt(2):.4f}, got {a2:g}")
         a1 = math.sqrt(2 * a2)
         return a1, a2, (a2 * a2 + 2) / (2 * a1)
-    raise InputError(f"unknown alignment target '{target}'; known targets are B4, BL4 and QB3")
+    raise InputError(f"unknown alignment target '{target}'; known targets are B4, BL4, QB3 and C4")
 
 
 def f3_over_f0(a1, a2, a3):
@@ -160,7 +170,7 @@ def sealed_alignment(qtc):
                      "and pays 6.3 dB of hump for it. Qtc = 0.5 is critical damping, 0.707 is maximally flat.")
 
 
-def solve_alignment(target, ql, a2=None):
+def solve_alignment(target, ql, a2=None, ripple_db=0.5):
     """Small's lossy alignment recipe: solve r^4 - c1 r^3 + c2 r - 1 = 0 and report what follows.
 
     The quartic has several positive real roots — at QL = 7 the B4 roots are 0.0548, 1.0000 and
@@ -170,7 +180,7 @@ def solve_alignment(target, ql, a2=None):
     ql = float(ql)
     if ql <= 0:
         raise InputError("alignment.ql must be positive")
-    a1, a2v, a3 = prototype(target, a2)
+    a1, a2v, a3 = prototype(target, a2, ripple_db)
     c1, c2 = a1 * ql, a3 * ql
     roots = np.roots([1.0, -c1, 0.0, c2, -1.0])
     real = sorted(float(z.real) for z in roots if abs(z.imag) < 1e-8 * max(1.0, abs(z.real)) and z.real > 0)
@@ -193,9 +203,11 @@ def solve_alignment(target, ql, a2=None):
                 required_qt=h * ql / denominator)
 
 
-def alignment_for_driver(ts, target, ql, a2=None):
+def alignment_for_driver(ts, target, ql, a2=None, ripple_db=0.5):
     """The solved alignment expressed as the box a given driver needs, beside the QT it actually has."""
-    solution = solve_alignment(target, ql, a2)
+    solution = solve_alignment(target, ql, a2, ripple_db)
+    if str(target).upper() in ("C4", "CHEBYSHEV"):
+        solution["prototype"]["ripple_db"] = float(ripple_db)
     fs = float(ts["fs_hz"])
     vas = float(ts["vas_l"])
     qts = 1 / (1 / float(ts["qes"]) + 1 / float(ts["qms"]))

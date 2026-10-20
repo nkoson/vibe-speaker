@@ -53,7 +53,7 @@ def impulse(params, base_dir):
     if not 0 <= start < stop <= len(data)/fs+1e-12:
         raise cli.InputError("window must lie inside the sampled impulse")
     sel = (t >= start) & (t < stop)
-    n = int(params.get("fft_length", signal.get_window("boxcar", len(data)).size))
+    n = int(params.get("fft_length", len(data)))
     if n < len(data):
         raise cli.InputError("fft_length cannot truncate input samples")
     w = np.zeros(len(data))
@@ -62,6 +62,25 @@ def impulse(params, base_dir):
         raise cli.InputError("unsupported time window")
     taper = ("tukey", float(window.get("alpha", .25))) if kind == "tukey" else kind
     w[sel] = signal.get_window(taper, int(sel.sum()), fftbins=False)
+    if "left_s" in window or "right_s" in window:
+        left=cli.positive(window.get("left_s",0),"window.left_s",zero=True)
+        right=cli.positive(window.get("right_s"),"window.right_s")
+        if not 0 <= reference <= t[-1]:
+            raise cli.InputError("two-sided window reference must lie inside the samples")
+        w=np.zeros(len(data))
+        for side,duration in (("left",left),("right",right)):
+            if duration==0:continue
+            phase=(reference-t)/duration if side=="left" else (t-reference)/duration
+            inside=(phase>=0)&(phase<=1)
+            window_kind=window.get(side+"_kind",kind)
+            if window_kind not in ("boxcar","hann","hamming","blackman","blackmanharris","tukey"):
+                raise cli.InputError("unsupported sided window")
+            window_spec=("tukey",float(window.get("alpha",.25))) if window_kind=="tukey" else window_kind
+            # A densely sampled half-window avoids shifting the acquisition time grid.
+            half=signal.get_window(window_spec,8193,fftbins=False)[4096:]
+            w[inside]=np.interp(phase[inside],np.linspace(0,1,len(half)),half)
+        w[np.isclose(t,reference,atol=.1/fs)]=1
+        start=max(0,reference-left);stop=min(len(data)/fs,reference+right)
     h = data*w*float(spec.get("calibration", 1))
     basis = spec.get("sample_basis", "discrete_impulse")
     if basis not in ("discrete_impulse", "continuous_impulse_density"):
@@ -89,7 +108,12 @@ def compute(params, base_dir):
             raise cli.InputError("digitization needs valid pixel pairs and nondegenerate axes")
         u = (p[:, 0]-x0)/(x1-x0)
         f = np.exp(np.log(f0)+u*np.log(f1/f0)) if params["axes"].get("frequency_scale", "log") == "log" else f0+u*(f1-f0)
-        values = d0+(p[:, 1]-y0)/(y1-y0)*(d1-d0)
+        fraction=(p[:, 1]-y0)/(y1-y0)
+        if params["axes"].get("value_scale","linear")=="log":
+            if min(d0,d1)<=0:raise cli.InputError("logarithmic values require positive endpoints")
+            values=np.exp(np.log(d0)+fraction*np.log(d1/d0))
+        else:
+            values = d0+fraction*(d1-d0)
         order = np.argsort(f)
         if np.any(np.diff(f[order]) <= 0):
             raise cli.InputError("digitized frequencies must be unique")

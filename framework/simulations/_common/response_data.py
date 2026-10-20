@@ -64,13 +64,13 @@ def plane_values(plane, grid_f, f, angles):
     if (np.any(target < aa[0]-1e-7) or np.any(target > aa[-1]+1e-7)
             or np.any(ff < grid_f[0]) or np.any(ff > grid_f[-1])):
         raise cli.InputError("measured polar data does not cover the requested direction/frequency")
-    values = np.stack([resample(ff.ravel(), grid_f, row) for row in data])
+    unique_f, frequency_index = np.unique(ff.ravel(), return_inverse=True)
+    values = np.stack([resample(unique_f, grid_f, row) for row in data])
     flat = target.ravel()
     right = np.clip(np.searchsorted(aa, flat, side="right"), 1, len(aa)-1)
     left = right-1
     fraction = (flat-aa[left])/(aa[right]-aa[left])
-    index = np.arange(len(flat))
-    return (values[left, index]*(1-fraction)+values[right, index]*fraction).reshape(ff.shape)
+    return (values[left, frequency_index]*(1-fraction)+values[right, frequency_index]*fraction).reshape(ff.shape)
 
 
 def measured_directivity(model, f, h, v):

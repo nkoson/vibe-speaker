@@ -17,6 +17,8 @@ CHAIN = [
     ("parameter_identification", SIMS / "parameter_identification" / "example.json", "parameter_identification"),
     ("network_diagnostics", SIMS / "network_diagnostics" / "example.json", "network_diagnostics"),
     ("response_diagnostics", SIMS / "response_diagnostics" / "example.json", "response_diagnostics"),
+    ("source_response", HERE / "section_polar.json", "section_polar"),
+    ("baffle_diffraction", HERE / "baffle_angular.json", "baffle_angular"),
     ("lf_box", SIMS / "lf_box" / "example.json", "lf_box"),
     # the same woofer in the three loadings added with the second source round: a fourth-order
     # bandpass, an isobaric pair in half the box, and the aperiodic resistance sweep

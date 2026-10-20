@@ -43,3 +43,14 @@ def test_box_and_free_air_share_blocked_motor(tmp_path):
 def test_fractional_active_domain_rejected():
     with pytest.raises(cli.InputError):
         acoustics.blocked_impedance(dict(TS,inductance_model={"kind":"leach","k":.1,"n":1.2}),np.array([100]))
+
+
+def test_isobaric_lossy_impedance_scaling():
+    from _common import bass
+    f=np.geomspace(10,20000,100)
+    ts=dict(TS,inductance_model={"kind":"leach","k":.03,"n":.6},
+            creep={"beta":.2,"c0_m_per_n":.0005,"r0_ns_m":1.2})
+    original=acoustics.impedance_model({"kind":"free_air","ts":ts},f)
+    for wiring,scale in [("series",2),("parallel",.5)]:
+        pair,_=bass.isobaric_pair(ts,wiring)
+        np.testing.assert_allclose(acoustics.impedance_model({"kind":"free_air","ts":pair},f),original*scale)

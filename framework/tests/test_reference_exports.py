@@ -43,3 +43,17 @@ def test_comparison_reports_errors_without_verdicts():
     assert result["rms_magnitude_difference_db"] == pytest.approx(20*np.log10(2))
     np.testing.assert_allclose(result["phase_difference_deg"], 90)
     assert not {"pass", "fail", "acceptable", "recommended"} & result.keys()
+
+
+def test_two_source_far_field_against_frozen_export():
+    from _common import radiation
+    data=np.loadtxt(ROOT/"two_sources.csv",delimiter=",",skiprows=1)
+    for angle in np.unique(data[:,0]):
+        rows=data[data[:,0]==angle];f=rows[:,1]
+        distance=1e6;a=np.deg2rad(angle)
+        receiver=np.array([[distance*np.sin(a),distance*np.cos(a),0]])
+        common=dict(pressure=np.ones(len(f),complex),transfer=np.ones(len(f),complex),
+                    baffle=np.ones(len(f),complex),directivity={"kind":"omni"},tilt_rad=0,outlets=[],rear=None)
+        sections=[dict(common,centre=np.array([x,0,0])) for x in [-.1,.1]]
+        actual,_=radiation.pressure(sections,f,receiver,distance)
+        np.testing.assert_allclose(actual[0],rows[:,2],atol=1e-5)

@@ -7,7 +7,7 @@ from numpy.polynomial.legendre import leggauss
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from _common import cli,acoustics
 NAME="room_modal"
-VERSION="1.0"
+VERSION = "1.1"
 WALLS=("x_min","x_max","y_min","y_max","z_min","z_max")
 
 def basis(points,modes,dimensions):

@@ -71,6 +71,8 @@ def load_sections(params, f, base_dir):
             if isinstance(parent,dict) and parent.get("angular_model"):
                 directivity = parent["angular_model"]
                 baffle = np.ones(len(f),complex)
+                if ref["path"].endswith(".combined_factor") and parent.get("recess_transfer"):
+                    baffle = cli.curve_from_reference(dict(ref,path=parent_path+".recess_transfer"),base_dir,f)
         entry = dict(name=section.get("name"), pressure=pressure, directivity=directivity, centre=centre, transfer=transfer, baffle=baffle,
                      acoustic_depth_mm=depth,
                      rear=rear_prior(section.get("rear_radiation"), cabinet.get("baffle_width_mm")),

@@ -77,3 +77,23 @@ Complex records everywhere follow `{real, imag, magnitude, magnitude_db, phase_d
 ## Series resistance and downstream sources
 
 `drive.series_resistance_ohm` affects pressure, excursion and current at the stated source voltage. The reported `z_ohm` is the driver load and excludes that external resistance. Applying a crossover coil to that impedance while reusing source-voltage pressure containing the same coil allowance repeats the loss. Use a zero-external-resistance LF source run, or `source_response.acoustic.voltage_basis: driver_terminal` to remove the allowance; then model physical wiring and coil DCR once in the network. Keep allowance runs for alignment screening and stress runs at their stated drive.
+
+## Extended linear driver laws and chamber networks
+
+`driver.ts.inductance_model` supports `constant {le_mh}`, `leach {k,n}`,
+`lr2 {le_mh,l2_mh,r2_ohm}` and
+`semi_inductance {leb_mh,le_mh,ke,rss_ohm}`; absent parallel branches are open.
+`driver.ts.creep` supplies `beta`, optional `transition_hz` (default 1.5 fs),
+`c0_m_per_n` and `r0_ns_m`. Read
+[driver impedance](../../references/driver-impedance-identification.md) before
+substituting fitted parameters for conventional T/S values. Isobaric equivalents
+scale these laws consistently. Heating changes Re and Qes together to retain Bl.
+
+`alignment.target: C4` adds a fourth-order Chebyshev prototype with explicit
+`ripple_db` (default 0.5); high-frequency gain is normalized to unity. It uses the
+same lossy quartic as the existing prototypes and still reports required versus
+actual driver Q. It is not an automatic alignment choice.
+
+Use [enclosure_network](../enclosure_network/README.md) for double-tuned reflex,
+PR bandpass, general chamber incidences, separate absorption/leakage or multiple
+individually driven motors.

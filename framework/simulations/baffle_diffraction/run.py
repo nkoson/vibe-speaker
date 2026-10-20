@@ -9,13 +9,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _common import cli, acoustics  # noqa: E402
 
 NAME = "baffle_diffraction"
-VERSION = "1.1"
+VERSION = "1.2"
 NOTES = [
     "Shelf: first-order 6 dB baffle step with corner at 115 / width Hz. Edge diffraction: first-order sum of delayed, inverted half edge waves weighted by subtended angle and piston beaming; on-axis factor only.",
     "The step is distance-dependent. Each edge wave is weighted by observer / hypot(observer, edge distance), so a near observer sees a shallower step than the far field: a 250 mm baffle centred source shows about 5 dB at 0.25 m against 6 dB far field. A correction derived at one distance and applied at another under- or over-compensates by that difference.",
     "An edge radius tapers the edge wave above its lambda/8 frequency c / (8 r) and does nothing below it, which is the frequency reported as edge_radius_effective_above_hz. The taper is a first-order prior, not a solved roundover.",
     "Recess: short rigid tube terminated by a piston radiation impedance; quarter-wave rise only, no cavity edge diffraction.",
-    "No rear-wall scattering, off-axis diffraction or room; the factor multiplies the infinite-baffle (2 pi) source response and tends to 0.5 (-6 dB, the 4 pi limit) at low frequency in the far field.",
+    "Legacy models are on-axis transfers. The distributed-edge-dipole option supplies angular radiation, including a continuous rear field, under its planar approximation. Neither option solves thick rear-wall scattering or the room.",
     "The full 6 dB step belongs to a speaker in free space. In a normal room the walls restore part of the low-frequency support and the realised step is unlikely to exceed about 3 dB, so how much to compensate is a voicing decision to state, not a number this app supplies.",
 ]
 VALIDITY = [
@@ -99,6 +99,12 @@ def compute(params, base_dir):
             row["recess_transfer"] = rt
             row["combined_factor"] = factor * rt
         rows.append(row)
+    angular_used=any(row.get("angular_model") for row in rows)
+    statements = ([
+        "Distributed edge dipoles on a convex planar baffle with declared piston illumination; source/receiver paths are explicit.",
+        "The circular far-field limit is analytically tested. Polygon quadrature and finite-distance extensions require independent convergence/validation.",
+        "No thick side/rear walls, nonconvex visibility or higher-order edge interactions. Roundovers and recesses remain separate approximations.",
+    ] if angular_used else list(VALIDITY))
     return dict(f_hz=f, baffle=dict(width_mm=width, height_mm=height, edge_radius_mm=default_edge_radius * 1000),
                 observer_distance_m=observer,
                 shelf_corner_hz=float(115 / (width / 1000)),
@@ -106,9 +112,9 @@ def compute(params, base_dir):
                 corner_note="115 / W and c / (2 W) name different points on a transition that spans roughly a decade; "
                             "read the computed curve rather than either number.",
                 sources=rows,
-                validity=dict(statements=list(VALIDITY),
-                              baffle_width_irrelevant_above_hz=14000.0,
-                              width_stops_setting_response_above_hz=6000.0))
+                validity=dict(statements=statements,
+                              **({} if angular_used else dict(baffle_width_irrelevant_above_hz=14000.0,
+                                                              width_stops_setting_response_above_hz=6000.0))))
 
 
 if __name__ == "__main__":

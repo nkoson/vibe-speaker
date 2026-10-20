@@ -6,7 +6,7 @@ import numpy as np
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from _common import cli,acoustics
 NAME="distributed_loading"
-VERSION="1.0"
+VERSION = "1.1"
 
 def compute(params,base_dir):
     f=cli.frequency_grid(params.get("frequencies"),10,4000,600);s=2j*np.pi*f

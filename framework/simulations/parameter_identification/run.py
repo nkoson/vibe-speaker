@@ -45,9 +45,12 @@ def compute(params,base_dir):
         required={"mms_kg","cms_m_per_n","rms_ns_m","bl_tm","re_ohm"}
         if not required <= set(initial)|set(known):
             raise cli.InputError("driver identification needs Mms, Cms, Rms, Bl and Re initial/known values")
-        loaded=any(r.get("added_mass_g",0)>0 or r.get("sealed_volume_l",0)>0 for r,_,_,_ in observations)
-        if not loaded and not ({"mms_kg","bl_tm"}&set(known)):
+        conditions={(float(r.get("added_mass_g",0)),float(r.get("sealed_volume_l",0))) for r,_,_,_ in observations}
+        if any(m<0 or v<0 for m,v in conditions):raise cli.InputError("added mass and sealed volume must be nonnegative")
+        if len(conditions)<2 and not ({"mms_kg","bl_tm"}&set(known)):
             raise cli.InputError("a single free-air condition needs known mms_kg or bl_tm to identify absolute mechanical scale")
+        for key in required:
+            cli.positive(dict(initial,**known)[key],key)
         area=cli.positive(params["sd_cm2"],"sd_cm2")*1e-4
     elif mode=="radiator":
         if len(params["network"].get("radiators",[]))<1:raise cli.InputError("radiator fit needs an explicit enclosure network")

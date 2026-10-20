@@ -26,6 +26,11 @@ Blackman, Blackman-Harris and Tukey. WAV integer samples are normalized to full 
 conversion to Pa or a transfer requires the supplied calibration.
 Returns positive-frequency complex response, DC separately, window and gated samples.
 
+Alternatively `window.left_s` and `window.right_s` define independent half-windows
+around `reference_time_s`, with optional `left_kind` and `right_kind`. The gate
+retains the original time grid. `digitize` also accepts `axes.value_scale: log`
+for logarithmic impedance axes.
+
 `digitize` converts supplied `pixel_points` using
 `axes: {x_pixels,frequency_hz,y_pixels,values,frequency_scale}`.
 This coordinate transform does not identify a curve automatically or supply measured phase.

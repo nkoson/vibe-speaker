@@ -1,0 +1,8 @@
+{
+  "frequencies": {"min_hz": 20, "max_hz": 20000, "points": 100},
+  "baffle": {"vertices_mm": [[0,0],[300,0],[300,500],[250,550],[50,550],[0,500]]},
+  "far_field": true,
+  "edge_subdivisions": 32,
+  "sources": [{"name": "LF", "model": "distributed_edge_dipole", "x_mm": 150, "z_mm": 250, "radius_mm": 80}],
+  "angular_grid": {"horizontal_deg": [-180,-90,-60,-30,0,30,60,90,180], "vertical_deg": [-180,-90,-60,-30,0,30,60,90,180]}
+}

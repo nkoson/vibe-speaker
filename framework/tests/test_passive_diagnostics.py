@@ -72,3 +72,22 @@ def test_inductor_parasitics_match_explicit_parallel_network():
     s=2j*np.pi*f
     z=acoustics.element_impedance(dict(type="L",value_mh=1,dcr_ohm=.2,parallel_r_ohm=1000,parallel_c_pf=500),f)
     np.testing.assert_allclose(z,1/(1/(.2+s*.001)+.001+s*500e-12))
+
+
+def test_exports_preserve_curve_and_impulse_scale(tmp_path):
+    import importlib.util
+    from scipy.io import wavfile
+    path=Path(__file__).resolve().parents[1]/"tools/export_response.py"
+    spec=importlib.util.spec_from_file_location("export_response_test",path)
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    p=tmp_path/"result.json"
+    cli.write_document(p,dict(status="computed",simulation="test",version="1",
+        results=dict(f_hz=[100,200],response=np.array([1,1j]),time_domain=dict(sample_rate_hz=48000,impulse_samples=[0,2,0]))))
+    module.export(p,"results.response",tmp_path/"curve.csv","csv",quantity="transfer")
+    data=np.loadtxt(tmp_path/"curve.csv",delimiter=",",skiprows=1)
+    np.testing.assert_allclose(data[:,1]+1j*data[:,2],[1,1j])
+    module.export(p,"results.time_domain.impulse_samples",tmp_path/"impulse.wav","wav")
+    fs,samples=wavfile.read(tmp_path/"impulse.wav")
+    assert fs==48000
+    np.testing.assert_allclose(samples,[0,2,0])
+    assert (tmp_path/"impulse.wav.json").exists()

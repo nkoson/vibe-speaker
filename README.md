@@ -35,7 +35,7 @@ This creates `.speaker-venv/` inside the repository (with the project-local uv i
 | `framework/skills/speaker-documentation/` | How to write cabinet, crossover, performance and reference-comparison documents |
 | `framework/skills/speaker-learnings/` | Consult past learnings, write the postmortem, distill new learnings |
 | `framework/learnings/` | Advice from past projects, one file per learning, indexed |
-| `framework/simulations/` | Twenty-nine standalone simulation apps, each with `run.py`, `README.md` and `example.json`; see its [README](framework/simulations/README.md) for the inventory |
+| `framework/simulations/` | Thirty-five standalone simulation apps, each with `run.py`, `README.md` and `example.json`; see its [README](framework/simulations/README.md) for the inventory |
 | `framework/tools/` | Plotting, cabinet drawing and cut list, crossover schematic and board netlist, PDF assembly of the final package |
 | `framework/templates/` | Project, reference, part, candidate and evaluation templates |
 | `framework/tests/` | pytest suite running the example chain |

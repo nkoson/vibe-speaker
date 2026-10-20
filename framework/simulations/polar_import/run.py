@@ -16,6 +16,10 @@ def compute(params, base_dir):
     timing = params.get("phase_reference")
     if timing not in ("intrinsic", "absolute", "reference_delay_removed"):
         raise cli.InputError("phase_reference needs intrinsic, absolute or reference_delay_removed")
+    if params.get("baffle","included") not in ("included","external"):
+        raise cli.InputError("baffle must be included or external")
+    if params.get("gate_ms") is not None:
+        cli.positive(params["gate_ms"],"gate_ms")
     source = np.asarray(params.get("source_position_m", [0, 0, 0]), float)
     centre = np.asarray(params.get("rotation_center_m", [0, 0, 0]), float)
     if source.shape != (3,) or centre.shape != (3,) or not np.all(np.isfinite([source, centre])):
@@ -67,6 +71,8 @@ def compute(params, base_dir):
                 values.setdefault(-a, p.copy())
         # +/-180 denote exactly the same physical direction.
         if 180 in values:
+            if -180 in values and not np.allclose(values[180],values[-180],rtol=1e-4,atol=1e-12):
+                raise cli.InputError("plus/minus 180-degree measurements disagree at the same direction")
             values.setdefault(-180, values[180])
         if -180 in values:
             values.setdefault(180, values[-180])
