@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "generator": "generate_reference_exports.py",
+  "generator_sha256": "87116eb7a2070f0334939a6dca77b3d3f2a534aced9240a944eddf3f4e4fd887",
+  "engine": {
+    "name": "SciPy",
+    "version": "1.17.0"
+  },
+  "interpretation": "Simulated mathematical references; no empirical accuracy claim.",
+  "cases": [
+    {
+      "id": "rc_lowpass",
+      "file": "rc_lowpass.csv",
+      "sha256": "317a0b7765ea8424a19a42dbd51c0294fdc34474ad33c32cca2c9a71293c20c0",
+      "evidence_class": "independent_numerical",
+      "quantity": "voltage_transfer",
+      "units": "V/V",
+      "parameters": {
+        "resistance_ohm": 8,
+        "capacitance_f": 2e-05
+      },
+      "numerator": [
+        1
+      ],
+      "denominator": [
+        0.00016,
+        1
+      ],
+      "conditions": {
+        "phasor": "exp(+jwt)",
+        "source_voltage_rms": 1
+      },
+      "source": "scipy.signal.freqresp continuous-time rational system"
+    },
+    {
+      "id": "rlc_lowpass",
+      "file": "rlc_lowpass.csv",
+      "sha256": "aa4bda26d380c442817df785de40b33c2b15884b9e1e195b885a055ea1d503bb",
+      "evidence_class": "independent_numerical",
+      "quantity": "voltage_transfer",
+      "units": "V/V",
+      "parameters": {
+        "resistance_ohm": 8,
+        "inductance_h": 0.001,
+        "capacitance_f": 2e-05
+      },
+      "numerator": [
+        1
+      ],
+      "denominator": [
+        2e-08,
+        0.00016,
+        1
+      ],
+      "conditions": {
+        "phasor": "exp(+jwt)",
+        "source_voltage_rms": 1
+      },
+      "source": "scipy.signal.freqresp continuous-time rational system"
+    },
+    {
+      "id": "two_sources",
+      "file": "two_sources.csv",
+      "sha256": "b9c1c138ef1641241b52ecfd7d5eac105e7358e512a4bdf0dde536360ab303b6",
+      "evidence_class": "analytical",
+      "quantity": "normalized_pressure",
+      "units": "1",
+      "conditions": {
+        "spacing_m": 0.2,
+        "speed_of_sound_m_s": 343,
+        "distance": "far field"
+      },
+      "source": "2 cos(k d sin(theta)/2), coherent identical monopoles"
+    }
+  ]
+}

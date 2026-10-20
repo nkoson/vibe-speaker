@@ -6,6 +6,7 @@ References are not learnings. A learning in `framework/learnings/` says what hap
 
 | Reference | Read it when |
 |---|---|
+| [passive-analysis](passive-analysis.md) | Comparing independent exports, checking numerical evidence and preserving source conventions |
 | [driver-selection](driver-selection.md) | Choosing a driver from its parameters, or judging an efficiency, excursion, Xmax or power claim |
 | [enclosure-alignments](enclosure-alignments.md) | Solving a bass alignment, sizing a vent, or considering a loading other than sealed and vented |
 | [system-architecture](system-architecture.md) | Deciding how many sections a design needs and where the crossover frequencies go |
