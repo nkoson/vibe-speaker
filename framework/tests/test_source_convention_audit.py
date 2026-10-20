@@ -82,3 +82,18 @@ def test_fixture_magnitude_removed_before_relative_shape_normalization(tmp_path)
     # Scaling the fixture by a constant cannot identify source sensitivity.
     cli.write_document(tmp_path/"fixture.json", {"results": {"f_hz": f, "p": fixture*2}})
     np.testing.assert_allclose(module.compute(observed, tmp_path)["pressure_per_volt_pa"], expected, atol=1e-11)
+
+
+def test_scenarios_reduce_complex_impedance_magnitude_not_real_part(tmp_path):
+    params = dict(draws=0, steps=[dict(id="source", app="source_response",
+        parameters=dict(frequencies={"values_hz": [100, 200]},
+            acoustic=dict(kind="bandwidth_prior", sensitivity_db_2v83_1m=90),
+            impedance=dict(kind="curve", frequency_hz=[100, 200],
+                           real_ohm=[3, 6], imag_ohm=[4, 8])))],
+        observables=[dict(name="z_"+reduction, step="source", path="results.z_ohm",
+                          reduce=reduction) for reduction in ["min", "max", "mean", "rms"]])
+    result = apps.module("system_scenarios").compute(params, tmp_path)
+    row = result["outcomes"][0]
+    assert row["input_error"] is None
+    np.testing.assert_allclose([row["observables"]["z_"+r] for r in ["min","max","mean","rms"]],
+                               [5, 10, 7.5, np.sqrt(62.5)])

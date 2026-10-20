@@ -7,7 +7,7 @@ from scipy.special import ndtr
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from _common import cli,apps
 NAME="system_scenarios"
-VERSION="1.0"
+VERSION="1.1"
 
 def assign(record,path,value):
     parts=path.split('.');current=record
@@ -59,6 +59,10 @@ def compute(params,base_dir):
                         if isinstance(value,dict) and "real" in value:value=abs(cli.complex_from_record(value))
                         if value is not None:
                             a=np.asarray(value)
+                            # Steps are computed in memory, so their complex arrays
+                            # have not necessarily become serialized real/imag records.
+                            if np.iscomplexobj(a):
+                                a=np.abs(a)
                             operation=obs.get("reduce","scalar")
                             value=float({"min":np.min,"max":np.max,"mean":np.mean,"rms":lambda a:np.sqrt(np.mean(abs(a)**2)),"scalar":float}[operation](a))
                         observations[obs["name"]]=value
