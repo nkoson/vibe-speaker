@@ -9,19 +9,20 @@ from scipy.optimize import least_squares
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _common import cli, acoustics, response_data
 NAME = "response_prepare"
-VERSION = "1.0"
+VERSION = "1.1"
 
 
 def curve(record, f, base_dir):
     if "reference" in record:
-        return cli.curve_from_reference(dict(extrapolation="error", **record["reference"]), base_dir, f)
-    if "file" in record:
+        p = cli.curve_from_reference(dict(extrapolation="error", **record["reference"]), base_dir, f)
+    elif "file" in record:
         fp, p, _ = response_data.read_table(cli.resolve_path(record["file"], base_dir),
                                           record.get("quantity", "pressure"), record.get("phase_assumption"))
+        p = response_data.resample(f, fp, p, float(record.get("known_delay_s", 0)))
     else:
         fp = np.asarray(record["frequency_hz"], float)
         p = cli.complex_from_record(record)
-    p = response_data.resample(f, fp, p, float(record.get("known_delay_s", 0)))
+        p = response_data.resample(f, fp, p, float(record.get("known_delay_s", 0)))
     scale = float(record.get("scale", 1))*10**(float(record.get("gain_db", 0))/20)
     scale *= float(record.get("polarity", 1))
     if "nearfield_radius_m" in record:
@@ -124,7 +125,27 @@ def compute(params, base_dir):
         raise cli.InputError("responses cannot be empty")
     curves = np.stack([curve(r, f, base_dir) for r in records])
     extra = {}
-    if operation == "merge":
+    if operation in ("volume_velocity_to_pressure", "pressure_to_volume_velocity"):
+        if len(curves) != 1:
+            raise cli.InputError("radiation conversion needs exactly one response")
+        distance = cli.positive(params.get("distance_m"), "distance_m")
+        space = params.get("radiation_space")
+        if space not in ("full", "half"):
+            raise cli.InputError("radiation_space must explicitly be full or half")
+        phase = params.get("phase_reference")
+        if phase not in ("absolute", "intrinsic"):
+            raise cli.InputError("phase_reference must explicitly be absolute or intrinsic")
+        omega = 2*np.pi*f
+        factor = 1j*omega*cli.RHO / ((4 if space == "full" else 2)*np.pi*distance)
+        if phase == "absolute":
+            factor *= np.exp(-1j*omega*distance/cli.C)
+        response = curves[0]*factor if operation == "volume_velocity_to_pressure" else curves[0]/factor
+        extra["radiation_conversion"] = dict(
+            distance_m=distance, radiation_space=space, phase_reference=phase,
+            output_units="Pa" if operation == "volume_velocity_to_pressure" else "m3/s",
+            scope="Equivalent compact-source far field; half space assumes an infinite rigid plane. "
+                  "Inverting calibrated pressure yields equivalent flow, not measured cone motion.")
+    elif operation == "merge":
         if len(curves) != 2:
             raise cli.InputError("merge needs low and high responses; sum cone/outlets beforehand")
         low, high = curves

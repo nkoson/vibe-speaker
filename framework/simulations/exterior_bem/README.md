@@ -8,6 +8,15 @@
 
 Supply `observers_m`, or an `angular_grid` with `radius_m`, `horizontal_deg` and `vertical_deg`. A source export is most useful with a reference sphere outside the object and angular grids containing zero and the intended full-space coverage. Pressure uses the e^(jwt), outgoing exp(-jkr) convention.
 
+A patch may select a planar disk using `disk: {centre_m, normal, radius_m}` instead
+of explicit triangle indices. Centroids must lie in the disk plane and inside its
+radius, with outward normals aligned. `volume_velocity_m3_s` or a complex
+`volume_velocity` reference distributes total flow over the selected area. This
+keeps total excitation fixed across mesh refinements; it does not make a coarse
+polygonal aperture identical to a circular piston. `drive_patches` reports selected
+areas, indices and assigned flows. Later overlapping patches overwrite earlier
+velocity assignments, as with explicit triangle patches.
+
 The solver uses a single-layer potential with constant triangle densities. The exterior normal derivative is collocated at centroids, including the -1/2 jump. It solves `(-I/2 + K') sigma = -j omega rho velocity`, then evaluates `p = S sigma` at the observers. Off-diagonal integration uses panel centroid quadrature. This is a low-order BEM: refine mesh, frequency and observer distance independently. Interior resonances can degrade conditioning; the result reports condition numbers and algebraic residuals rather than hiding them.
 
 Outputs include complex pressure, density, surface geometry, element/wavelength ratios and residuals. Angular runs also export a reference-sphere-delay-removed `pressure_per_volt_pa` and a `complex_grid` directivity, with a source contract marking included geometry diffraction. Combine this pressure with a separately justified driver impedance using `source_response` kind `simulation`; omit another baffle correction.

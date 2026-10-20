@@ -49,7 +49,24 @@ Scale each cone/outlet separately and sum complex pressure, with common drive an
 timing. Apply finite-cabinet corrections exactly once. Overlap matching is an explicit
 calibration estimate; report the fitted gain/delay and residual instead of hiding it.
 
+## Compact-source flow convention
+
+With `exp(j omega t)` time dependence, a compact full-space volume velocity Q
+produces `p(r)=j omega rho Q exp(-jkr)/(4 pi r)`. An infinite rigid-plane image
+doubles forward pressure for the same Q, replacing 4 pi with 2 pi. This is the
+low-ka far-field limit of a baffled piston, not a finite-cabinet correction.
+The framework's explicit pressure/flow conversions retain or remove propagation
+according to the declared phase reference. A source calibrated acoustically may
+be converted to an equivalent room excitation, but its inferred Q cannot certify
+actual diaphragm displacement or port speed. Gain, polarity and added delay apply
+equally to file-referenced and inline curves.
+
 ## Sources
+
+- COMSOL, [Acoustics Module User's Guide, Monopole Point Source](https://doc.comsol.com/5.4/doc/com.comsol.help.aco/AcousticsModuleUsersGuide.pdf),
+  p. 112, flow-source strength `S=j omega rho Q/(4 pi)`.
+- COMSOL, [Baffled Piston Radiation](https://doc.comsol.com/6.3/doc/com.comsol.help.models.aco.baffled_piston_radiation/baffled_piston_radiation.html),
+  Rayleigh integral and baffled-piston far-field comparison.
 
 - D. B. Keele Jr., “Low-Frequency Loudspeaker Assessment by Nearfield Sound-Pressure
   Measurement,” *JAES*, April 1974; [author's publication archive](https://dbkeele.com/technical-papers-2/).

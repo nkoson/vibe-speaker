@@ -2,6 +2,13 @@
 
 Operations: `ir_to_fr`, `merge`, `sum`, `average`, `product`, `difference`, `ratio`,
 `rms`, `maximum`, `minimum_phase`, `time_align`, `digitize`.
+Also `volume_velocity_to_pressure` and its inverse `pressure_to_volume_velocity`
+convert a single compact-source curve. Explicit `distance_m`, `radiation_space:
+full|half`, and `phase_reference: absolute|intrinsic` are required. Absolute phase
+includes outgoing propagation; intrinsic omits it. Pressure and flow use the same
+RMS or per-volt basis. Inverting a calibrated pressure gives equivalent flow, not
+an independent mechanical prediction. These far-field conversions omit finite
+aperture directivity and cabinet diffraction.
 
 Most operations use `frequencies` and `responses[]`. A response is either a
 `reference: {file,path,frequency_path}`, a `file` containing Hz/SPL/phase, or
