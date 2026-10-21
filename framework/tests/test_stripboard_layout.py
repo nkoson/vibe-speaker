@@ -33,6 +33,13 @@ def test_distinct_nodes_cannot_share_an_uncut_strip():
     with pytest.raises(ValueError,match='distinct continuous strips'):inspect(layout)
 
 
+def test_cut_harness_length_replaces_the_resistance_allowance():
+    layout,circuit=fixture()
+    layout['harness'][0].update(length_mm=600,section_mm2=1.5)
+    out,_=compile_circuit(layout,circuit)
+    assert next(w for w in out['wires'] if w['id']=='amp')['resistance_ohm']==pytest.approx(.009)
+
+
 def test_route_and_pad_must_agree_in_three_dimensions():
     layout,_=fixture();layout['parts'][0]['leads'][0]['points_mm'][-1][2]=1
     with pytest.raises(ValueError,match='copper pad'):inspect(layout)

@@ -35,9 +35,13 @@ Tools (one command each, `.speaker-venv/bin/python`):
 
 ## Physical crossover layout
 
+For a construction revision, identify the user's fixed constraints separately from the available placement choices. A retained board count, stock type or outline still allows component positions, orientations and node assignments to improve. When applying updated construction skills, complete that placement review and its comparison before regenerating the document; use a documentation-only workflow when the user explicitly freezes the placement.
+
 Build one serviceable assembly per driver. Start with the electrical connection graph: group parallel parts between shared node lines, place series-connected parts in sequence, and bring shunt branches close to their junctions. Component placement determines the wiring. Compare plausible placements using total connection length, straight wire runs, direction changes, crossings, joint count and access, while preserving body clearance, coil orientation and cooling. Select the arrangement that is simplest to assemble and inspect; record the comparison in the project.
 
 Choose a purchasable prototyping board with an existing copper pattern, or a plastic/wooden mounting board carrying ordinary insulated wire and suitable stock terminals. A common rail can be the wire connecting several component leads. Fit the design to the selected construction using normal cutting, drilling, lead forming, soldering or specified connectors. Read [crossover assembly](../../references/crossover-assembly.md) for the topology-led layout and build review. Include every conductor and joint in the wiring plan, verify actual lead reach, and replay changed connection losses and displaced volume through their dependent results.
+
+For a continuous factory-strip board, use [the stripboard layout tool](../../tools/stripboard-layout.md) to record complete three-dimensional native-lead routes, pad addresses, shared copper and component clearances. Review the physical drawing together with the reported quantities; a short jumper list alone does not describe the component placement.
 
 ## Required cabinet CAD workflow
 

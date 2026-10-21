@@ -124,7 +124,10 @@ def compile_circuit(layout,circuit,copper_multiplier=1):
             wire(f"lead_{p['id']}_{i+1}",c['nodes'][i],tag,resistance)
             entries.append(dict(id=f"{p['id']}.{i+1}",pad=tag,length_mm=mm,resistance_ohm=resistance))
     for h in layout['harness']:
-        tag=address(h['pad']);taps[tag]=h['pad'];wire(h['id'],h['node'],tag,h['resistance_ohm'])
+        tag=address(h['pad']);taps[tag]=h['pad']
+        resistance=(layout.get('rho_ohm_mm2_m',.0175)*h['length_mm']/1000/h.get('section_mm2',1.5)+2*layout.get('joint_ohm',.001)
+                    if 'length_mm' in h else h['resistance_ohm'])
+        wire(h['id'],h['node'],tag,resistance)
     for row in layout['rows'].values():
         pp=sorted((rc[1],name) for name,rc in taps.items() if rc[0]==row)
         for (a,pa),(b,pb) in zip(pp,pp[1:]):
@@ -150,7 +153,7 @@ def draw(layout,folder):
             for p in layout['parts']:
                 x,y=p['center_mm'];bw,bh=p['footprint_mm'];fc={'L':'#dcb38d','C':'#b2d1bf','R':'#e7c88e'}[p['id'][0]]
                 shape=Circle((x,y),bw/2,fc=fc,ec='#444') if p['body'].get('axis')=='Z' else Rectangle((x-bw/2,y-bh/2),bw,bh,fc=fc,ec='#444')
-                ax.add_patch(shape);ax.text(x,y,p['id'],ha='center',va='center',fontsize=11,fontweight='bold')
+                ax.add_patch(shape);ax.text(x,y,p['id'],ha='center',va='center',fontsize=11,fontweight='bold',zorder=20,bbox=dict(facecolor=fc,edgecolor='none',alpha=.9,pad=.8))
                 if p['id'][0]=='L':ax.text(x,y+4,'axis '+p['body']['axis'],fontsize=7,ha='center')
                 for i,lead in enumerate(p['leads']):
                     pts=np.asarray(lead['points_mm']);ax.plot(pts[:,0],pts[:,1],color=palette[p['nodes'][i]],lw=1.5,ls='--' if lead.get('under_body') else '-')
@@ -166,6 +169,8 @@ def draw(layout,folder):
                     ax.text(flip(x),y-1.5,f"{p['id']}.{i+1}",fontsize=7,ha='center',rotation=30)
         for cable in layout['harness']:
             x,y=pad_xy(layout,cable['pad']);ax.plot(flip(x),y,'s',ms=5,mfc='#ffe099',mec='#333')
+            if copper and cable.get('points_mm'):
+                pts=np.asarray(cable['points_mm']);ax.plot([flip(x) for x in pts[:,0]],pts[:,1],color=palette[cable['net']],lw=1.5,ls='--')
             if copper:ax.text(flip(x),y+3,cable['label'],fontsize=6,ha='center',rotation=30)
         ax.text(w/2,-5,'FRONT / baffle',ha='center',fontsize=11)
         ax.set_title(layout['title']+' - '+('copper face' if copper else 'component face and native leads'),fontsize=14,pad=15)
