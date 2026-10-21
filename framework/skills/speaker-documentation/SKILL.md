@@ -31,6 +31,10 @@ Tools (one command each, `.speaker-venv/bin/python`):
 - `framework/tools/plot_curves.py` for every performance plot (system and per-section SPL, acoustic section phase around crossovers, off-axis maps, impedance, excursion and port speed at the stress drive, reference comparison). Where a plot needs phase and the helper does not expose it, take it from the complex responses in the result files rather than reconstructing it.
 - `framework/simulations/response_metrics/run.py` when a comparison statistic is missing.
 
+## Physical crossover default
+
+Unless the user explicitly requests another method, use soldered prototyping circuit boards with common copper rails, joining isolated lands where necessary. Do not default to a wooden plank or a flying-wire junction for every part. Read [crossover assembly](../../references/crossover-assembly.md) before selecting the board and placing components. Arrange shared circuit nodes to minimize insulated jumpers while preserving coil separation, cooling, mechanical restraint and service access. Include stock-board geometry, copper isolation, rail reinforcement, component lead reach and every conductor in the realization; audit the copper graph against the authoritative circuit. Recompute changed connection losses and displaced volume through their dependent results.
+
 ## Required cabinet CAD workflow
 
 **Use [cad-drawing](../cad-drawing/SKILL.md) for every cabinet drawing set and revision.** It owns the cabinet assembly/elevation/section drawings, driver placement, screw-hole patterns, machining details and all other construction geometry. Read its [sourced drawing reference](../../references/cad-drawing.md), then include its verified PDF sheets, editable CAD files and matching feature schedules in this package. A prose cut list or an illustrative cabinet sketch does not replace this workflow. Keep the electrical circuit schematic and its physical wiring documentation in the crossover workflow below.

@@ -13,6 +13,10 @@ User-facing communication contains analysis and instructions. Connect each impor
 
 The apps continue to compute and report quantities only. Interpretation and design decisions belong to the agent, using the engineering references. Resolve invalid calculations before relying on them; canonical results do not make inconsistent inputs valid.
 
+## Physical crossover default
+
+Unless the user explicitly requests another method, use soldered prototyping circuit boards with common copper rails, joining isolated lands where necessary. Do not default to a wooden plank or a flying-wire junction for every part. Read [crossover assembly](../../references/crossover-assembly.md) before selecting the board and placing components. Arrange shared circuit nodes to minimize insulated jumpers while preserving coil separation, cooling, mechanical restraint and service access. Include stock-board geometry, copper isolation, rail reinforcement, component lead reach and every conductor in the realization; audit the copper graph against the authoritative circuit. Recompute changed connection losses and displaced volume through their dependent results.
+
 ## Working context
 
 Projects live in `framework/projects/<slug>/` and remain outside Git. `project.json` records the brief, objectives, listening geometry, iteration budget, candidate list and decisions. Inventory records, candidate parameter/result files, evaluations and final drawings preserve the evidence. A revision normally becomes a new candidate with a `parent`, leaving the released baseline available for comparison.

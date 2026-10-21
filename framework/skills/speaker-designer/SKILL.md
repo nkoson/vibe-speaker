@@ -7,6 +7,10 @@ description: Build or refine one simulated passive loudspeaker candidate - choos
 
 Build one candidate from the project brief, inventory, reference and latest evaluation. Record its physical idea, choices, sources and parameter/result files. Simulation results are the canonical performance basis for your engineering judgement; they do not choose parts, approve a design or substitute their defaults for the brief. Handoff notes must connect important curve features to design choices and building/listening instructions. Follow speaker-design's analysis-only communication rule: no simulation-status disclaimers in user-facing output; retain source provenance and validation details in the project evidence.
 
+## Physical crossover default
+
+Unless the user explicitly requests another method, use soldered prototyping circuit boards with common copper rails, joining isolated lands where necessary. Do not default to a wooden plank or a flying-wire junction for every part. Read [crossover assembly](../../references/crossover-assembly.md) before selecting the board and placing components. Arrange shared circuit nodes to minimize insulated jumpers while preserving coil separation, cooling, mechanical restraint and service access. Include stock-board geometry, copper isolation, rail reinforcement, component lead reach and every conductor in the realization; audit the copper graph against the authoritative circuit. Recompute changed connection losses and displaced volume through their dependent results.
+
 ## Choose the physical model
 
 Read `framework/references/README.md` for the relevant engineering and [model coverage](references/model-coverage.md) for the available application chain. Use [advanced simulations](references/advanced-simulation.md) for exact inputs, coupling ownership and refinement studies. Read each app's README before its first use and run it with `.speaker-venv/bin/python framework/tools/run_simulation.py`.
