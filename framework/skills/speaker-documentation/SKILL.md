@@ -25,7 +25,7 @@ Inputs: `project.json`, `reference/reference.json`, the selected `candidates/<cN
 
 Tools (one command each, `.speaker-venv/bin/python`):
 
-- Use the framework layout tools for a physical wiring map, restraint locations, conductor schedule and electrical netlist. Select the drawing representation to match the purchased construction: existing PCB copper, ordinary wire, or stock terminal hardware. Review geometry and replay the electrical dependencies before release.
+- Use the [shared-wire assembly tool](../../tools/wire-assembly.md) for a physical wiring map, restraint locations, conductor schedule and electrical netlist. Select the drawing representation to match the purchased construction: existing PCB copper, ordinary wire, or stock terminal hardware. Review geometry and replay the electrical dependencies before release.
 
 - Follow `cad-drawing` and [the CAD exporter contract](../../tools/cad-drawings.md) for fabrication PDF sheets, dimensioned millimetre DXFs and STEP parts/assembly. `framework/tools/cabinet_drawing.py` can still supply a preliminary elevation and cut list; use the required CAD workflow below for the final construction set.
 - `framework/tools/schematic.py --input candidates/<cNN>/sim/crossover_network.params.json --out final/ --name crossover` for the schematic PNG, the connection table and a board netlist. Labels show reference, part name and specification; make sure every leaf in that parameter file carries `part` and `rating` before you draw it. Then open the rendered image: a grouped block is not a construction drawing, and document 2 says what it has to become.

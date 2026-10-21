@@ -79,3 +79,11 @@ Citations appear beside the construction mechanisms they support. The principal 
 
 All external sources accessed 2026-10-21. Manufacturer process examples support the stated mechanisms; project dimensions and mounting choices remain the designer's engineering decisions. Local solver contracts: [board_nodal](../simulations/board_nodal/README.md), [crossover_network](../simulations/crossover_network/README.md).
 
+
+## Ordinary wiring and stock supports
+
+Choose wire by conductor section, insulation temperature, termination compatibility and physical flexibility. LAPP publishes its OELFLEX HEAT180 SiF single-core silicone wire in1.5 mm2, including construction and temperature data. The insulation supports routing near crossover components while the layout maintains resistor clearance. Select the actual ordering variant and include its outside diameter in the placement review. [LAPP SiF](https://products.lappgroup.com/online-catalogue/power-and-control-cables/expanded-ambient-temperatures/silicone-single-cores/oelflex-heat-180-sif.html)
+
+Straight soldered connections can use heat-shrink sleeves; a multiway junction can use a suitable self-fusing insulating wrap, with adjoining wires separately restrained. 3M's Scotch70 is a silicone self-fusing electrical tape rated for180 C service; follow its application instructions for overlap and tension. [3M Scotch70](https://www.3m.com/3M/en_US/p/d/v000060542/)
+
+For elevated resistor bodies, Quick-Ohm lists stocked KER8-4.2X15 steatite sleeves,15 mm high with8 mm outside diameter. Its published package quantity is100; record fitted quantity and purchasing quantity separately. Their placement and lacing remain design choices. [Quick-Ohm KER8-4.2X15](https://www.quick-ohm.de/abstandsrohr-keramik-laenge-15mm/ker8-4.2x15)

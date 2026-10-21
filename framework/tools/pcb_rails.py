@@ -63,7 +63,7 @@ def compile_layout(layout, circuit):
                 if r['net']==s['net']:continue
                 gap=min(segment_distance(a,z,c,d) for a,z in zip(r['points'],r['points'][1:]) for c,d in zip(s['points'],s['points'][1:]))-(r['width_mm']+s['width_mm'])/2
                 reports['rail_clearances_mm'].append({'board':bid,'rails':[r['id'],s['id']],'gap_mm':gap})
-        holes=[('mount',p,2.5) for p in b['holes']]+[(c['id'],p,1.75) for c in b['parts'] for p in c['restraint_holes_mm']]
+        holes=[('mount',p,2.5) for p in b['holes']]+[(c['id'],p,c.get('restraint_hole_diameter_mm',3.5)/2) for c in b['parts'] for p in c['restraint_holes_mm']]
         for i,(hid,p,radius) in enumerate(holes):
             for other,q,r2 in holes[i+1:]:
                 reports['hole_pair_clearances_mm'].append({'board':bid,'holes':[hid,other],'points':[p,q],'edge_gap_mm':distance(p,q)-radius-r2})
@@ -87,7 +87,7 @@ def compile_layout(layout, circuit):
         for k,(a,b) in enumerate(zip(r['points'],r['points'][1:])):
             points=sorted([p for p in taps[bid,rid] if on_segment(p,a,b)],key=lambda p:distance(a,p))
             for j,(p,q) in enumerate(zip(points,points[1:])):
-                mm=distance(p,q);wire(f'{bid}-{rid}-{k}-{j}',taps[bid,rid][p],taps[bid,rid][q],mm,r['section_mm2'],'rail');reports['rail_length_mm']+=mm
+                mm=distance(p,q); path_length=length(r['points']); electrical_mm=mm*r.get('cut_length_mm',path_length)/path_length; wire(f'{bid}-{rid}-{k}-{j}',taps[bid,rid][p],taps[bid,rid][q],electrical_mm,r['section_mm2'],'rail');reports['rail_length_mm']+=mm
     groups={}
     for c in out['components']:
         for node,net in zip(c['nodes'],layout['logical_components'][c['id']]):groups.setdefault(net,set()).add(root(node))
