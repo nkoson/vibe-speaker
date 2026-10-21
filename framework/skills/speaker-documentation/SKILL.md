@@ -25,7 +25,7 @@ Inputs: `project.json`, `reference/reference.json`, the selected `candidates/<cN
 
 Tools (one command each, `.speaker-venv/bin/python`):
 
-- [Shared-rail PCB exporter](../../tools/pcb-rails.md) for prototype-board rail maps, placement/restraint sheets, conductor schedules and a segmented wiring netlist. Review its geometry quantities and replay the electrical dependencies before release.
+- Use the framework layout tools for a physical wiring map, restraint locations, conductor schedule and electrical netlist. Select the drawing representation to match the purchased construction: existing PCB copper, ordinary wire, or stock terminal hardware. Review geometry and replay the electrical dependencies before release.
 
 - Follow `cad-drawing` and [the CAD exporter contract](../../tools/cad-drawings.md) for fabrication PDF sheets, dimensioned millimetre DXFs and STEP parts/assembly. `framework/tools/cabinet_drawing.py` can still supply a preliminary elevation and cut list; use the required CAD workflow below for the final construction set.
 - `framework/tools/schematic.py --input candidates/<cNN>/sim/crossover_network.params.json --out final/ --name crossover` for the schematic PNG, the connection table and a board netlist. Labels show reference, part name and specification; make sure every leaf in that parameter file carries `part` and `rating` before you draw it. Then open the rendered image: a grouped block is not a construction drawing, and document 2 says what it has to become.
@@ -33,9 +33,11 @@ Tools (one command each, `.speaker-venv/bin/python`):
 - `framework/tools/plot_curves.py` for every performance plot (system and per-section SPL, acoustic section phase around crossovers, off-axis maps, impedance, excursion and port speed at the stress drive, reference comparison). Where a plot needs phase and the helper does not expose it, take it from the complex responses in the result files rather than reconstructing it.
 - `framework/simulations/response_metrics/run.py` when a comparison statistic is missing.
 
-## Physical crossover default
+## Physical crossover layout
 
-Unless the user explicitly requests another method, use one soldered prototyping circuit board per driver with common copper rails, joining isolated lands where necessary. Do not default to a wooden plank or a flying-wire junction for every part. Read [crossover assembly](../../references/crossover-assembly.md) before selecting the board and placing components. Arrange shared circuit nodes to minimize insulated jumpers while preserving coil separation, cooling, mechanical restraint and service access. Include stock-board geometry, copper isolation, rail reinforcement, component lead reach and every conductor in the realization; audit the copper graph against the authoritative circuit. Recompute changed connection losses and displaced volume through their dependent results.
+Build one serviceable assembly per driver. Start with the electrical connection graph: group parallel parts between shared node lines, place series-connected parts in sequence, and bring shunt branches close to their junctions. Component placement determines the wiring. Compare plausible placements using total connection length, straight wire runs, direction changes, crossings, joint count and access, while preserving body clearance, coil orientation and cooling. Select the arrangement that is simplest to assemble and inspect; record the comparison in the project.
+
+Choose a purchasable prototyping board with an existing copper pattern, or a plastic/wooden mounting board carrying ordinary insulated wire and suitable stock terminals. A common rail can be the wire connecting several component leads. Fit the design to the selected construction using normal cutting, drilling, lead forming, soldering or specified connectors. Read [crossover assembly](../../references/crossover-assembly.md) for the topology-led layout and build review. Include every conductor and joint in the wiring plan, verify actual lead reach, and replay changed connection losses and displaced volume through their dependent results.
 
 ## Required cabinet CAD workflow
 

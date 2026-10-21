@@ -13,9 +13,11 @@ User-facing communication contains analysis and instructions. Connect each impor
 
 The apps continue to compute and report quantities only. Interpretation and design decisions belong to the agent, using the engineering references. Resolve invalid calculations before relying on them; canonical results do not make inconsistent inputs valid.
 
-## Physical crossover default
+## Physical crossover layout
 
-Unless the user explicitly requests another method, use one soldered prototyping circuit board per driver with common copper rails, joining isolated lands where necessary. Do not default to a wooden plank or a flying-wire junction for every part. Read [crossover assembly](../../references/crossover-assembly.md) before selecting the board and placing components. Arrange shared circuit nodes to minimize insulated jumpers while preserving coil separation, cooling, mechanical restraint and service access. Include stock-board geometry, copper isolation, rail reinforcement, component lead reach and every conductor in the realization; audit the copper graph against the authoritative circuit. Recompute changed connection losses and displaced volume through their dependent results.
+Build one serviceable assembly per driver. Start with the electrical connection graph: group parallel parts between shared node lines, place series-connected parts in sequence, and bring shunt branches close to their junctions. Component placement determines the wiring. Compare plausible placements using total connection length, straight wire runs, direction changes, crossings, joint count and access, while preserving body clearance, coil orientation and cooling. Select the arrangement that is simplest to assemble and inspect; record the comparison in the project.
+
+Choose a purchasable prototyping board with an existing copper pattern, or a plastic/wooden mounting board carrying ordinary insulated wire and suitable stock terminals. A common rail can be the wire connecting several component leads. Fit the design to the selected construction using normal cutting, drilling, lead forming, soldering or specified connectors. Read [crossover assembly](../../references/crossover-assembly.md) for the topology-led layout and build review. Include every conductor and joint in the wiring plan, verify actual lead reach, and replay changed connection losses and displaced volume through their dependent results.
 
 ## Working context
 
