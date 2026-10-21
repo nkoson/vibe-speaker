@@ -25,6 +25,8 @@ Inputs: `project.json`, `reference/reference.json`, the selected `candidates/<cN
 
 Tools (one command each, `.speaker-venv/bin/python`):
 
+- [Shared-rail PCB exporter](../../tools/pcb-rails.md) for prototype-board rail maps, placement/restraint sheets, conductor schedules and a segmented wiring netlist. Review its geometry quantities and replay the electrical dependencies before release.
+
 - Follow `cad-drawing` and [the CAD exporter contract](../../tools/cad-drawings.md) for fabrication PDF sheets, dimensioned millimetre DXFs and STEP parts/assembly. `framework/tools/cabinet_drawing.py` can still supply a preliminary elevation and cut list; use the required CAD workflow below for the final construction set.
 - `framework/tools/schematic.py --input candidates/<cNN>/sim/crossover_network.params.json --out final/ --name crossover` for the schematic PNG, the connection table and a board netlist. Labels show reference, part name and specification; make sure every leaf in that parameter file carries `part` and `rating` before you draw it. Then open the rendered image: a grouped block is not a construction drawing, and document 2 says what it has to become.
 - `framework/tools/build_pdf.py --out final/<slug>-design-package.pdf --title "<speaker name>" --subtitle "<one line>" --md final/README.md --md final/01-cabinet-construction.md ... --preview final/preview/` to assemble the PDF in reading order and render each page to a PNG for inspection. It supports headings, paragraphs, lists, tables, images and code blocks; images are referenced from the Markdown with relative paths.
@@ -33,7 +35,7 @@ Tools (one command each, `.speaker-venv/bin/python`):
 
 ## Physical crossover default
 
-Unless the user explicitly requests another method, use soldered prototyping circuit boards with common copper rails, joining isolated lands where necessary. Do not default to a wooden plank or a flying-wire junction for every part. Read [crossover assembly](../../references/crossover-assembly.md) before selecting the board and placing components. Arrange shared circuit nodes to minimize insulated jumpers while preserving coil separation, cooling, mechanical restraint and service access. Include stock-board geometry, copper isolation, rail reinforcement, component lead reach and every conductor in the realization; audit the copper graph against the authoritative circuit. Recompute changed connection losses and displaced volume through their dependent results.
+Unless the user explicitly requests another method, use one soldered prototyping circuit board per driver with common copper rails, joining isolated lands where necessary. Do not default to a wooden plank or a flying-wire junction for every part. Read [crossover assembly](../../references/crossover-assembly.md) before selecting the board and placing components. Arrange shared circuit nodes to minimize insulated jumpers while preserving coil separation, cooling, mechanical restraint and service access. Include stock-board geometry, copper isolation, rail reinforcement, component lead reach and every conductor in the realization; audit the copper graph against the authoritative circuit. Recompute changed connection losses and displaced volume through their dependent results.
 
 ## Required cabinet CAD workflow
 

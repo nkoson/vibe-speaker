@@ -10,13 +10,13 @@ Read [crossover design](crossover-design.md) for circuit physics and the documen
 
 ## Default construction: prototype PCB with shared rails
 
-Unless the user explicitly requests another construction method, build the passive crossover on soldered prototyping circuit boards. Use the board's common copper rails, or join its isolated lands into clearly identified common-node rails, so component leads connect directly to their shared nodes with as few insulated jumpers as practical. Wooden planks, solderless breadboards and individual flying-wire junctions are not the default. Cabinet plywood can support PCB stand-offs; it is not the circuit board.
+Unless the user explicitly requests another construction method, build the passive crossover on one soldered prototyping circuit board per driver. Use the board's common copper rails, or join its isolated lands into clearly identified common-node rails, so component leads connect directly to their shared nodes with as few insulated jumpers as practical. Wooden planks, solderless breadboards and individual flying-wire junctions are not the default. Cabinet plywood can support PCB stand-offs; it is not the circuit board.
 
 Choose a board that fits the actual bodies, lead diameters, copper requirements and mechanical restraints. Mundorf's manufacturer catalogue documents universal boards with approximately 10 by 10 mm isolated copper areas, components attached on the copper side, and leads soldered directly to the lands. It also lists copper reinforcement strips, including 1 by 5 mm. This is one suitable construction family, not a mandatory brand. Ordinary fine-pitch stripboard may need more adaptation: Roth RE200-LF, for example, has 1 mm holes, 35 micrometre copper and no plated-through holes. Do not force a large inductor lead into an undersized hole or credit an unreinforced thin track with an arbitrary current rating. [Mundorf catalogue, MConstruct Multiboard](https://www.audiohobby.eu/files/Mundorf_Hifi%2BStudio_catalog-2013.pdf), [Roth RE200-LF](https://www.roth-elektronik.com/product/RE200-LF)
 
 Draw the actual copper connectivity. A row of separate pads becomes a rail only through specified retained copper, solder bridges or added conductor. Identify every isolation cut, retained bridge, rail splice, crossover link and external terminal. If stock artwork is not dimensioned, give a registration/receiving procedure and machine isolation from the selected layout datum; never invent a manufacturer's grid pitch. Include unconnected copper islands in the review because a strip laid across them can unintentionally join another node. Inspect both sides where copper is present on both faces.
 
-Place shared-node rails first, then fit the components and restraints around them. Use several modules when that gives accessible joints and adequate cooling. Minimize jumpers after satisfying current, thermal, magnetic and mechanical requirements. Report separate counts for native component leads, added copper rail pieces, solder bridges, insulated board jumpers and inter-board/harness conductors. Renaming a lead extension a rail does not eliminate a connection.
+Place shared-node rails first, then fit the components and restraints around them. Size each driver board for accessible joints and adequate cooling; do not split it into smaller modules merely to fit a familiar stock size. Minimize jumpers after satisfying current, thermal, magnetic and mechanical requirements. Report separate counts for native component leads, added copper rail pieces, solder bridges, insulated board jumpers and inter-board/harness conductors. Renaming a lead extension a rail does not eliminate a connection.
 
 ## Preserve electrical identity
 
@@ -59,4 +59,16 @@ Fix and strain-relieve the input and driver harness before it reaches solder joi
 5. Fit module links and strain-relieved harnesses. Verify component identity, endpoint labels, polarity and joint access against the master wiring view. Check driver-disconnected resistance against the circuit's expected low-resistance paths; do not demand isolation across a coil.
 6. Install the boards with specified fasteners and lining clearances. Reconcile the parts list, conductor cut list, board volume and electrical model before releasing the construction package.
 
+## Sources
+
+Citations appear beside the construction mechanisms they support. The principal manufacturer publications are:
+
+- Mundorf, [HiFi and Studio catalogue, MConstruct Multiboard](https://www.audiohobby.eu/files/Mundorf_Hifi%2BStudio_catalog-2013.pdf): prototype-board assembly and copper strips.
+- Coilcraft, [FAQ: spacing and board layout](https://www.coilcraft.com/en-us/faq/): magnetic interaction and orientation.
+- TDK, [Film capacitor mounting guidelines](https://www.tdk-electronics.tdk.com/download/187698/e7a5bd016c4f22e100e5e54231c7de6f/pdf-mountingguidelines.pdf): heat exposure and mechanical handling.
+- Vishay, [Thermal management](https://www.vishay.com/docs/30380/terminalderating.pdf): mounting-dependent resistor heat removal.
+- Bungard, [Manufacturer catalogue](https://www.bungard.de/images/downloads/allgemein/katalog_en.pdf): FR4 prototyping stock and cutting service.
+
 All external sources accessed 2026-10-21. Manufacturer process examples support the stated mechanisms; project dimensions and mounting choices remain the designer's engineering decisions. Local solver contracts: [board_nodal](../simulations/board_nodal/README.md), [crossover_network](../simulations/crossover_network/README.md).
+
+For larger one-piece boards, copper-clad FR4 prototyping stock can be cut and milled/etched to a shared-rail artwork. Bungard documents FR4 panel thicknesses including 2 mm, 35/70 micrometre copper options and a cutting service. Reinforce retained thin tracks where the current path requires it. [Bungard manufacturer catalogue, pp. 6-7](https://www.bungard.de/images/downloads/allgemein/katalog_en.pdf), accessed 2026-10-21.

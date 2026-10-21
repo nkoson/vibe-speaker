@@ -15,7 +15,7 @@ The apps continue to compute and report quantities only. Interpretation and desi
 
 ## Physical crossover default
 
-Unless the user explicitly requests another method, use soldered prototyping circuit boards with common copper rails, joining isolated lands where necessary. Do not default to a wooden plank or a flying-wire junction for every part. Read [crossover assembly](../../references/crossover-assembly.md) before selecting the board and placing components. Arrange shared circuit nodes to minimize insulated jumpers while preserving coil separation, cooling, mechanical restraint and service access. Include stock-board geometry, copper isolation, rail reinforcement, component lead reach and every conductor in the realization; audit the copper graph against the authoritative circuit. Recompute changed connection losses and displaced volume through their dependent results.
+Unless the user explicitly requests another method, use one soldered prototyping circuit board per driver with common copper rails, joining isolated lands where necessary. Do not default to a wooden plank or a flying-wire junction for every part. Read [crossover assembly](../../references/crossover-assembly.md) before selecting the board and placing components. Arrange shared circuit nodes to minimize insulated jumpers while preserving coil separation, cooling, mechanical restraint and service access. Include stock-board geometry, copper isolation, rail reinforcement, component lead reach and every conductor in the realization; audit the copper graph against the authoritative circuit. Recompute changed connection losses and displaced volume through their dependent results.
 
 ## Working context
 

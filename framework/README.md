@@ -62,3 +62,5 @@ The advanced chain includes shared assembly geometry, exterior boundary acoustic
 Cabinet fabrication drawings use the mandatory [CAD drawing skill](skills/cad-drawing/SKILL.md). The [CAD tool contract](tools/cad-drawings.md) documents reusable PDF/DXF/STEP export from project geometry, native dimensions and interchange checks.
 
 For a physical revision, `tools/replay_results.py --folder PROJECT/release/sim --changed cavity lf_box --manifest PROJECT/evaluations/replay.json` follows saved file references and replays the changed nodes and all dependent results in order. It uses the standalone apps, records input/dependency/implementation hashes, and supports `--resume` after an interrupted run. Design interpretation remains with the agent.
+
+Passive crossovers default to one shared-rail prototype PCB per driver. The [PCB layout tool](tools/pcb-rails.md) exports copper artwork, mounting/placement sheets, conductor schedules and a segmented resistive network for the standalone circuit solver; the agent reviews construction and performance.
