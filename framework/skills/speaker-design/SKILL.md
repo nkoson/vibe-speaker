@@ -27,6 +27,8 @@ Use `.speaker-venv/bin/python` and `framework/tools/run_simulation.py` for proje
 
 The companion skills cover candidate creation (`speaker-designer`), comparison (`speaker-evaluator`), builder documentation (`speaker-documentation`), accumulated experience (`speaker-learnings`) and fabrication CAD (`cad-drawing`, required by speaker-documentation). Their procedures are guidance to adapt to the brief. Engineering sources live in `framework/references/README.md`; consult the reference covering each physical decision.
 
+Driver and passive-radiator geometry is part of the design basis. Require sourced models of every installed unit in both the CAD drawings and individual/assembled STEP files. Use those same geometry definitions for fit validation and for every applicable simulation that accepts their geometry, following the CAD reference's [transducer geometry workflow](../../references/cad-drawing.md#transducer-geometry-and-simulation-reuse).
+
 ## Interpret the brief and establish a baseline
 
 Start from `framework/templates/project.json`. Record the user's quantitative targets, qualitative priorities, physical constraints and authorized iteration budget. If no iteration count was given, three rounds of three detailed candidates is a useful starting budget, with expensive analysis focused on finalists. This is not a limit on researched parts, catalogue coverage, inexpensive screening or stock alternatives. An explicit user research/time limit still governs. Clarify only ambiguities that materially change the speaker.

@@ -47,6 +47,8 @@ For a continuous factory-strip board, use [the stripboard layout tool](../../too
 
 **Use [cad-drawing](../cad-drawing/SKILL.md) for every cabinet drawing set and revision.** It owns the cabinet assembly/elevation/section drawings, driver placement, screw-hole patterns, machining details and all other construction geometry. Read its [sourced drawing reference](../../references/cad-drawing.md), then include its verified PDF sheets, editable CAD files and matching feature schedules in this package. A prose cut list or an illustrative cabinet sketch does not replace this workflow. Keep the electrical circuit schematic and its physical wiring documentation in the crossover workflow below.
 
+The package must include models of every installed driver and passive radiator in the drawings and STEP set: individual named parts plus their installed positions in the cabinet assembly. Show the actual flange, rear body and mounting interface in dimensioned views and seating sections, including horns and compression drivers separately. Include the source geometry and fit audit in the project. Reconcile the drawings and STEP revision with the geometry consumed by supported simulations before release; a silhouette, unused STEP attachment or empty driver cutout is insufficient.
+
 ## Freeze the realization before writing
 
 Follow [the construction audit](references/construction-audit.md) for loose-panel datums, routed contours, joints, exact board parts, visible wiring and canonical phase plots. Reconcile inherited physical artifacts and prose using [comparable sources and revisions](../speaker-design/references/simulation-integrity.md). These procedures supplement the package contents below; a correct netlist or occupancy table alone is not a usable assembly drawing.
