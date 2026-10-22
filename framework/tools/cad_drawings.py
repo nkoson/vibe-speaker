@@ -97,6 +97,9 @@ def part_entities(part,face='outside',features=None,outline=True):
 
 def make_part(part):
     import cadquery as cq
+    if 'solid_model' in part:
+        from cad_components import make_component
+        return make_component(part['solid_model'])
     t=float(part['thickness'])
     if t<=0:raise ValueError('part thickness must be positive')
     if part.get('outline')=='circle':
@@ -194,15 +197,24 @@ def export_solids(spec,out):
         shape=make_part(part);shapes[part['id']]=shape
         cq.exporters.export(shape,str(folder/(part['id']+'.step')))
         reopened=cq.importers.importStep(str(folder/(part['id']+'.step'))).val()
-        if abs(reopened.Volume()-shape.Volume())>max(1e-5,shape.Volume()*1e-8):raise ValueError('STEP volume mismatch')
-        bb=shape.BoundingBox();entry=dict(id=part['id'],volume_mm3=shape.Volume(),bounds_mm=[bb.xlen,bb.ylen,bb.zlen],features=len(part.get('features',[])))
+        # Adaptive integration is necessary for trimmed B-spline lofts. Default
+        # mass integration can change appreciably after STEP seam normalization.
+        integration_tol=1e-5 if 'solid_model' in part else None
+        original_volume=shape.Volume(integration_tol);exported_volume=reopened.Volume(integration_tol)
+        relative_tolerance=1e-6 if integration_tol else 1e-8
+        if abs(exported_volume-original_volume)>max(1e-5,original_volume*relative_tolerance):raise ValueError('STEP volume mismatch: '+part['id'])
+        if not reopened.isValid() or len(reopened.Solids())!=len(shape.Solids()):raise ValueError('STEP topology mismatch')
+        # Draw and assemble the reopened exchange solid, including normalized
+        # seams/tolerances on complex revolved and boolean purchased parts.
+        shape=reopened;shapes[part['id']]=shape
+        bb=shape.BoundingBox();entry=dict(id=part['id'],volume_mm3=exported_volume,bounds_mm=[bb.xlen,bb.ylen,bb.zlen],features=len(part.get('features',[])),solid_count=len(shape.Solids()),step_volume_difference_mm3=exported_volume-original_volume,volume_integration_tolerance=integration_tol)
         report.append(entry)
         metrics=aperture_metrics(part)
         if metrics:entry['aperture_geometry']=metrics
         if air is not None:entry['air_intrusions_mm3']=[]
         for j,pose in enumerate(part.get('placements',[])):
             placed=place_part(shape,pose);shapes[f"{part['id']}@{j}"]=placed
-            assembly.add(placed,name=part['id']+'_'+str(j),color=cq.Color(.77,.68,.52))
+            assembly.add(placed,name=part['id']+'_'+str(j),color=cq.Color(*part.get('color',[.77,.68,.52])))
             if air is not None:entry['air_intrusions_mm3'].append(placed.intersect(air).Volume())
     assembly.export(str(folder/'cabinet-assembly.step'))
     return shapes,report
@@ -367,6 +379,9 @@ def build(spec,out,pdf_path):
             view=View(sheet,v)
             entities=part_entities(parts[v['part']],v.get('face','outside'),v.get('features'),v.get('outline',True)) if 'part' in v else []
             if 'section' in v:entities+=section_entities(shapes,v['section'])
+            if 'projection' in v:
+                from cad_components import projection_entities
+                entities+=projection_entities(shapes,v['projection'])
             if 'flared_duct' in v:entities+=flared_duct_entities(v['flared_duct'])
             entities+=v.get('entities',[])
             for e in entities:view.entity(e)

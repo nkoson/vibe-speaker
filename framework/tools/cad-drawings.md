@@ -37,3 +37,40 @@ A view may supply `flared_duct` to draw a recognisable assembled or exploded por
 Optional top-level `air_domain` (`origin_mm`, `size_mm`) reports each installed part's actual intrusion into the internal air box. Features marked `role: air_aperture` produce aperture areas, pairwise root ligaments and clearance to the shaped part boundary. These are geometry outputs for the agent's evaluation.
 
 Set `inspect_intersections: true` to report installed-part pairs with positive overlap volume. The report gives part IDs and overlap volumes; the agent distinguishes intentional joints from collisions and decides how to revise the design.
+
+## Datasheet-derived installed components
+
+A part may supply `solid_model: {operations: [...]}` in place of panel dimensions.
+The shared `cad_components.py` geometry builder supports `revolve` (closed radius/Z
+profile), `cylinder`, `box`, `extrude` (XY polygon), `slot` and `loft` (ordered Z
+sections with a circle radius or XY polygon). Operations are `union`, `cut` or
+`intersect`; the first is a union. Optional rotation and translation apply before
+combining. See `primitive()` for the explicit fields. Local XY is the front face,
+with negative Z behind it. Existing part placements put the resulting component
+into the cabinet assembly. Optional RGB `color` distinguishes purchased parts.
+
+Keep published dimensions, traced profile coordinates and chosen printable
+features in the project's source-basis record. Preserve mounting slots, clocking,
+thread specifications and seating faces. A printed tapping bore is a fabrication
+choice, not the geometry of a manufactured internal thread. Author the hole
+interfaces separately from the cabinet pattern and compare them after applying
+the assembly transforms; copying cabinet holes alone does not verify a factory
+pattern. `interface_offsets()` reports paired centre offsets without judging fit.
+
+A view with `projection: {parts, origin, normal, x_dir, hidden}` draws visible
+BRep edges using orthographic hidden-line removal. Parts use the same names as
+sections. `hidden` defaults to false; set it deliberately for through-body views.
+Curved drawing edges are sampled at 0.05 mm deflection; STEP keeps BRep geometry.
+Add native dimension entities and keyed mounting schedules to these projections.
+Sections, projections and STEP now share the solid geometry. Reopen each STEP,
+check solid count/connectivity, interfaces and installed collisions, and inspect
+the new PDF views. Preserve the manufacturer's displacement value in acoustic
+models: the printable mockup's solid material volume is a different quantity.
+
+Loft sections may use periodic `spline_points` instead of polygon `points` when
+the section is smooth. `solid_model.expected_solids` checks the intended connected
+piece count. Complex component exports use adaptive mass integration (1e-5) and
+report their STEP round-trip volume difference, with a 1e-6 relative interchange
+threshold. Analytic cabinet parts retain the 1e-8 threshold. All exported solids
+must remain valid and preserve their solid count. Drawings use the reopened STEP
+geometry, avoiding in-memory seam tolerances that can omit section contours.
