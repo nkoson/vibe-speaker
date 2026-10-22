@@ -74,3 +74,34 @@ report their STEP round-trip volume difference, with a 1e-6 relative interchange
 threshold. Analytic cabinet parts retain the 1e-8 threshold. All exported solids
 must remain valid and preserve their solid count. Drawings use the reopened STEP
 geometry, avoiding in-memory seam tolerances that can omit section contours.
+
+## Scaled STEP mockups
+
+Use `scale_step.py` to create a separate scale set from the individual STEP files
+and their installed placements in the CAD manifest. It scales part coordinates
+and assembly translations together, rebuilds the named assembly from the output
+parts, and leaves source files untouched.
+
+```sh
+.speaker-venv/bin/python framework/tools/scale_step.py \
+  --source-dir PROJECT/final/cad/step \
+  --manifest PROJECT/final/cad/cabinet-drawing.json \
+  --out PROJECT/final/cad/scale-8-percent --scale 0.08 --min-wall-mm 0.1 \
+  --patches PROJECT/final/cad/scale-8-percent/minimum-wall-patches.json
+```
+
+The optional patches file maps part IDs to either a `solid_model` operation
+record for added material, or `{mode: "replace", solid_model: {...}}` for a
+reconstructed variant. Dimensions in this record are in source millimetres;
+scaling follows construction. Keep printable corrections in that variant and
+check its original interfaces and exterior bounds. Use a reconstructed section
+when coplanar Boolean additions create disconnected slivers.
+
+The minimum-wall argument records the design requirement; it does not invent
+geometry changes. Review thin membranes, steep flares, recess floors and fixing
+lands at the output scale. `wall_samples()` reports exact-surface inward-normal
+chords with face IDs and positions for targeted refinement. Use meridian/section
+geometry for continuous wall bounds where possible, and distinguish wall stock
+from tapered edge tips or an intentional assembly joint. The tool verifies STEP
+solid validity/count, scale bounds and triangulated edge incidence, winding and
+collapsed triangles. `scale-audit.json` retains source/output hashes and poses.
