@@ -43,6 +43,10 @@ def primitive(spec):
         shape = cq.Solid.makeLoft(wires, ruled=spec.get('ruled', False))
     else:
         raise ValueError('unknown solid primitive: ' + kind)
+    if 'scale' in spec:
+        if spec['scale'] <= 0:
+            raise ValueError('primitive scale must be positive')
+        shape = shape.scale(spec['scale'])
     if 'rotate' in spec:
         r = spec['rotate']
         shape = shape.rotate(tuple(r['start']), tuple(r['end']), r['degrees'])
@@ -71,6 +75,12 @@ def make_component(spec):
     if shape is None or not shape.isValid() or shape.Volume() <= 0:
         raise ValueError('invalid component solid')
     shape = shape.clean()
+    if spec.get('fill_internal_voids'):
+        import cadquery as cq
+        solids = [cq.Solid.makeSolid(s.outerShell()) for s in shape.Solids()]
+        shape = solids[0] if len(solids) == 1 else cq.Compound.makeCompound(solids)
+        if not shape.isValid():
+            raise ValueError('invalid component after filling internal voids')
     if 'expected_solids' in spec and len(shape.Solids()) != spec['expected_solids']:
         raise ValueError('component solid count differs from expected_solids')
     return shape

@@ -105,3 +105,15 @@ geometry for continuous wall bounds where possible, and distinguish wall stock
 from tapered edge tips or an intentional assembly joint. The tool verifies STEP
 solid validity/count, scale bounds and triangulated edge incidence, winding and
 collapsed triangles. `scale-audit.json` retains source/output hashes and poses.
+
+For multi-part printed components, give each part its intended print coordinates
+and use its `placements` to restore the assembled position. A primitive's positive
+`scale` is applied before `rotate` and `translate`, allowing source-sized features
+and output-sized joints to share one recipe. `meta.assembly_filename` overrides
+the default `cabinet-assembly.step` name for a component assembly.
+
+An explicit `solid_model.fill_internal_voids: true` fills enclosed cavities by
+retaining each solid's outer shell; through bores and other openings remain.
+Use it for an intended solid print when a construction joint encloses an unwanted
+pocket. Check the source interfaces, mating/insertion clearances and meshes after
+export. A valid solid alone does not prove suitable printable subdivisions.

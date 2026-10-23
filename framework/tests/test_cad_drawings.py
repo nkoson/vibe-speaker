@@ -142,3 +142,11 @@ def test_flared_duct_sections_preserve_cut_lengths_and_sleeve_overlap():
     assert (min(bx),max(bx))==(0,168)
     sleeves=[e for e in a if e['kind']=='rect' and e['size']==[26,2]]
     assert sorted(e['xy'][0] for e in sleeves)==[37,37,69,69]
+
+
+def test_custom_assembly_filename(tmp_path):
+    manifest=dict(meta=dict(drawing_prefix='driver',assembly_filename='driver-assembled.step'),
+                  parts=[block(placements=[dict(origin=[0,0,0])])])
+    cad.export_solids(manifest,tmp_path)
+    assert (tmp_path/'step/driver-assembled.step').exists()
+    assert not (tmp_path/'step/cabinet-assembly.step').exists()

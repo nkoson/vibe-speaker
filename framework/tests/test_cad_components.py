@@ -84,3 +84,27 @@ def test_periodic_loft_step_round_trip(tmp_path):
     assert report[0]['volume_integration_tolerance']==1e-5
     assert abs(report[0]['step_volume_difference_mm3'])<report[0]['volume_mm3']*1e-6
     assert not shapes['flare'].isInside(cq.Vector(0,0,-15))
+
+
+def test_primitive_scaling_precedes_print_orientation():
+    from cad_components import primitive
+    shape=primitive(dict(kind='box',size=[20,10,4],origin=[0,0,-4],scale=.1,
+        rotate=dict(start=[0,0,0],end=[1,0,0],degrees=180)))
+    bb=shape.BoundingBox()
+    assert [bb.xlen,bb.ylen,bb.zlen,bb.zmin]==pytest.approx([2,1,.4,0],abs=1e-6)
+    with pytest.raises(ValueError,match='positive'):
+        primitive(dict(kind='cylinder',radius=1,length=2,scale=0))
+
+
+def test_filling_internal_voids_preserves_open_bores():
+    shell_ops=[dict(kind='box',size=[10,10,10]),
+               dict(kind='box',size=[6,6,6],origin=[2,2,2],operation='cut')]
+    hollow=make_component(dict(operations=shell_ops))
+    filled=make_component(dict(operations=shell_ops,fill_internal_voids=True))
+    assert len(hollow.Shells())==2 and len(filled.Shells())==1
+    assert filled.Volume()==pytest.approx(1000)
+    open_ops=[dict(kind='box',size=[10,10,10]),
+              dict(kind='cylinder',radius=2,length=12,origin=[5,5,11],operation='cut')]
+    open_part=make_component(dict(operations=open_ops,fill_internal_voids=True))
+    assert not open_part.isInside(cq.Vector(5,5,5))
+    assert open_part.Volume()==pytest.approx(1000-math.pi*4*10)

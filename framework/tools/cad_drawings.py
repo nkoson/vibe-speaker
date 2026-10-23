@@ -216,7 +216,7 @@ def export_solids(spec,out):
             placed=place_part(shape,pose);shapes[f"{part['id']}@{j}"]=placed
             assembly.add(placed,name=part['id']+'_'+str(j),color=cq.Color(*part.get('color',[.77,.68,.52])))
             if air is not None:entry['air_intrusions_mm3'].append(placed.intersect(air).Volume())
-    assembly.export(str(folder/'cabinet-assembly.step'))
+    assembly.export(str(folder/spec['meta'].get('assembly_filename','cabinet-assembly.step')))
     return shapes,report
 
 
