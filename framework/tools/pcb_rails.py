@@ -52,7 +52,10 @@ def compile_layout(layout, circuit):
             for i,lead in enumerate(c['leads']):
                 r=rails[bid,lead['rail']]
                 if r['net']!=target[i]:reports['component_node_mismatches'].append([c['id'],i,r['net'],target[i]])
-                node=tap(bid,lead['rail'],lead['points'][-1]);mm=length(lead['points'])+c.get('stand_off_mm',0)
+                node=tap(bid,lead['rail'],lead['points'][-1])
+                # Through-carrier work supplies the complete route, including the
+                # vertical descent and the underside solder allowance.
+                mm=lead.get('length_mm',length(lead['points'])+c.get('stand_off_mm',0))
                 wire(c['id']+'-lead-'+str(i+1),components[c['id']]['nodes'][i],node,mm,layout.get('lead_section_mm2',.5),'native_lead',contact)
                 reports['lead_length_mm']+=mm
         for j in b.get('jumpers',[]):

@@ -12,7 +12,8 @@ def route_metrics(layout):
         record={'id':board['id'],'body_count':len(parts),'node_wire_count':len(active_paths),'direct_joint_count':len(paths)-len(active_paths),'node_wire_path_mm':sum(length(r['points']) for r in paths),'cut_wire_mm':sum(r.get('cut_length_mm',length(r['points'])) for r in paths),'straight_runs':sum(len(r['points'])-1 for r in active_paths),'bends':sum(max(0,len(r['points'])-2) for r in active_paths),'native_lead_plan_mm':sum(length(l['points']) for c in parts for l in c['leads']),'separate_jumpers':len(board.get('jumpers',[]))}
         record['straight_runs']+=sum(len(j.get('path',[]))-1 for j in board.get('jumpers',[]) if j.get('path'))
         record['bends']+=sum(max(0,len(j.get('path',[]))-2) for j in board.get('jumpers',[]))
-        record['internal_conductor_path_mm']=record['node_wire_path_mm']+record['native_lead_plan_mm']+sum(length(j['path']) if j.get('path') else j['length_mm'] for j in board.get('jumpers',[]))
+        record['native_lead_route_mm']=sum(l.get('length_mm',length(l['points'])+c.get('stand_off_mm',0)) for c in parts for l in c['leads'])
+        record['internal_conductor_path_mm']=record['node_wire_path_mm']+record['native_lead_route_mm']+sum(length(j['path']) if j.get('path') else j['length_mm'] for j in board.get('jumpers',[]))
         report['boards'].append(record)
         byrail={r['id']:r for r in paths}
         def station(points,p):
@@ -29,7 +30,7 @@ def route_metrics(layout):
                         points=byrail[la['rail']]['points']
                         mm=length(la['points'])+abs(station(points,la['points'][-1])-station(points,lb['points'][-1]))+length(lb['points'])
                         report['connected_pairs'].append({'board':board['id'],'parts':[a['id'],b['id']],'endpoints':[ia+1,ib+1],'node':byrail[la['rail']]['net'],'plan_route_mm':mm})
-    report['totals']={k:sum(b[k] for b in report['boards']) for k in ['node_wire_count','direct_joint_count','node_wire_path_mm','cut_wire_mm','straight_runs','bends','native_lead_plan_mm','separate_jumpers','internal_conductor_path_mm']}
+    report['totals']={k:sum(b[k] for b in report['boards']) for k in ['node_wire_count','direct_joint_count','node_wire_path_mm','cut_wire_mm','straight_runs','bends','native_lead_plan_mm','native_lead_route_mm','separate_jumpers','internal_conductor_path_mm']}
     return report
 
 

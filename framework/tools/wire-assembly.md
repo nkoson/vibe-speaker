@@ -14,6 +14,12 @@ The shared layout schema uses `boards`, physical `parts` and `rails` (the histor
 
 The electrical compiler splits wires at their bends and taps. It distributes each specified cut length over those segments in proportion to drawn length, preserving the complete resistance of the cut conductor, including fitting allowance. Component leads and contact resistances are separate. Feed `assembly-board.params.json` to `board_nodal` and replay changed dependencies before using the results in the package.
 
+For through-carrier leads, supply each lead's complete `length_mm`, including the
+vertical route and solder allowance. This replaces the legacy planar length plus
+component stand-off in the electrical compiler. Routing reports retain both the
+planar projection and complete routed length. Use [blank-carrier templates](carrier-templates.md)
+for component-face drilling and mirrored underside wiring exports.
+
 Outputs include:
 
 - `assembly-routing.json`: internal conductor path length, cut wire length, straight runs, bends, direct-joint count and connected-component route lengths. Optional `routing-comparison.json` retains both layouts' quantities.
