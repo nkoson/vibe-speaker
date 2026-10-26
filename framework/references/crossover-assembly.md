@@ -1,7 +1,7 @@
 ---
 id: crossover-assembly
 applies_when: Realizing a passive circuit as physical boards, shared copper rails, component banks and serviceable assemblies
-updated: 2026-10-21
+updated: 2026-10-26
 ---
 
 # Crossover realization and assembly
@@ -27,6 +27,16 @@ The connection graph, routing measures and geometry checks are reported quantiti
 
 Manufacturer construction examples help select an appropriate platform. Mundorf describes surface soldering of crossover parts onto universal-board lands. Roth RE200-LF specifies 1 mm holes and 35 micrometre copper, so its lead fit and current paths require attention for large parts. Select an existing pattern that suits the components and their currents. [Mundorf catalogue, MConstruct Multiboard](https://www.audiohobby.eu/files/Mundorf_Hifi%2BStudio_catalog-2013.pdf), [Roth RE200-LF](https://www.roth-elektronik.com/product/RE200-LF)
 
+## Board size and cabinet location
+
+**Prefer a compact assembly that preserves good electrical and mechanical practice.** Treat carrier area, installed height, wiring, cooling, magnetic separation and service access as a joint comparison. A tidy layout with fewer wire bends can still waste board area. It is useful to compare several compact placements before carrying an inherited outline into a new material or drilling template. Component-body area is a packing diagnostic, not a sufficient allowance for leads, restraints, heat clearance or coil spacing.
+
+**Benchmark the complete crossover per speaker.** Published board dimensions from comparable designs help expose an oversized carrier early. Compare the sum of all board areas, noting circuit complexity, component sizes, banks and mounting orientation. Distinguish a designer's dimensioned assembly from a vendor's suggested universal PCB; an unscaled photograph provides no reliable dimensions. For context, Calpamos uses two 165 x 240 mm boards mounted at the cabinet bottom near the rear. Faital 3WC-15's three published layouts specify 90 x 220, 150 x 230 and 65 x 180 mm. These are useful comparisons, not size limits for another circuit. [Calpamos construction](https://www.humblehomemadehifi.com/download/Humble%20Homemade%20Hifi_Calpamos.pdf), [Faital 3WC-15 layouts](http://www.troelsgravesen.dk/Faital-3WC-15.htm#CROSSOVER-LAYOUT)
+
+**Consider the cabinet location while arranging the parts.** Bottom or lower-compartment mounting is often worth exploring first when it leaves the rear wall behind the woofer available for absorption. Check the populated height, port airflow, brace openings, driver clearance, heat paths and the route for withdrawing the assembly. Rear-wall mounting can also work, but its occupied area includes the board, component envelope and cooling/service clearances. Compare that area with the actual lining map rather than considering displaced litres alone. Absorber behind a broad solid board is partly screened from incident sound; placing lining around or behind the carrier is not automatically equivalent to leaving it exposed. [Cabinet construction: standing waves and lining](cabinet-construction.md#8-inside-the-box-standing-waves)
+
+**Review the acoustic consequence before freezing fabrication.** The rear region facing the cone deserves particular attention for reflected midrange energy, while the other opposing surfaces also contribute to cavity modes. Prefer a placement that preserves the intended absorption coverage without wrapping hot components in lining. A wiring-only comparison or an overall lining-thickness input does not establish the effect of a newly exposed reflective patch. Where that distinction could affect the choice, compare spatially represented lining/obstruction alternatives, or record the unresolved acoustic tradeoff in the project evaluation before selecting the mounting location. This review is most useful before carrier dimensions and paper templates become the construction baseline.
+
 ## Preserve electrical identity
 
 Total resistance in a resonant correction branch includes the resistor, winding and connections: `Rtotal = Radded + DCR + Rwire`. For a specified total, `Radded = Rtotal - DCR - Rwire`, when nonnegative. Capacitors add only when their endpoints really share the same two nodes. Preserve all physical leaves for current and heat accounting. Use the selected coil variant's DCR and dimensions together; an unpublished saturation current is not supplied by a core-material label. [Crossover design](crossover-design.md), [Jantzen coil guidance](https://jantzen-audio.com/faq/coil-types-and-where-to-use-them/)
@@ -36,6 +46,8 @@ Model wire and copper paths by their actual length and section, using `R = rho L
 Audit connectivity by collapsing only intended copper/links into circuit nodes and comparing every component endpoint against the authoritative netlist. Then inspect the physical view: graph equivalence alone does not detect an unshown copper bridge, a mounting screw across rails, inadequate lead reach or a wire drawn through a component body.
 
 ## Coil placement and nearby metal
+
+**Keep coil separation in the compactness tradeoff.** Compare the largest coils flat and upright when their bodies and lead exits permit it. Standing a coil on edge can reduce its board footprint, but increases its height and changes its axis relative to every other coil. Consider a cradle or other nonconductive restraint with nearby board supports so the winding tails carry no mechanical load. If upright mounting creates a parallel-axis pair, more separation or a different part arrangement may be preferable. Coil spacing across adjacent boards also matters; splitting the circuit onto separate carriers does not itself provide magnetic isolation.
 
 Inductors interact through mutual inductance, `M = k sqrt(L1 L2)`. Separate their magnetic axes and use perpendicular axes for nearby coils where practical. Do not stack coils coaxially. There is no universal separation distance that makes all crossover coils independent: Coilcraft identifies orientation, distance, waveform, current and frequency as relevant. More than three coils cannot all have pairwise perpendicular axes. Record axis and body position for every coil, place unavoidable parallel coils farther apart, and evaluate declared coupling scenarios when that could affect the response. [Coilcraft FAQ, spacing and board layout](https://www.coilcraft.com/en-us/faq/)
 
