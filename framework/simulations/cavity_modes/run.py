@@ -15,7 +15,7 @@ from _common import cli, acoustics, geometry  # noqa: E402
 from _common.acoustics import C, RHO, P0  # noqa: E402
 
 NAME = "cavity_modes"
-VERSION = "1.5"
+VERSION = "1.6"
 NOTES = [
     "Rigid-wall modal model of the rectangular bass chamber: an analytical mode basis (fast) or a 3D finite-volume basis that masks brace windows and port tubes (slower). Lining enters as Miki surface admittance damping on the lined walls only.",
     "cone_deviation_db compares the cone velocity through the cavity model with the lumped box model of lf_box at the same drive; outlet_relative_db is the outlet pressure relative to the cone's mean level in 150 to 300 Hz.",
@@ -152,6 +152,53 @@ def rectangular_modes(g, max_hz):
     boundary = 2 * np.where(indices[:, 0] == 0, 1, 2) / L[0] + np.where(indices[:, 1] == 0, 1, 2) / L[1] + 2 * np.where(indices[:, 2] == 0, 1, 2) / L[2]
     return dict(frequency_hz=fn, cone=e0, outlet=ep, boundary_ratio_m_inv=boundary, indices=indices, method="rectangular analytical modes",
                 mode_norm=norm)
+
+
+def lining_boundary_area(edges, fluid, lining):
+    """Integrate rectangular lining coverage on external fluid-cell faces.
+
+    Patches use ascending tangential axes, in mm. Fractional cell-face overlap
+    preserves patch area when an edge lies between mesh lines. Overlapping
+    rectangles are rejected rather than counting the same absorber twice.
+    """
+    faces = {'left': (0, 0), 'right': (0, -1), 'front': (1, 0),
+             'rear': (1, -1), 'bottom': (2, 0), 'top': (2, -1)}
+    shape = fluid.shape
+    patches = lining.get('patches')
+    if patches is None:
+        patches = [dict(face=name, bounds_mm=[[0, float(edges[j][-1])*1000]
+                    for j in range(3) if j != axis])
+                   for name, (axis, side) in faces.items() if name != 'front']
+    normalized = []
+    for patch in patches:
+        if patch.get('face') not in faces:
+            raise cli.InputError('lining patch face is not a cabinet face')
+        axis, side = faces[patch['face']]
+        tangents = [j for j in range(3) if j != axis]
+        bounds = np.asarray(patch.get('bounds_mm'), float)/1000
+        if bounds.shape != (2, 2) or not np.all(np.isfinite(bounds)):
+            raise cli.InputError('lining patch bounds_mm needs two finite intervals')
+        if any(lo < 0 or hi <= lo or hi > edges[j][-1]+1e-9
+               for (lo, hi), j in zip(bounds, tangents)):
+            raise cli.InputError('lining patch lies outside the cabinet face')
+        for name, other in normalized:
+            if name == patch['face'] and all(min(a[1], b[1])-max(a[0], b[0]) > 1e-10
+                                             for a,b in zip(bounds, other)):
+                raise cli.InputError('lining patches overlap on the same face')
+        normalized.append((patch['face'], bounds))
+    boundary = np.zeros(shape)
+    areas = {name: 0.0 for name in faces}
+    for name, bounds in normalized:
+        axis, side = faces[name]
+        tangents = [j for j in range(3) if j != axis]
+        lengths = [np.maximum(0, np.minimum(edges[j][1:],hi)-np.maximum(edges[j][:-1],lo))
+                   for (lo,hi),j in zip(bounds,tangents)]
+        area = lengths[0][:,None]*lengths[1][None,:]
+        selection = [slice(None)]*3; selection[axis] = side; selection = tuple(selection)
+        area = area*fluid[selection]
+        boundary[selection] += area
+        areas[name] += float(area.sum())
+    return boundary[fluid], areas
 
 
 def finite_volume_modes(g, mesh_mm, max_hz, include_braces=True, include_tubes=True):
@@ -293,23 +340,11 @@ def finite_volume_modes(g, mesh_mm, max_hz, include_braces=True, include_tubes=T
     potential -= volume @ potential / volume.sum()
     static_fields = volume.sum() / C ** 2 * potential
     static_matrix = patches.T @ static_fields
-    boundary = np.zeros(n)
-    for axis, side in [(0, 0), (0, -1), (1, -1), (2, 0), (2, -1)]:
-        selection = [slice(None)] * 3
-        selection[axis] = side
-        selection = tuple(selection)
-        area = np.ones(shape)
-        for other in range(3):
-            if other != axis:
-                sh = [1, 1, 1]
-                sh[other] = len(widths[other])
-                area *= widths[other].reshape(sh)
-        valid = fluid[selection].copy()
-        np.add.at(boundary, ids[selection][valid], area[selection][valid])
+    boundary, lined_areas = lining_boundary_area(edges, fluid, g['lining'])
     ratio = boundary @ (psi * psi) / volume.sum()
     return dict(frequency_hz=fn, cone=e0, outlet=ep, boundary_ratio_m_inv=ratio, method="3D finite-volume modes", cells=n, mesh_mm=mesh_mm,
                 modeled_air_volume_l=float(volume.sum() * 1000), static_matrix=static_matrix, static_fields=static_fields, coords=coords, psi=psi,
-                volume=volume, outlet_count=len(g["patches"]))
+                volume=volume, outlet_count=len(g["patches"]), lined_area_by_face_m2=lined_areas)
 
 
 def port_transfer(outlet, f, count, fb, qp):
@@ -509,6 +544,8 @@ def compute(params, base_dir):
     f = cli.frequency_grid(params.get("frequencies"), 20, max_hz, 631) if params.get("frequencies") else default_f
     bases = []
     if kind == "rectangular":
+        if 'patches' in g['lining']:
+            raise cli.InputError('Explicit lining patches use method.kind fvm')
         bases.append(rectangular_modes(g, max_hz))
     elif kind == "fvm":
         meshes = method.get("mesh_mm", [35.0])
@@ -535,6 +572,9 @@ def compute(params, base_dir):
                    outlet_pressure_per_volt_pa=terminal["outlet_pressure_pa"], z_ohm=terminal["driver_z_ohm"],
                    source_contract=dict(phase_reference="intrinsic", pressure_reference_m=1.,
                                         baffle="external", normalization="driver_terminal_volt", radiation_space="half"))
+    if 'lined_area_by_face_m2' in fine_basis:
+        results['lining_coverage'] = dict(lined_area_by_face_m2=fine_basis['lined_area_by_face_m2'],
+            patches=g['lining'].get('patches'), basis='Boundary modal damping weighted by covered cell-face area')
     if params.get("export_complex_field") and "psi" in fine_basis:
         results["complex_field"] = dict(coordinates_m=fine_basis["coords"], pressure_pa=pressure_field(fine_basis, fine, np.arange(len(f))).T)
     if "radiator_excursion_peak_mm" in fine:

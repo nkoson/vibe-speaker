@@ -59,13 +59,13 @@ def draw_board(c,b,ox,oy,mirror=False,wiring=False,labels=True):
             c.drawCentredString(xy([x,y])[0],xy([x,y])[1],part['id']+(f' / {part["axis"]}' if part.get('axis') else ''))
     if wiring:
         for r in b['rails']:
-            poly(r['points'],(.05,.27,.45),.6)
+            poly(r['points'],(.05,.27,.45),.6,[3*mm,1.5*mm] if r.get('underside_raise_mm') else None)
             if labels:
                 x,y=r.get('label_at',r['points'][0]);c.setFont('Helvetica-Bold',8);c.setFillColorRGB(.05,.27,.45)
                 c.drawString(*xy([x,y]),r['id'])
         for part in b['parts']:
             for i,lead in enumerate(part['leads'],1):
-                poly(lead['under_points'],(.35,.35,.35),.3)
+                poly(lead['under_points'],(.35,.35,.35),.3,[2*mm,1*mm] if lead.get('under_z_mm',0)<-10 else None)
                 c.setFillColorRGB(0,0,0);c.circle(*xy(lead['points'][-1]),.65*mm,fill=1,stroke=0)
                 if labels:
                     c.setFont('Helvetica',7);p=lead['hole'];c.drawString(*xy([p[0]+2,p[1]+2]),f'{part["id"]}.{i}')
@@ -74,7 +74,7 @@ def draw_board(c,b,ox,oy,mirror=False,wiring=False,labels=True):
         x,y=xy(hole['center']);r=hole['diameter']/2*mm
         c.circle(x,y,r);c.line(x-r-1*mm,y,x+r+1*mm,y);c.line(x,y-r-1*mm,x,y+r+1*mm)
     c.setFont('Helvetica-Bold',9);c.setFillColorRGB(0,0,0)
-    c.drawString(ox*mm,(oy+3)*mm,'BOTTOM / datum '+('at right' if mirror else 'at left'))
+    c.drawString(ox*mm,(oy-4)*mm,b.get('datum_edge','BOTTOM')+' / datum '+('at right' if mirror else 'at left'))
 
 
 def ruler(c,x,y,length=100):
@@ -87,11 +87,24 @@ def templates(layout,out):
     # An A3 portrait sheet has room for a 220 x 390 carrier at exact scale.
     c=canvas.Canvas(str(out/'drilling-templates-A3.pdf'),pagesize=(297*mm,420*mm))
     for b in layout['boards']:
-        c.setFont('Helvetica-Bold',11);c.drawString(12*mm,411*mm,f'{b["id"]} / Rev {layout["revision"]} / COMPONENT FACE / 220 x 390 mm / 1:1')
-        draw_board(c,b,38,12)
+        w,h,_=b['size_mm']
+        c.setFont('Helvetica-Bold',11);c.drawString(12*mm,411*mm,f'{b["id"]} / Rev {layout["revision"]} / COMPONENT FACE / {w:g} x {h:g} mm / 1:1')
+        draw_board(c,b,(297-w)/2,(410-h)/2)
         c.saveState();c.translate(17*mm,85*mm);c.rotate(90);ruler(c,0,0);c.restoreState()
         c.setFont('Helvetica',8);c.drawString(12*mm,5*mm,'Print 100%. No Fit/Shrink. D3.5 lead/lacing/ties; D5 coil restraints and mounts.');c.showPage()
     c.save()
+    if all(b['size_mm'][0]<=277 and b['size_mm'][1]<=180 for b in layout['boards']):
+        c=canvas.Canvas(str(out/'drilling-templates-A4.pdf'),pagesize=(297*mm,210*mm))
+        for b in layout['boards']:
+            w,h,_=b['size_mm']
+            c.setFont('Helvetica-Bold',10);c.drawString(10*mm,202*mm,f'{b["id"]} / Rev {layout["revision"]} / COMPONENT FACE / {w:g} x {h:g} mm / ACTUAL SIZE')
+            draw_board(c,b,(297-w)/2,20)
+            ruler(c,14,10)
+            c.setFont('Helvetica',8);c.drawString(130*mm,10*mm,'D3.5 leads/lacing/wire ties; D5 coil ties and mounts.')
+            c.drawString(130*mm,5*mm,'Print Actual size / 100%. Check outline in both directions.')
+            c.showPage()
+        c.save()
+        return
     c=canvas.Canvas(str(out/'drilling-templates-A4-tiled.pdf'),pagesize=(210*mm,297*mm))
     # Two columns and two rows, with shared registration marks in each overlap.
     origins=[(0,0),(40,0),(0,140),(40,140)]
@@ -117,13 +130,16 @@ def wiring(layout,out):
     c=canvas.Canvas(str(out/'underside-wiring-A2.pdf'),pagesize=(594*mm,420*mm))
     for b in layout['boards']:
         c.setFont('Helvetica-Bold',14);c.drawString(12*mm,408*mm,f'{b["id"]} - UNDERSIDE WIRING / Rev {layout["revision"]}')
-        draw_board(c,b,12,10,mirror=True,wiring=True)
-        x,y=250,390
+        draw_board(c,b,12,400-b['size_mm'][1],mirror=True,wiring=True)
+        x,y=max(250,b['size_mm'][0]+35),390
         def line(s,size=10):
             nonlocal y
             c.setFillColorRGB(0,0,0);c.setFont('Helvetica',size);c.drawString(x*mm,y*mm,s);y-=5.2
         line('MIRRORED: bottom edge remains at the bottom; component-face datum is at the right.',10)
         line('Blue: insulated 1.5 mm2 node wires. Grey: sleeved component tails. Black dot: joint.')
+        if any(r.get('underside_raise_mm') for r in b['rails']):
+            line('Dashed blue wires sit 7 mm below the other wires on insulating saddles.')
+            line('Dashed grey tails use that lower plane; rise to the destination only at its joint.')
         line('Dashed outlines: components on the opposite face. Crossings without dots are insulated.')
         line('Hole centres remain component-face coordinates in the CSV. Drill from that face.')
         line('Turn wires through smooth 90-degree bends; the drawn vertices are routing guides.')
@@ -131,10 +147,10 @@ def wiring(layout,out):
         y-=4;line('COMPONENT ENDS: hole / destination wire / minimum routed tail length',11)
         for p in b['parts']:
             vals=[]
-            for i,l in enumerate(p['leads'],1):vals.append(f'{i}: ({l["hole"][0]:g},{l["hole"][1]:g}) -> {l["rail"]}, {math.ceil(l["length_mm"]):g} mm')
+            for i,l in enumerate(p['leads'],1):vals.append(f'{i}: ({l["hole"][0]:g},{l["hole"][1]:g}) -> {l["rail"]}, {math.ceil(l["length_mm"]):g} mm'+(' lower' if l.get('under_z_mm',0)<-10 else ''))
             line(p['id']+'   '+' | '.join(vals),9)
         y-=4;line('NODE WIRES - cut lengths include fitting allowance',11)
-        for r in b['rails']:line(f'{r["id"]} / {r["net"]}: {r["cut_length_mm"]:g} mm',9)
+        for r in b['rails']:line(f'{r["id"]} / {r["net"]}: {r["cut_length_mm"]:g} mm'+(' / raised 7 mm' if r.get('underside_raise_mm') else ''),9)
         y-=4;line('HARNESS ATTACHMENTS (component-face coordinates)',11)
         for name,(rid,pos) in b['terminals'].items():line(f'{name}: wire {rid}, ({pos[0]:g}, {pos[1]:g})',9)
         c.showPage()

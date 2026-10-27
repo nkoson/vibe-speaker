@@ -22,11 +22,17 @@ lead exit geometry, decide component fit, or assess the carrier's mechanical
 strength. Review body/fastener envelopes, native lead reach, sleeving, support
 spacing and underside conductor clearances separately.
 
-The present paper arrangement fits a 220 x 390 mm carrier. A3 sheets are 1:1.
-Each carrier's four A4 tiles cover the full rectangle with overlapping square
-registration marks; these marks are not holes. Horizontal and vertical 100 mm
-rulers allow checking printer scale. Print Actual Size / 100%, never Fit/Shrink.
+Carriers up to 277 x 180 mm receive one full-size landscape A4 sheet each.
+Larger carriers use the existing four-tile arrangement for a 220 x 390 mm
+outline. A3 sheets are also 1:1. The larger carrier's A4 tiles overlap with square
+registration marks; these marks are not holes. Calibration rulers and the
+dimensioned outline allow checking printer scale. Print Actual Size / 100%.
 Use only the component-face pages as drill templates; the wiring view is mirrored.
+
+Optional `underside_raise_mm` on a node wire marks a lower wiring plane in the
+view and schedule. A lead's `under_z_mm` below -10 mm is dashed to distinguish
+its lower route. Those fields describe authored geometry; provide the insulating
+supports, clearance review and full conductor lengths in the construction data.
 
 Keep substrate thickness, mounting stack, hole schedules, wire lengths and the
 cabinet's displaced volume synchronized with the final construction records.

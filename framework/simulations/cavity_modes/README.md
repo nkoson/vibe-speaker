@@ -66,6 +66,21 @@ The uniform cavity mode includes the specified leakage loss `ql` for vented boxe
 
 ## Shaped braces and internal flat parts
 
+For finite-volume work, `cavity.lining.patches` can describe the actual exposed
+lining rectangles. Each patch supplies `face` (`left`, `right`, `front`, `rear`,
+`bottom`, `top`) and `bounds_mm: [[u0,u1],[v0,v1]]`, with in-plane axes in ascending
+global-axis order (X/Z on the rear wall). Bounds use the cavity's internal datum.
+An omitted list retains the legacy five fully lined walls; an empty list gives
+no lining. Rectangles on a face may abut but overlapping patches are rejected.
+The common thickness and flow resistivity still apply to every patch.
+
+Covered cell-face areas weight the modal damping integral, including partial
+mesh-cell overlap at patch edges. Solid-obstructed wall cells contribute no
+lined area. `results.lining_coverage` records the resulting area per face.
+This is spatially weighted surface damping, not porous-volume propagation or
+diffraction around a board standing in front of a lining patch. Explicit patches
+are supported by the FVM basis; the analytical rectangular basis rejects them.
+
 `cavity.braces[].reliefs` uses the same aperture shapes but may extend beyond the panel edge, for an open driver-clearance notch. Closed `holes` stay inside the footprint. Circular and rounded-rectangle containment is evaluated directly at the FVM cell centres.
 
 `cavity.internal_panels[]` adds a flat internal part in any principal plane: `normal_axis` (`x`, `y`, `z`), `start_mm`, `thickness_mm`, `origin_uv_mm`, `size_uv_mm`, optional `holes` and `reliefs`. The in-plane coordinates follow the other two global cavity axes in ascending order (X/Z for a Y-normal support). Normal panel faces and outside in-plane boundaries are inserted into the mesh. Use a circular relief plus an open-top rectangular relief for a curved support. Refine the grid to inspect acoustic sensitivity to its occupied volume.
