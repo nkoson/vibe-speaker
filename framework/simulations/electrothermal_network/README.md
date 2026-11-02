@@ -13,3 +13,7 @@ Output sections contain hot impedance, transfer, temperature and power; when a c
 Compare iteration/relaxation sensitivity and plausible thermal resistances. The model changes voice-coil resistance while holding mechanical and motor parameters fixed. It does not automatically heat the crossover coils or predict thermal endurance. Use `nonlinear_driver` for time-domain state changes and separately sourced nonlinear curves.
 
 See [simulation methods](../../references/simulation-methods.md) for equations, sources and verification scope, and [advanced workflow guidance](../../skills/speaker-designer/references/advanced-simulation.md) for connecting the result to a design.
+
+## Electrical-load evidence
+
+See the shared [electrical-load contract and scenario interface](../electrical-loads.md). Load identity, model, phase basis, coverage and transformations are reported for agent interpretation; missing evidence does not trigger a design-validation error.

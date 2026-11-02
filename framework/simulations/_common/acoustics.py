@@ -521,15 +521,15 @@ def impedance_model(model, f):
     f = np.asarray(f, float)
     s = 2j * np.pi * f
     kind = require(model, "kind", label="impedance")
+    if kind == "blocked":
+        return blocked_impedance(model.get("ts", model), f)
     if kind == "resistive":
         return np.full(len(f), positive(model.get("r_ohm"), "impedance.r_ohm"), complex)
     if kind == "resonant":
-        re = positive(model.get("re_ohm"), "impedance.re_ohm")
-        le = float(model.get("le_mh", 0.0)) * 1e-3
         peak_r = float(model.get("peak_r_ohm", 0.0))
         peak_hz = float(model.get("peak_hz", 0.0))
         peak_q = float(model.get("peak_q", 1.0))
-        z = re + s * le
+        z = blocked_impedance(model, f)
         if peak_r > 0 and peak_hz > 0:
             z = z + peak_r / (1 + 1j * peak_q * (f / peak_hz - peak_hz / f))
         return z

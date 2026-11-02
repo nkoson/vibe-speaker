@@ -8,8 +8,8 @@ positive bounds for mass, compliance, damping and force factor.
 For `mode: driver`, specify `sd_cm2` and physical parameters `mms_kg`,
 `cms_m_per_n`, `rms_ns_m`, `bl_tm`, `re_ohm`, optional `le_h`.
 `observations[]` contain a ZMA `file` or `frequency_hz`, `real`, `imag`.
-Each can declare `added_mass_g` or `sealed_volume_l`. Free-air-only fitting requires
-known Mms or Bl; multiple known loads can establish scale. The sealed-volume
+Each can declare `added_mass_g` or `sealed_volume_l`. Known Mms or Bl, or multiple known loads, can establish mechanical scale.
+A single-condition fit without that scale reports the ambiguity and still computes. The sealed-volume
 identification model is ideal, rigid and unfilled.
 
 `inductance_kind`: `constant`, `leach` (inductance_k, inductance_n),
@@ -27,3 +27,7 @@ optimizer termination, distances to bounds, scaled Jacobian singular values/rank
 and driver T/S values when applicable. No automatic fit-quality verdict is made.
 
 See [driver identification](../../references/driver-impedance-identification.md).
+
+## Electrical-load evidence
+
+See the shared [electrical-load contract and scenario interface](../electrical-loads.md). Load identity, model, phase basis, coverage and transformations are reported for agent interpretation; missing evidence does not trigger a design-validation error.

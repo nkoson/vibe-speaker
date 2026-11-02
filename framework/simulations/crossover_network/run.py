@@ -6,10 +6,10 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from _common import cli, acoustics, networks, thermal  # noqa: E402
+from _common import electrical_load, cli, acoustics, networks, thermal  # noqa: E402
 
 NAME = "crossover_network"
-VERSION = "1.4"
+VERSION = "1.5"
 NOTES = [
     "Exact complex series/shunt ladder recursion per section against the supplied load impedance; sections are parallel at the input terminals.",
     "Coil DCR defaults to 0.10 + 0.16 sqrt(L_mH) ohm and capacitor ESR to 0.01 ohm when not stated; replace them with the chosen parts' data.",
@@ -44,12 +44,12 @@ def compute(params, base_dir):
     rows = []
     branch_z = []
     for section in sections:
-        load, pressure = networks.section_load(section, f, base_dir)
+        load, pressure, load_contract = electrical_load.section(section, f, base_dir)
         elements = networks.with_wire(section)
         polarity = float(section.get("polarity", 1))
         state = networks.ladder_state(f, load, elements, None, voltage)
         transfer = state["terminal"] / voltage * polarity
-        row = dict(name=section.get("name"), polarity=polarity, load_z_ohm=load, transfer=transfer, branch_input_z_ohm=state["input_z"],
+        row = dict(name=section.get("name"), load_contract=load_contract, polarity=polarity, load_z_ohm=load, transfer=transfer, branch_input_z_ohm=state["input_z"],
                    load_power_w=np.abs(state["load_current"]) ** 2 * load.real, terminal_voltage_rms=np.abs(state["terminal"]),
                    components=networks.leaf_summary(elements, state["states"], f),
                    inductor_ratings=networks.part_ratings(elements, state["states"], f, section.get("passband_hz")),

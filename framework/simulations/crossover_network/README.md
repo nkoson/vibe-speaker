@@ -74,3 +74,7 @@ Downstream: `whole_speaker` reads `results.sections.N.transfer` through `{"file"
 | `sections[].elements[].core`, `saturation_current_a` | Coil core material (`air`, `ferrite`, a powder core, or any ferromagnetic description) and its published saturation current, where one exists |
 | `thermal` | `{coil_temperatures_c: [20, 100], reference_c: 20, copper_coefficient_per_c: 0.0039}` |
 | `power_split_band_hz` | Band the integrated power split is taken over, default 20 to 20000 Hz |
+
+## Electrical-load evidence
+
+See the shared [electrical-load contract and scenario interface](../electrical-loads.md). Load identity, model, phase basis, coverage and transformations are reported for agent interpretation; missing evidence does not trigger a design-validation error.

@@ -40,9 +40,11 @@ def test_box_and_free_air_share_blocked_motor(tmp_path):
     np.testing.assert_allclose(box,free,rtol=1e-8)
 
 
-def test_fractional_active_domain_rejected():
-    with pytest.raises(cli.InputError):
-        acoustics.blocked_impedance(dict(TS,inductance_model={"kind":"leach","k":.1,"n":1.2}),np.array([100]))
+def test_fractional_exponent_computes_without_passivity_verdict():
+    f=np.array([100.,1000.])
+    actual=acoustics.blocked_impedance(dict(TS,inductance_model={"kind":"leach","k":.1,"n":1.2}),f)
+    np.testing.assert_allclose(actual,6+.1*(2j*np.pi*f)**1.2)
+    assert np.min(actual.real)<0
 
 
 def test_isobaric_lossy_impedance_scaling():

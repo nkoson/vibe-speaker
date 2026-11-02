@@ -44,3 +44,7 @@ Uncoupled inductors support `parallel_r_ohm` and `parallel_c_pf` across the enti
 series DCR+L branch. For coupled windings represent shunts as separate R/C components.
 Component dissipation includes the real part of the resulting branch impedance.
 See [passive network diagnostics](../../references/passive-network-diagnostics.md).
+
+## Electrical-load evidence
+
+See the shared [electrical-load contract and scenario interface](../electrical-loads.md). Load identity, model, phase basis, coverage and transformations are reported for agent interpretation; missing evidence does not trigger a design-validation error.

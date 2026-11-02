@@ -49,7 +49,7 @@ def install():
 
 def verify(tests):
     python = venv_python()
-    run([python, "-c", "import numpy, scipy, matplotlib; print('numpy', numpy.__version__, 'scipy', scipy.__version__, 'matplotlib', matplotlib.__version__)"])
+    run([python, "-c", "import numpy, scipy, matplotlib, javaobj.v2; print('numpy', numpy.__version__, 'scipy', scipy.__version__, 'matplotlib', matplotlib.__version__, 'MDAT reader available')"])
     run([python, ROOT / "framework" / "simulations" / "examples" / "run_examples.py"])
     if tests:
         run([python, "-m", "pytest", ROOT / "framework" / "tests", "-q"])
@@ -59,13 +59,17 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--check", action="store_true", help="verify only; do not create or install")
     parser.add_argument("--tests", action="store_true", help="run the pytest suite after the example chain")
+    parser.add_argument("--install-only", action="store_true", help="create/update dependencies without running the simulation example chain")
     args = parser.parse_args()
+    if args.install_only and (args.check or args.tests):
+        parser.error("--install-only cannot be combined with --check or --tests")
     if not args.check:
         create()
         install()
     if not venv_python():
         raise SystemExit("no environment at .speaker-venv; run without --check to create it")
-    verify(args.tests)
+    if not args.install_only:
+        verify(args.tests)
     print(f"ready: {venv_python()}")
 
 

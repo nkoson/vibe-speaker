@@ -11,11 +11,11 @@ from scipy.sparse.linalg import eigsh, splu
 from scipy.special import j1
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from _common import cli, acoustics, geometry  # noqa: E402
+from _common import electrical_load, cli, acoustics, geometry  # noqa: E402
 from _common.acoustics import C, RHO, P0  # noqa: E402
 
 NAME = "cavity_modes"
-VERSION = "1.6"
+VERSION = "1.7"
 NOTES = [
     "Rigid-wall modal model of the rectangular bass chamber: an analytical mode basis (fast) or a 3D finite-volume basis that masks brace windows and port tubes (slower). Lining enters as Miki surface admittance damping on the lined walls only.",
     "cone_deviation_db compares the cone velocity through the cavity model with the lumped box model of lf_box at the same drive; outlet_relative_db is the outlet pressure relative to the cone's mean level in 150 to 300 Hz.",
@@ -591,6 +591,9 @@ def compute(params, base_dir):
                                            first_modes_max_relative_change_percent=float(np.max(np.abs(first_f[:n] - first_c[:n]) / first_f[:n]) * 100) if n else None,
                                            cone_deviation_max_change_db=float(np.max(np.abs(fine_r["cone_deviation_db"] - coarse["cone_deviation_db"]))),
                                            outlet_leakage_max_change_db=float(np.max(np.abs(fine_r["outlet_relative_db"][leak] - coarse["outlet_relative_db"][leak]))) if fine_r["has_outlet"] else None)
+    load_contract=electrical_load.describe(dict(kind="cavity_modes",ts=params["driver"]["ts"],parameters=terminal_params),f,
+                                           params["driver"].get("electrical_load"))
+    results["source_contract"]["electrical_load"]=electrical_load.observe(load_contract,f,results["z_ohm"])
     results["validity"] = dict(statements=list(VALIDITY), method=kind, max_mode_hz=max_hz,
                                evaluated_band_hz=[float(f[0]), float(f[-1])])
     if kind == "fvm":

@@ -61,5 +61,7 @@ def test_single_added_mass_condition_is_not_an_absolute_scale(tmp_path):
     p=dict(sd_cm2=220,initial=dict(mms_kg=.03,cms_m_per_n=.0005,rms_ns_m=1.5,bl_tm=8,re_ohm=6),
            observations=[dict(frequency_hz=[10,100,1000],real=[6,7,8],imag=[1,2,3],added_mass_g=20)])
     p["bounds"]={k:[v*.1,v*10] for k,v in p["initial"].items()}
-    with pytest.raises(cli.InputError,match="scale"):
-        apps.module("parameter_identification").compute(p,tmp_path)
+    result = apps.module("parameter_identification").compute(p,tmp_path)
+    assert result["fit_diagnostics"]["mechanical_scale"]["absolute_scale_basis"] == "not_independently_identified"
+    assert result["parameters"]
+    assert "error" not in result

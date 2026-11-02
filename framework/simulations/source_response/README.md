@@ -81,3 +81,7 @@ and [polar import](../polar_import/README.md).
 T/S inputs support `inductance_model` (`constant`, `leach`, `lr2`,
 `semi_inductance`) and `creep`; the same laws feed the linear box, cavity, room
 and distributed-loading solves. See [driver impedance](../../references/driver-impedance-identification.md).
+
+## Electrical-load evidence
+
+See the shared [electrical-load contract and scenario interface](../electrical-loads.md). Load identity, model, phase basis, coverage and transformations are reported for agent interpretation; missing evidence does not trigger a design-validation error.

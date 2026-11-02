@@ -6,9 +6,9 @@ from pathlib import Path
 import numpy as np
 from scipy.optimize import least_squares
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from _common import cli, acoustics, response_data, apps
+from _common import cli, acoustics, response_data, apps, electrical_load, networks
 NAME="parameter_identification"
-VERSION="1.0"
+VERSION = "1.1"
 
 
 def ts_from_physical(values, area):
@@ -17,6 +17,14 @@ def ts_from_physical(values, area):
     return dict(fs_hz=w/(2*np.pi),vas_l=c*cli.RHO*cli.C**2*area**2*1000,
                 qms=w*m/r,qes=w*m*re/bl**2,re_ohm=re,sd_cm2=area*1e4,
                 le_mh=values.get("le_h",0)*1000)
+
+
+def fitting_mask(record, f):
+    selected = np.ones(len(f), dtype=bool)
+    if record.get("role") == "held_out":
+        selected[:] = False
+    selected[np.asarray(record.get("held_out_indices", []), int)] = False
+    return selected
 
 
 def compute(params,base_dir):
@@ -31,12 +39,16 @@ def compute(params,base_dir):
     if np.any(lower<0) or np.any(lower>=upper) or np.any(x0<lower) or np.any(x0>upper):
         raise cli.InputError("fit requires nonnegative ordered bounds containing the initial point")
     observations=[]
+    scale_observation=None
     for record in params["observations"]:
         if "file" in record:
-            f,z,phase=response_data.read_table(cli.resolve_path(record["file"],base_dir),"impedance",record.get("phase_assumption"))
+            f,z,phase=response_data.read_table(cli.resolve_path(record["file"],base_dir),"impedance",record.get("phase_assumption", "zero"))
         else:
             f=np.asarray(record["frequency_hz"],float)
-            z=cli.complex_from_record(record);phase="supplied"
+            if "magnitude" in record and "phase_deg" not in record:
+                z=np.asarray(record["magnitude"],complex);phase="assumed_zero"
+            else:
+                z=cli.complex_from_record(record);phase="supplied"
         if len(f)<3 or z.shape!=f.shape or np.any(f<=0) or np.any(np.diff(f)<=0) or not np.all(np.isfinite(z)):
             raise cli.InputError("impedance observations need increasing finite frequency/complex arrays")
         observations.append((record,f,z,phase))
@@ -45,10 +57,10 @@ def compute(params,base_dir):
         required={"mms_kg","cms_m_per_n","rms_ns_m","bl_tm","re_ohm"}
         if not required <= set(initial)|set(known):
             raise cli.InputError("driver identification needs Mms, Cms, Rms, Bl and Re initial/known values")
-        conditions={(float(r.get("added_mass_g",0)),float(r.get("sealed_volume_l",0))) for r,_,_,_ in observations}
+        conditions={(float(r.get("added_mass_g",0)),float(r.get("sealed_volume_l",0))) for r,f,_,_ in observations if np.any(fitting_mask(r,f))}
         if any(m<0 or v<0 for m,v in conditions):raise cli.InputError("added mass and sealed volume must be nonnegative")
-        if len(conditions)<2 and not ({"mms_kg","bl_tm"}&set(known)):
-            raise cli.InputError("a single free-air condition needs known mms_kg or bl_tm to identify absolute mechanical scale")
+        scale_observation = dict(load_conditions=len(conditions), known_mass_or_motor=bool({"mms_kg","bl_tm"}&set(known)),
+            absolute_scale_basis="known_mass_or_motor" if {"mms_kg","bl_tm"}&set(known) else "multiple_load_conditions" if len(conditions)>1 else "not_independently_identified")
         for key in required:
             cli.positive(dict(initial,**known)[key],key)
         area=cli.positive(params["sd_cm2"],"sd_cm2")*1e-4
@@ -87,16 +99,23 @@ def compute(params,base_dir):
         values=dict(known,**dict(zip(keys,x)))
         out=[]
         for record,f,z,phase in observations:
-            delta=predict(values,record,f)-z
-            scale=np.maximum(abs(z),float(params.get("impedance_floor_ohm",1)))
-            if params.get("ignore_phase"):
-                delta=(abs(predict(values,record,f))-abs(z))/scale
+            selected=fitting_mask(record,f)
+            if not np.any(selected):continue
+            prediction=predict(values,record,f)[selected]
+            observed=z[selected]
+            delta=prediction-observed
+            scale=np.maximum(abs(observed),float(params.get("impedance_floor_ohm",1)))
+            if params.get("ignore_phase") or phase == "assumed_zero":
+                delta=(abs(prediction)-abs(observed))/scale
                 out.extend(delta)
             else:
                 out.extend(delta.real/scale);out.extend(delta.imag/scale)
         out=np.asarray(out)
         if retain:history.append(dict(values=values,normalized_squared_residual=float(out@out)))
         return out
+    if not any(np.any(fitting_mask(r,f)) for r,f,_,_ in observations):
+        return dict(parameters=dict(known,**initial), observations=[], fit_diagnostics=dict(fitting_points=0,
+                    computation="no fitting samples; parameters retained"), trials=[])
     fit=least_squares(residual,x0,bounds=(lower,upper),x_scale=np.maximum(abs(x0),1e-9),
                       max_nfev=int(params.get("max_evaluations",1000)),ftol=1e-12,xtol=1e-12,gtol=1e-12)
     values=dict(known,**dict(zip(keys,fit.x)))
@@ -108,6 +127,42 @@ def compute(params,base_dir):
                 bound_distances={k:{"lower":float(v-lo),"upper":float(hi-v)} for k,v,lo,hi in zip(keys,fit.x,lower,upper)},
                 observations=[dict(f_hz=f,observed_z_ohm=z,predicted_z_ohm=predict(values,r,f),phase_basis=phase)
                               for r,f,z,phase in observations])
+    audits=[]
+    for record,f,z,phase in observations:
+        predicted=predict(values,record,f)
+        fitted=fitting_mask(record,f)
+        bands=params.get("audit_bands", [{"name":"all", "band_hz":[float(f[0]),float(f[-1])]}])
+        rows=[]
+        for band in bands:
+            inside=(f>=band["band_hz"][0])&(f<=band["band_hz"][1])
+            for role,mask in (("fit",fitted),("held_out",~fitted)):
+                selected=inside&mask
+                delta=predicted[selected]-z[selected]
+                rows.append(dict(name=band.get("name"),band_hz=band["band_hz"],role=role,points=int(selected.sum()),
+                    complex_rms_ohm=float(np.sqrt(np.mean(abs(delta)**2))) if len(delta) and phase != "assumed_zero" else None,
+                    magnitude_max_error_db=float(np.max(abs(acoustics.db(predicted[selected])-acoustics.db(z[selected])))) if len(delta) else None,
+                    phase_max_error_deg=float(np.max(abs(np.rad2deg(np.angle(predicted[selected]/z[selected]))))) if len(delta) and phase != "assumed_zero" else None))
+        transfers=[]
+        for circuit in params.get("transfer_audits", []):
+            if phase == "assumed_zero":
+                transfers.append(dict(name=circuit.get("name"),phase_basis=phase,
+                    computation="observed-load transfer unspecified: impedance phase absent"))
+                continue
+            elements=circuit["elements"]
+            h_observed,z_observed=networks.ladder_transfer(f,z,elements)
+            h_fitted,z_fitted=networks.ladder_transfer(f,predicted,elements)
+            transfers.append(dict(name=circuit.get("name"),f_hz=f,observed_load_transfer=h_observed,fitted_load_transfer=h_fitted,
+                transfer_difference_db=acoustics.db(h_fitted)-acoustics.db(h_observed),
+                phase_difference_deg=np.rad2deg(np.angle(h_fitted/h_observed)),
+                observed_input_z_ohm=z_observed,fitted_input_z_ohm=z_fitted))
+        audits.append(dict(phase_basis=phase,fitting_indices=np.flatnonzero(fitted),held_out_indices=np.flatnonzero(~fitted),
+                          residual_bands=rows,transfer_audits=transfers))
+    result["fit_diagnostics"]=dict(observations=audits, mechanical_scale=scale_observation,
+        parameter_bounds=bounds, error_budget=params.get("error_budget"),
+        interpretation="Residuals, sample partitions and parameter sensitivity; no acceptance thresholds are applied.")
+    result["alternative_parameters"]=[dict(parameters=alternative,
+        observations=[dict(f_hz=f,z_ohm=predict(dict(values,**alternative),r,f)) for r,f,_,_ in observations])
+        for alternative in params.get("alternative_parameters",[])]
     if mode=="driver":
         ts=ts_from_physical(values,area)
         kind=params.get("inductance_kind","constant")
@@ -115,7 +170,18 @@ def compute(params,base_dir):
         elif kind=="lr2":ts["inductance_model"]=dict(kind=kind,le_mh=values.get("le_h",0)*1000,l2_mh=values["l2_h"]*1000,r2_ohm=values["r2_ohm"])
         elif kind=="semi_inductance":ts["inductance_model"]=dict(kind=kind,**{k:values[k] for k in ("leb_mh","le_mh","ke","rss_ohm") if k in values})
         if "creep_beta" in values:ts["creep"]=dict(beta=values["creep_beta"],transition_hz=values.get("creep_transition_hz",1.5*ts["fs_hz"]))
+        if "inductance_model" not in ts:
+            ts["inductance_model"]={"kind":"constant","le_mh":ts["le_mh"]}
         result["driver_ts"]=ts
+        all_f=np.unique(np.concatenate([f[fitting_mask(r,f)] for r,f,_,_ in observations]))
+        contract=electrical_load.describe(dict(kind="free_air",ts=ts),all_f,params.get("electrical_load"))
+        training_phases=[phase for r,f,_,phase in observations if np.any(fitting_mask(r,f))]
+        contract["phase_basis"]=("magnitude_only_fit" if params.get("ignore_phase") or all(p=="assumed_zero" for p in training_phases)
+            else "complex_impedance_fit" if all(p=="supplied" for p in training_phases) else "mixed_supplied_or_assumed_phase_fit")
+        contract["fit_band_hz"]=[float(all_f[0]),float(all_f[-1])]
+        contract["fit_diagnostics"]=result["fit_diagnostics"]
+        result["load_contract"]=contract
+        result["impedance_model"]=dict(kind="free_air",ts=ts,electrical_load=contract)
     result["validity"]=dict(interpretation="Numerical parameter estimates and local identifiability diagnostics, not fit-quality ratings or empirical uncertainty. Calibration and held-out validation remain separate.")
     return result
 

@@ -34,3 +34,7 @@ preference regression from the objective. It requires resolved LF extension and
 the predictor frequency bands. No component/spatial target is added implicitly.
 An `epdr_ohm` constraint returns a signed margin under the declared class-B model.
 See [passive network diagnostics](../../references/passive-network-diagnostics.md).
+
+## Electrical-load evidence
+
+See the shared [electrical-load contract and scenario interface](../electrical-loads.md). Load identity, model, phase basis, coverage and transformations are reported for agent interpretation; missing evidence does not trigger a design-validation error.

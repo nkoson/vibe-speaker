@@ -80,3 +80,7 @@ These allow a search to retain an intended handover, bass extension and protecti
 fitting total response. Zero degrees must appear among target angles. Empty bands are errors.
 `constraint_diagnostics` reports unweighted margins on the full output grid; a negative margin is a
 remaining violation. Independently verify realized stock, dense-grid response and terminal transfer.
+
+## Electrical-load evidence
+
+See the shared [electrical-load contract and scenario interface](../electrical-loads.md). Load identity, model, phase basis, coverage and transformations are reported for agent interpretation; missing evidence does not trigger a design-validation error.

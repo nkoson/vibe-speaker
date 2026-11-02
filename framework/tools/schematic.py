@@ -168,8 +168,8 @@ def netlist(sections, base_dir="."):
         components.append(dict(id=f"lead_{name}_return", type="R", value_ohm=0.005, nodes=[minus, drv_minus], note="driver lead, set resistance"))
         connections.append(dict(id=f"lead_{name}_hot", label=f"{up} driver lead", from_node=node, to_node=drv_plus, value=f"driver + terminal (polarity {polarity:+g})"))
         connections.append(dict(id=f"lead_{name}_return", label=f"{up} driver return", from_node=minus, to_node=drv_minus, value="driver - terminal"))
-        impedance = section.get("load") or (dict(section["source"], path="results.z_ohm") if section.get("source") else {"kind": "resistive", "r_ohm": 8})
-        loads.append(dict(id=name, plus=f"{up}_DRV+", minus=f"{up}_DRV-", impedance=_absolute(impedance, base_dir)))
+        impedance = section.get("load") or (dict(section["source"], path=section["source"].get("impedance_path", "results.z_ohm")) if section.get("source") else {"kind": "resistive", "r_ohm": 8})
+        loads.append(dict(id=name, plus=f"{up}_DRV+", minus=f"{up}_DRV-", impedance=_absolute(impedance, base_dir), electrical_load=section.get("electrical_load")))
     links = []
     first = sections[0].get("name", "section").upper()
     for section in sections[1:]:

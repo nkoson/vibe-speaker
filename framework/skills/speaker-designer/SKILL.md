@@ -58,3 +58,9 @@ Use `system_scenarios` to replay the dependency chain with correlated production
 ## Freeze and record
 
 Record the final physical parts, wiring/polarity, geometry, source contracts, all result dependencies, cost completeness and the figures that motivated the selection. Cold-replay the chosen chain. A refinement normally becomes a new candidate, with changed variables isolated for its first comparison and dependent results regenerated. Keep remaining limitations specific to their effect on this design, and deliver definite values under the chosen assumptions.
+
+## Electrical-load evidence and alternatives
+
+Use [driver impedance and identification](../../references/driver-impedance-identification.md) and the [electrical-load interface](../../simulations/electrical-loads.md) when preparing a crossover source. Inspect the load's model, phase basis, support band and source identity separately from its acoustic curve. A datasheet Le retains a constant-inductance assumption; a small solver residual does not establish that assumption's broadband accuracy. Select a curve or parametric model from the available evidence, without a universal preferred law or exponent.
+
+Where load ambiguity affects a useful response feature, compare declared `load_scenarios` with the same circuit, then consider fitting across those cases. Read branch gain/phase, acoustic overlap and leakage, summed response, input load and component stress. Keep production tolerances separate. Choose bands, error budgets and objective aggregation from this brief. If changed physical parameters affect sound per terminal volt, replace the acoustic source too or replay the physical chain. The tools return observations; you judge whether further source research or a different circuit would improve the design.

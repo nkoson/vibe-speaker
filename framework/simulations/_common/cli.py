@@ -312,6 +312,7 @@ def run(name, version, compute, description, notes, validity=()):
         "status": "computed",
         "generated_utc": started.isoformat(timespec="seconds"),
         "inputs": params,
+        "interpretation": "Data and numerical diagnostics for the calling agent. No design acceptance, evidence qualification or fit-quality verdict is computed.",
         "model_notes": list(notes),
         "validity": {"app_version": version, "statements": list(validity) or list(notes),
                       "universal": list(UNIVERSAL_VALIDITY),

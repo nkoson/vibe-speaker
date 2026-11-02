@@ -5,9 +5,9 @@ from pathlib import Path
 import numpy as np
 from scipy.optimize import minimize, differential_evolution, NonlinearConstraint
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from _common import cli,apps,radiation,acoustics,networks,spatial_objectives,load_diagnostics
+from _common import cli,apps,radiation,acoustics,networks,spatial_objectives,load_diagnostics,electrical_load
 NAME="network_fit"
-VERSION = "1.2"
+VERSION = "1.3"
 
 class EvaluationBudgetExceeded(Exception):
     """Stop numerical work while retaining evaluated trials."""
@@ -45,12 +45,18 @@ def compute(params,base_dir):
         sel=(f>=spec["band_hz"][0])&(f<=spec["band_hz"][1])
         if not np.any(sel):raise cli.InputError("spatial target band has no samples")
         spatial_targets.append((spec,values,sel))
-    def evaluate(x,stock=False):
-        key=tuple(x) if not stock else None
-        if key is not None and key in cache:return cache[key]
-        if len(trials)>=budget:raise EvaluationBudgetExceeded
+    cases=electrical_load.fit_cases(params)
+    case_data=[]
+    for case in cases:
+        case_loads,case_system,case_notes=electrical_load.case_inputs(board["loads"],system,case,nodal=True)
+        case_sources=radiation.load_sections(case_system,f,base_dir) if case_system else None
+        case_spatial=spatial_objectives.basis(case_sources,f,distance,ear) if case_sources and (spatial_specs or preference_weight) else None
+        case_data.append((case,case_loads,case_system,case_sources,case_spatial,case_notes))
+
+    def evaluate_case(x,case_record,stock=False):
+        case,case_loads,system,sources,spatial_basis,case_notes=case_record
         for v,k,value in zip(variables,keys,np.exp(x)):components[v["id"]][k]=float(value)
-        result=apps.module("board_nodal").compute(board,base_dir)
+        result=apps.module("board_nodal").compute(dict(board,loads=case_loads),base_dir)
         mode=result["modes"][int(params.get("mode_index",0))];loads={r["id"]:r for r in mode["loads"]}
         residual=[];objective_terms=[];spatial=None;regression=None
         for spec in target.get("transfers",[]):
@@ -59,7 +65,7 @@ def compute(params,base_dir):
         acoustic=None
         if sources:
             transfers=[loads[s["load_id"]]["transfer"] for s in system["sections"]]
-            p,_=radiation.pressure(sources,f,radiation.observation_points(distance,ear,angles,"V"),distance,transfers)
+            p,contributions=radiation.pressure(sources,f,radiation.observation_points(distance,ear,angles,"V"),distance,transfers)
             acoustic=acoustics.db(p*float(params.get("input_voltage_rms",2.83))/cli.P0)
             band=target.get("band_hz",[f[0],f[-1]]);sel=(f>=band[0])&(f<=band[1])
             if acoustic_target is not None:
@@ -105,6 +111,23 @@ def compute(params,base_dir):
                  input_z_min_ohm=float(min(abs(s["input_z_ohm"]).min() for s in mode["sources"] if s.get("active"))),
                  inventory_cost=networks.inventory_cost(board["components"]),
                  stock_realization=stock)
+        row.update(name=case["name"],load_scenario=case_notes,
+                   loads=mode["loads"],components_stress=mode["components"],sources=mode["sources"],
+                   acoustic_sections=contributions if sources else None)
+        return row
+
+    def evaluate(x,stock=False):
+        key=tuple(x) if not stock else None
+        if key is not None and key in cache:return cache[key]
+        if len(trials)>=budget:raise EvaluationBudgetExceeded
+        outcomes=[evaluate_case(x,case,stock) for case in case_data]
+        row=dict(outcomes[0])
+        row["cost"]=electrical_load.combine_costs([o["cost"] for o in outcomes],cases,params.get("load_scenario_objective"))
+        # Constraints retain their caller-declared numerical meaning. Alternatives only
+        # participate when the caller explicitly asks for them.
+        if params.get("load_scenario_constraints") == "all":
+            row["constraint_margins"]=[m for o in outcomes for m in o["constraint_margins"]]
+        row["load_scenarios"]=outcomes
         trials.append(row)
         if key is not None:cache[key]=row
         return row
@@ -146,7 +169,9 @@ def compute(params,base_dir):
     continuous_minimum_index=numerical["index"]
     constrained=[r for r in trials if all(m>=-1e-9 for m in r["constraint_margins"])]
     numerical=min(constrained or trials,key=lambda r:r["cost"])
-    return dict(f_hz=f,continuous_minimum_index=continuous_minimum_index,trials=trials,stock_trials=[r["index"] for r in stock],
+    return dict(load_scenario_objective=params.get("load_scenario_objective", {"mode":"nominal"}),
+                load_scenario_aggregation=electrical_load.aggregation(cases,params.get("load_scenario_objective")),
+                f_hz=f,continuous_minimum_index=continuous_minimum_index,trials=trials,stock_trials=[r["index"] for r in stock],
                 numerical_minimum_index=numerical["index"],optimizer_status=status,
                 numerical_domain_count=len(constrained),
                 validity=dict(objective="Declared numeric targets/constraints; trial metrics do not choose a speaker or prescribe acceptance. Stock trials preserve SKU, losses, rating and price fields supplied together."))

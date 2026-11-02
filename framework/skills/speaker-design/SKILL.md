@@ -23,6 +23,8 @@ Choose a purchasable prototyping board with an existing copper pattern, or a pla
 
 ## Working context
 
+For supplied measurements or requests to diagnose a built speaker, use [speaker-measurements](../speaker-measurements/SKILL.md). It reads REW files directly, preserves the acquisition basis, analyses branch overlap and summation, and connects measured findings to controlled crossover changes. Measurement interpretation is centred on improving the speaker; acquisition checks are a supporting step.
+
 Projects live in `framework/projects/<slug>/` and remain outside Git. `project.json` records the brief, objectives, listening geometry, iteration budget, candidate list and decisions. Inventory records, candidate parameter/result files, evaluations and final drawings preserve the evidence. A revision normally becomes a new candidate with a `parent`, leaving the released baseline available for comparison.
 
 Use `.speaker-venv/bin/python` and `framework/tools/run_simulation.py` for project runs. Read `framework/simulations/README.md` and each selected app's contract before its first use. Keep dependency execution in order and inspect command status and fresh result identity before using a result. One app per command makes failures and provenance easier to interpret.
@@ -68,3 +70,7 @@ Make a definite recommendation using the user's central priorities, realized con
 For a selected construction design, use `speaker-documentation` to produce a complete PDF with source drawings and plots alongside it. Deliver final stock values, machining dimensions, wiring and useful placement guidance. If the available work does not approach the central brief, explain the closest option and alternatives honestly; respect the user's requested deliverable and budget.
 
 Finish with a project postmortem through `speaker-learnings`, recording transferable mechanisms and implementation defects. Source changes go through Git when authorized; project-specific evidence stays in the project folder.
+
+## Electrical-load evidence in the design loop
+
+Use the [electrical-load reports](../../simulations/electrical-loads.md) to connect source preparation, crossover fitting, evaluation and cold replay. Retain the selected load identity, model, phase/coverage evidence and relevant alternatives in the project record. Application diagnostics inform the agent; they do not impose validation gates, a universal load model or error thresholds. Adapt the depth of investigation to the effect on the user's objectives.

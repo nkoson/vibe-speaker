@@ -11,6 +11,10 @@ Record inputs, result paths/JSON fields, model revision, drive, grid, expected r
 | Level basis | Compare parameter-derived and published levels at the same band, voltage, distance and space; name chosen basis and uncertainty | |
 | Known series resistor | Move resistance from box drive to network; pressure (cone and outlet), current and excursion agree under the same drive | |
 | Aggregate drivers | Independent coupling calculation: total pressure, physical per-motor current/excursion, actual radiator count; state cavity-model limitation | |
+| Electrical load | Model/curve identity, blocked versus terminal scope, evidence, phase basis and stated support band; report missing information | |
+| Load replay | Compare complex impedance and load identities through source, ladder/nodal, fitter and whole-system outputs; inspect explicit overrides | |
+| Load alternatives | Same-circuit branch transfer, overlap/leakage, sum and stress across declared alternatives; distinguish electrical-only probes from physical source changes | |
+| Identification | Fit/held-out band residuals, bounds/rank and same-circuit transfer differences; interpret using the brief's error budget | |
 | Cold replay | Rerun dependencies in order without cache, compare frozen results; record code revision and any changed input | |
 | Inherited baseline | Identify released realization and artifact revisions; regenerate figures on current basis without changing targets | |
 | Fixture and final calibration | Record test geometry/splice; calibrate after source shaping; verify completed source against anchors | |
@@ -22,3 +26,5 @@ Record inputs, result paths/JSON fields, model revision, drive, grid, expected r
 Graph calibration record: source URL/document, variant, test horn/baffle, two or more axes/curve anchors, reading uncertainty, phase provenance. Acoustic calibration records the gain and its derivation; it does not rescale current or excursion.
 
 Correction log: cause; affected candidates; original and corrected evidence; ranking impact; exploration invalidated; budget treatment. Use new exploration IDs only for actual design exploration, not validation reruns.
+
+These entries guide an agent review. They are not software acceptance conditions or fixed validation thresholds. Record why the evidence changes or retains the design choice.

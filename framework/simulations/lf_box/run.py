@@ -7,10 +7,10 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from _common import cli, acoustics, bass, thermal  # noqa: E402
+from _common import electrical_load, cli, acoustics, bass, thermal  # noqa: E402
 
 NAME = "lf_box"
-VERSION = "1.3"
+VERSION = "1.4"
 NOTES = [
     "Linear lumped electro-mechanical-acoustic model at small signal; no suspension or Bl nonlinearity, thermal compression, port turbulence or cone breakup.",
     "Pressures are at 1 m in the stated radiation space (half = 2 pi infinite baffle, full = 4 pi free field); excursion and port air speed are sine peak values.",
@@ -326,6 +326,19 @@ def compute(params, base_dir):
         limits["xmax_definition"] = displacement["definition"]["definition"]
     if limits:
         results["linear_scaling_to_limits"] = _scaling(f, base, voltages[0], limits, stress_band)
+    for curve in curves:
+        case_enclosure = dict(enclosure)
+        if "rav_pa_s_per_m3" in curve:
+            case_enclosure["rav_pa_s_per_m3"] = curve["rav_pa_s_per_m3"]
+        contract = electrical_load.describe(dict(kind=enclosure["type"], ts=ts, enclosure=case_enclosure), f,
+                                            params.get("driver", {}).get("electrical_load"))
+        contract["transformations"].extend([dict(operation="enclosure_loading", enclosure=case_enclosure),
+            dict(operation="external_series_resistance_excluded_from_load", resistance_ohm=series_r)])
+        if isobaric_report:
+            contract["transformations"].append(dict(operation="isobaric", details=isobaric_report))
+        if thermal_report:
+            contract["transformations"].append(dict(operation="thermal", details=thermal_report))
+        curve["load_contract"] = electrical_load.observe(contract, f, curve["z_ohm"])
     results["validity"] = _validity(ts, enclosure, f)
     return results
 

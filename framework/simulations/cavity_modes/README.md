@@ -86,3 +86,7 @@ are supported by the FVM basis; the analytical rectangular basis rejects them.
 `cavity.internal_panels[]` adds a flat internal part in any principal plane: `normal_axis` (`x`, `y`, `z`), `start_mm`, `thickness_mm`, `origin_uv_mm`, `size_uv_mm`, optional `holes` and `reliefs`. The in-plane coordinates follow the other two global cavity axes in ascending order (X/Z for a Y-normal support). Normal panel faces and outside in-plane boundaries are inserted into the mesh. Use a circular relief plus an open-top rectangular relief for a curved support. Refine the grid to inspect acoustic sensitivity to its occupied volume.
 
 These masks add geometry to the existing rigid-boundary finite-volume Helmholtz model; they do not infer brace strength or choose an aperture pattern. Use the [cabinet geometry](../../references/cabinet-geometry.md), [cabinet construction](../../references/cabinet-construction.md), and [panel mechanics](../../references/cabinet-materials-and-panels.md) references to interpret geometry and panel results.
+
+## Electrical-load evidence
+
+See the shared [electrical-load contract and scenario interface](../electrical-loads.md). Load identity, model, phase basis, coverage and transformations are reported for agent interpretation; missing evidence does not trigger a design-validation error.

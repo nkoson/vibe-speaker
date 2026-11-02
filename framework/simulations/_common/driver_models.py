@@ -13,8 +13,6 @@ def blocked_impedance(ts, f):
     if kind == "leach":
         k = cli.positive(model.get("k"), "inductance k", zero=True)
         n = cli.positive(model.get("n"), "inductance n", zero=True)
-        if n > 1:
-            raise cli.InputError("passive fractional inductance needs 0 <= n <= 1")
         return re+k*s**n
     if kind == "lr2":
         le = cli.positive(model.get("le_mh", 0), "le_mh", zero=True)*1e-3

@@ -122,3 +122,7 @@ Then check the figures against each other rather than one at a time. Every line 
 ## Editorial release check
 
 Read the complete rendered PDF, including text embedded in plots and drawings. Remove every simulation-status disclaimer and generic non-certification statement. Replace bare result narration with useful interpretation. For each performance figure, identify its observed feature, consequence for the speaker and practical implication. Keep real operating constraints and machining instructions; rewrite them as actions rather than disclaimers. Confirm that captions, legends and headings follow the same rule as the prose.
+
+## Selected electrical realization
+
+Use the agent-selected load and actual stock circuit consistently for branch, sum, impedance and stress figures. The [electrical-load records](../../simulations/electrical-loads.md) provide internal traceability through source, network and replay. Keep evidence diagnostics and selection reasoning in the project; the builder package explains the resulting behavior and definite construction choices. No software validation label is needed to document the chosen realization.
