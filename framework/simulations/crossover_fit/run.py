@@ -9,10 +9,10 @@ import numpy as np
 from scipy.optimize import least_squares
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from _common import cli, acoustics, networks, radiation  # noqa: E402
+from _common import cli, acoustics, networks, radiation, electrical_load, apps  # noqa: E402
 
 NAME = "crossover_fit"
-VERSION = "1.4"
+VERSION = "1.5"
 
 class EvaluationBudgetExceeded(Exception):
     """Expected termination of a bounded numerical search."""
@@ -137,7 +137,7 @@ def compute(params, base_dir):
     fit_f = cli.frequency_grid(params.get("fit_frequencies"), band[0] / 1.5, band[1] * 1.5, 240)
     full_f = cli.frequency_grid(params.get("frequencies"), 10.0, 40000.0, 800)
     observer = system.get("observer") or {}
-    distance = float(observer.get("distance_m", 3.0))
+    distance = float(observer.get("distance_m", 1.0))
     ear = float(observer.get("ear_height_m", 1.0))
     voltage = float(params.get("input_voltage_rms", 2.83))
     angles = target.get("vertical_angles_deg", [0.0])
@@ -148,6 +148,13 @@ def compute(params, base_dir):
     points = radiation.observation_points(distance, ear, angles, "V")
     geometry = radiation.load_sections(system, fit_f, base_dir)
     loads = [networks.section_load(w, fit_f, base_dir)[0] for w in sections_cfg]
+    cases = electrical_load.fit_cases(params)
+    case_data = []
+    for case in cases:
+        case_sections, case_system, notes = electrical_load.case_inputs(sections_cfg, system, case)
+        case_data.append(dict(case=case, sections=case_sections, system=case_system, notes=notes,
+            loads=[electrical_load.section(w, fit_f, base_dir)[0] for w in case_sections],
+            geometry=radiation.load_sections(case_system, fit_f, base_dir)))
     elements = [networks.with_wire(w) for w in sections_cfg]
     rows = _variables(sections_cfg)
     x0 = np.log([r["start"] for r in rows])
@@ -164,30 +171,35 @@ def compute(params, base_dir):
     scale = voltage / acoustics.P0
     budget = dict(calls=0, max=int(params.get("max_objective_calls", 4000)))
 
-    def evaluate(x, polarity, rows_=None, elements_=None, with_branches=False):
+    def evaluate(x, polarity, rows_=None, elements_=None, with_branches=False, case=None):
         rows_ = rows if rows_ is None else rows_
         elements_ = elements if elements_ is None else elements_
         _apply(rows_, x)
+        active_loads = case["loads"] if case else loads
+        active_geometry = case["geometry"] if case else geometry
         transfers = []
         zin = []
         for wi in range(len(elements_)):
-            h, z = networks.ladder_transfer(fit_f, loads[wi], elements_[wi])
+            h, z = networks.ladder_transfer(fit_f, active_loads[wi], elements_[wi])
             transfers.append(h * polarity[wi])
             zin.append(z)
-        total, contributions = radiation.pressure(geometry, fit_f, points, distance, transfers)
+        total, contributions = radiation.pressure(active_geometry, fit_f, points, distance, transfers)
         result = (acoustics.db(total * scale), 1 / np.sum([1 / z for z in zin], axis=0), transfers)
         return result + (acoustics.db(contributions[:, axis_index] * scale),) if with_branches else result
 
     def residual_values(x, polarity, target_db, rows_=None, elements_=None):
-        db_, zin, transfers, branches = evaluate(x, polarity, rows_, elements_, with_branches=True)
-        r = ((db_ - target_db[None, :]) * weights[None, :]).ravel()
-        if min_z > 0:
-            shortfall = np.maximum(min_z - np.abs(zin[audible]), 0.0) / min_z
-            r = np.r_[r, z_weight * 10 * shortfall]
-        if constraint_specs:
-            penalties, _ = constraint_penalties(constraint_specs, fit_f, db_[axis_index], transfers, branches, voltage)
-            r = np.r_[r, penalties]
-        return r
+        residuals=[]
+        for case in case_data:
+            db_, zin, transfers, branches = evaluate(x, polarity, rows_, elements_, with_branches=True, case=case)
+            r = ((db_ - target_db[None, :]) * weights[None, :]).ravel()
+            if min_z > 0:
+                shortfall = np.maximum(min_z - np.abs(zin[audible]), 0.0) / min_z
+                r = np.r_[r, z_weight * 10 * shortfall]
+            if constraint_specs:
+                penalties, _ = constraint_penalties(constraint_specs, fit_f, db_[axis_index], transfers, branches, voltage)
+                r = np.r_[r, penalties]
+            residuals.append(r)
+        return electrical_load.combine_residuals(residuals, cases, params.get("load_scenario_objective"))
 
     def residual(x, polarity, target_db):
         budget["calls"] += 1
@@ -390,15 +402,34 @@ def compute(params, base_dir):
                             note="Joint stock trials with supplied SKU/loss records. The returned realization minimizes the declared response cost among evaluated combinations; final design selection belongs to the caller.")
         _apply(rows,best["x"])
 
+    def report_cases(realization):
+        outcomes=[]
+        for case in cases:
+            cfg, case_system, notes = electrical_load.case_inputs(realization, system, case)
+            network=apps.module("crossover_network").compute(dict(sections=cfg,
+                frequencies={"values_hz":full_f.tolist()},input_voltage_rms=voltage),base_dir)
+            geom=radiation.load_sections(case_system,full_f,base_dir)
+            case_transfers=[row["transfer"] for row in network["sections"]]
+            pressure, contributions=radiation.pressure(geom,full_f,
+                radiation.observation_points(distance,ear,angles,"V"),distance,case_transfers)
+            outcomes.append(dict(name=case["name"],load_scenario=notes,network=network,
+                acoustic_pressure=pressure*voltage,acoustic_spl_db=acoustics.db(pressure*scale),
+                acoustic_sections=contributions*voltage))
+        return outcomes
+    scenario_results=report_cases(fitted_sections)
+    if quantization:
+        quantization["load_scenarios"]=report_cases(quantization["sections"])
     start_curve = start_db[0]
     aud = (full_f >= 20) & (full_f <= 20000)
     _, constraint_diagnostics = constraint_penalties(constraint_specs, full_f, on_axis, transfers,
                                                       acoustics.db(parts[:, 0] * scale), voltage)
-    return dict(f_hz=full_f, fit_f_hz=fit_f, target_spl_db=target_db, band_hz=list(band), start_spl_db=start_curve,
+    return dict(load_scenarios=scenario_results, load_scenario_objective=params.get("load_scenario_objective", {"mode":"nominal"}),
+                load_scenario_aggregation=electrical_load.aggregation(cases,params.get("load_scenario_objective")),
+                f_hz=full_f, fit_f_hz=fit_f, target_spl_db=target_db, band_hz=list(band), start_spl_db=start_curve,
                 constraint_diagnostics=constraint_diagnostics, constraints_are_soft_penalties=True,
                 ablation=ablation, quantization=quantization, fitted_efficiency=fitted_efficiency, fitted_parts=fitted_parts,
                 attempts=attempts, selected_polarity=best["polarity"], fitted_values=fitted_values, fitted_sections=fitted_sections,
-                on_axis_spl_db=on_axis, sections=[dict(name=w.get("name"), transfer=transfers[i], spl_db=acoustics.db(parts[i, 0] * scale)) for i, w in enumerate(sections_cfg)],
+                on_axis_spl_db=on_axis, sections=[dict(name=w.get("name"), load_contract=scenario_results[0]["network"]["sections"][i]["load_contract"], transfer=transfers[i], spl_db=acoustics.db(parts[i, 0] * scale)) for i, w in enumerate(sections_cfg)],
                 fitted_network_audit=audits, input_z_ohm=total_z,
                 statistics=dict(rms_error_in_band_db=best["rms"],
                                 ripple_in_band_db=float(np.ptp(on_axis[(full_f >= band[0]) & (full_f <= band[1])])),

@@ -377,8 +377,8 @@ def test_near_field_border_reproduces_the_published_example():
 def test_whole_speaker_reports_the_border_against_its_own_observation_distance():
     r = load("whole_speaker")
     near = r["arrays"]["near_field"]
-    assert near["observer_distance_m"] == 3.0
-    assert near["observer_inside_near_field_above_hz"] == 8000.0
+    assert near["observer_distance_m"] == 1.0
+    assert near["observer_inside_near_field_above_hz"] == 2000.0
     assert "ISOPHASIC" in near["caveat"]
     group = r["arrays"]["groups"][0]
     assert group["spacing"]["half_wavelength_limit_hz"] == pytest.approx(953, abs=2)

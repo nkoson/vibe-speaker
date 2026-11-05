@@ -1,7 +1,7 @@
 ---
 id: cad-drawing
 applies_when: Creating or reviewing fabrication CAD drawings for a loudspeaker cabinet and its installed parts
-updated: 2026-10-20
+updated: 2026-10-22
 ---
 
 # Cabinet CAD drawing practice
@@ -49,7 +49,7 @@ Choose the smallest complete set; an attractive isometric is a locator, not a re
 | Loose-panel drawings | Part ID/quantity/material, actual blank and long-point dimensions, local datum, cutouts, pockets, grooves, pilots and entry face |
 | Driver mounting details | Aperture, recess contour/radii/depth, fixing pattern, bearing ledge, compressed seal, nut/insert and fastener stack |
 | Brace details | Blank and housing engagement, each aperture and edge radius, coordinates and thickness |
-| Ports | Purchased pieces, straight cut lengths, sleeve engagement, finished mouth-to-mouth length, recess, fixing operation and mouth clearance |
+| Ports | Recognisable longitudinal and exploded views of purchased pieces; labelled mouth/cut endpoints, abutting joints, sleeve engagement, finished mouth-to-mouth length, recess, fixing operation and mouth clearance |
 | Cradle/support details | Saddle arc/centre, runners, contact surfaces, screw/pilot locations and assembly order |
 | Rear/underside details | Connector relief and hole pattern, board/star mounts, feet and blind fixing depths |
 | Cut list and feature schedule | Matching IDs, quantities, material thickness and sheet/view references |
@@ -74,6 +74,89 @@ Before release:
 4. Render every sheet. Check overlapping text, crossed dimension strings, hidden-line clarity, section arrows, hatch boundaries and empty/obscured callouts.
 5. Perform a reconstruction pass from drawings alone. Every essential feature must have a dimension, keyed schedule or a precise supplied-part jig operation.
 6. Keep source/provenance and checks in the project evaluation. Builder-facing notes are concise assembly and machining instructions, following the documentation skill's canonical-results contract.
+
+## Transducer geometry and simulation reuse
+
+Every installed driver and passive radiator requires a sourced CAD model, an
+individual named STEP file, an installed instance in the cabinet STEP assembly,
+and visible geometry in the construction drawings. Horns/waveguides and their
+compression drivers are separate physical parts. This is a framework requirement
+for fitting, mockup fabrication and consistent simulation inputs.
+
+### Source and define each part
+
+Prefer manufacturer CAD. If unavailable, create the model from the manufacturer's
+dimensioned drawing, preserving the exact variant and drawing revision. Published
+dimensions control over scaling the illustration. Keep a source record separating
+published dimensions, traced contours and reconstructed detail. Resolve conflicting
+table/drawing dimensions explicitly. Retain the parametric definition with the
+STEP export, since STEP alone does not preserve the complete feature history. [S9]
+
+Include the flange and seating face, fixing holes/slots with clocking, basket,
+magnet/rear chamber, diaphragm/surround, horn throat joint and any installed tuning
+weights. Preserve real openings around the basket. Identify terminal/access
+geometry where it affects fitting. The interface definition owns hole centres,
+sizes, recess depths, gasket compression and body orientation; drawings and STEP
+derive from it. Complete mounting information follows the functional-datum and
+hole-note principles above. [S1, S11, S12]
+
+For a printed mockup, keep tapping pilots, printable membrane thicknesses and
+other fabrication adaptations explicitly identified in the model source. Carry
+the purchased unit's mounting geometry into that variant. Keep manufacturer
+moving mass, air displacement, material and electromechanical data attached to
+the physical unit independently of the print's material volume or infill.
+
+### Validate the installed model
+
+Reopen the STEP files and inspect positive volume, connected-solid count, units,
+dimensions and transforms. Compare the driver's independently sourced mounting
+pattern with the cabinet pattern, including radial slots, hole clocking and
+clearance for screw shanks. Check the exported solids at the compressed seating
+stack: recess walls, bearing ledges, through aperture, body, braces, support,
+lining, terminal leads and tool access. A matching bolt circle alone does not
+establish complete fit.
+
+Keep stationary material separate from moving/service envelopes. For passive
+radiators, include front and rear travel at the design's applicable displacement,
+the installed tuning-weight stack, and access for adjustment. Draw the positions
+and clearances, and record numerical intersections/distances. The agent interprets
+intentional contact, sealing and fixing clearance; tools report the geometry.
+
+### Feed supported simulations
+
+Use the governing driver/radiator geometry in **every applicable simulation that
+supports that representation**. Record a geometry-consumer table in the project:
+CAD revision/hash and part IDs, simulation input/result paths, representation,
+unit/datum transform, source position/normal and any deliberate reduction.
+
+- `assembly_geometry` accepts closed triangle-mesh objects in metres. Derive their
+  vertices and installed transforms from the governing solids. Validate welded
+  topology, outward orientation, volume and mesh refinement before containment.
+- `cavity_modes` FVM accepts the shared assembly's air-minus-solid mask. Use the
+  relevant driver/radiator rear bodies, baskets and membranes in the cavity frame.
+  Construct the connected physical air domain explicitly, preserving open basket
+  passages and separating the front and rear sides of the diaphragm. Remove an
+  older displacement obstacle when its detailed geometry replaces it.
+- `exterior_bem` accepts a closed surface mesh or a selected assembly object.
+  Derive the cabinet, recess, diaphragm and horn boundary appropriate to the
+  exterior problem. Assign the actual moving surface's velocity/volume flow and
+  keep stationary faces rigid. A collection of CAD bodies does not itself define
+  the acoustic boundary conditions. Refine the mesh and compare fields.
+- Whole-speaker `assembly_source` can share the installed source position and
+  normal. Other shape-aware consumers use their documented geometry inputs,
+  derived from the same part/assembly definition.
+- Reduced models retain their supported physical inputs: active area, source
+  location, acoustic depth, air displacement, mass or loading profile. Trace these
+  quantities to their physical basis. Electrical networks and lumped motor models
+  do not acquire arbitrary STEP support merely because a STEP file exists.
+
+The current input contracts are in the respective application READMEs and the
+[advanced simulation guide](../skills/speaker-designer/references/advanced-simulation.md).
+Place reusable conversion/meshing logic in the framework; project files hold part
+data and run configurations. Replay affected consumers and downstream outputs
+after a change to geometry they actually use. A drawing-only detail that changes
+none of their physical inputs is recorded as such. Preserve these distinctions
+in the project audit; the builder receives the mounting and assembly instructions.
 
 ## Sources
 

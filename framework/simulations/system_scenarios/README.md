@@ -19,3 +19,7 @@ separately, reference an explicitly exported real-valued observable.
 Use the same production draw definitions for candidate comparisons, inspect domain errors and nominal recovery, and keep scenario uncertainty distinct from numerical mesh/solver refinement.
 
 See [simulation methods](../../references/simulation-methods.md) for equations, sources and verification scope, and [advanced workflow guidance](../../skills/speaker-designer/references/advanced-simulation.md) for connecting the result to a design.
+
+## Electrical-load evidence
+
+See the shared [electrical-load contract and scenario interface](../electrical-loads.md). Load identity, model, phase basis, coverage and transformations are reported for agent interpretation; missing evidence does not trigger a design-validation error.

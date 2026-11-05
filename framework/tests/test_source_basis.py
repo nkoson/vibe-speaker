@@ -65,11 +65,11 @@ def test_legacy_basis_is_explicit_about_embedded_loss(tmp_path):
     assert "do not apply" in result["pressure_basis"]
 
 
-def test_calibration_requires_provenance(tmp_path):
+def test_calibration_reports_missing_provenance(tmp_path):
     params, *_ = source_case(tmp_path)
     params["acoustic"]["level_calibration"] = {"gain_db": -2}
-    with pytest.raises(cli.InputError, match="basis"):
-        source.compute(params, tmp_path)
+    result = source.compute(params, tmp_path)
+    assert result["level_calibration"]["basis"] == "unspecified"
 
 
 def test_nonfirst_curve_uses_its_own_voltage(tmp_path):

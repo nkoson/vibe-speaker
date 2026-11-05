@@ -5,9 +5,9 @@ import sys
 from pathlib import Path
 import numpy as np
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from _common import cli, acoustics
+from _common import electrical_load, cli, acoustics
 NAME="enclosure_network"
-VERSION="1.0"
+VERSION = "1.1"
 
 
 def preset(params):
@@ -128,6 +128,9 @@ def compute(params,base_dir):
                                velocity_m_s=v,acceleration_rms_m_s2=abs(s*v),
                                reaction_force_peak_n=np.sqrt(2)*abs(s*v)*(e["mms"]+d.get("extra_mass_g",0)*.001),
                                copper_loss_w=abs(current)**2*e["re"]))
+        contract=electrical_load.describe(dict(kind="enclosure_network",ts=d["ts"],network=p,driver_id=d["id"]),f,d.get("electrical_load"))
+        contract["transformations"].append(dict(operation="external_series_resistance_excluded_from_load",resistance_ohm=d.get("series_resistance_ohm",0)))
+        driver_rows[-1]["load_contract"]=electrical_load.observe(contract,f,driver_rows[-1]["z_ohm"])
         if d.get("front_node") is None:
             emissions.append(dict(id=d["id"],flow=q,position_m=d.get("position_m",[0,0,0])))
         elif d.get("rear_node") is None:
@@ -158,7 +161,7 @@ def compute(params,base_dir):
         voltage=motors[0][-1]
         canonical=dict(pressure_per_volt_pa=sum((e["pressure_at_1m_pa"] for e in emissions),np.zeros(len(f),complex))/voltage,
                        z_ohm=driver_rows[0]["z_ohm"],
-                       source_contract=dict(phase_reference="intrinsic",pressure_reference_m=1.,
+                       source_contract=dict(electrical_load=driver_rows[0]["load_contract"],phase_reference="intrinsic",pressure_reference_m=1.,
                                             normalization="declared_volt",baffle="external",
                                             spatial_basis="colocated sum; use individual emissions for outlet position effects"))
     return dict(f_hz=f,expanded_network=p,chamber_pressure_pa=pressure,drivers=driver_rows,

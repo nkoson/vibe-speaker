@@ -4,9 +4,9 @@ import sys
 from pathlib import Path
 import numpy as np
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from _common import cli,acoustics
+from _common import electrical_load, cli,acoustics
 NAME="distributed_loading"
-VERSION = "1.1"
+VERSION = "1.2"
 
 def compute(params,base_dir):
     f=cli.frequency_grid(params.get("frequencies"),10,4000,600);s=2j*np.pi*f
@@ -52,6 +52,9 @@ def compute(params,base_dir):
         voltage=float(driver.get("voltage_rms",1.))
         rows.append(dict(id=driver["id"],velocity_m_s=v,current_a=current,z_ohm=voltage/current,
                          excursion_peak_mm=np.sqrt(2)*abs(v/s)*1000,volume_velocity_m3_s=q))
+        contract=electrical_load.describe(dict(kind="distributed_loading",ts=driver["ts"],network=params,driver_id=driver["id"]),f,driver.get("electrical_load"))
+        contract["transformations"].append(dict(operation="external_series_resistance_included_in_load",resistance_ohm=driver.get("series_resistance_ohm",0)))
+        rows[-1]["load_contract"]=electrical_load.observe(contract,f,rows[-1]["z_ohm"])
         if driver.get("front_node") is None:emissions.append(dict(id=driver["id"],position_m=driver.get("position_m",[0,0,0]),volume_velocity_m3_s=q))
     for outlet,a,z in outlets:emissions.append(dict(id=outlet["id"],position_m=outlet.get("position_m",[0,0,0]),volume_velocity_m3_s=p[:,a]/z))
     receivers=np.asarray(params.get("observers_m",[[0,1,0]]),float)

@@ -6,7 +6,9 @@ updated: 2026-09-28
 
 # Cabinet geometry: the interior is a volume
 
-A cabinet interior is a three-dimensional space that several solid objects share. Nothing in this framework checks whether two of them occupy the same place: `framework/tools/cabinet_drawing.py` draws three elevations and subtracts litres, and it will happily draw a port tube through a brace, a woofer magnet through a partition and a crossover board through a horn. The occupancy bookkeeping is yours.
+A cabinet interior is a three-dimensional space that several solid objects share. Use the CAD exporter's installed-solid intersections and `assembly_geometry`'s shared-domain quantities to check that space; an illustrative elevation or volume ledger alone cannot establish fit. The agent interprets contact, joints and clearance from those results.
+
+Driver and passive-radiator models are mandatory in the drawings and individual/assembled STEP files. Use the [transducer geometry workflow](cad-drawing.md#transducer-geometry-and-simulation-reuse) for sourced bodies and fixing patterns, moving envelopes and reuse in geometry-capable simulations. The simple shapes below are screening representations; the released mounting validation uses the sourced models.
 
 That makes "there is room" and "there is no room" claims you derive, not impressions you form from one drawing. Two mistakes make the derivation fail, and both are avoidable with arithmetic:
 

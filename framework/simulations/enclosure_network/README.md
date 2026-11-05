@@ -38,3 +38,7 @@ outlet effects. External series resistance, if supplied, remains in the acoustic
 source-voltage normalization and must not be applied twice downstream.
 
 See [passive enclosure networks](../../references/passive-enclosure-networks.md).
+
+## Electrical-load evidence
+
+See the shared [electrical-load contract and scenario interface](../electrical-loads.md). Load identity, model, phase basis, coverage and transformations are reported for agent interpretation; missing evidence does not trigger a design-validation error.

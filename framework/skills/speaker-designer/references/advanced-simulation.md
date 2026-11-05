@@ -26,6 +26,8 @@ These tools have different physical scope. Read their README contracts before co
 
 The assembly schema uses metres and rigid transforms. Existing cabinet/cavity/radiation inputs retain their documented coordinate conventions. Record the transform when adapting the shared geometry, and compare source locations, normals and volume totals after conversion. Shared IDs connect dimensions, materials, joints, source positions and machining records; diagrams alone do not establish those relationships.
 
+Driver and passive-radiator models are mandatory in the CAD/STEP design basis. Use their governing geometry in every applicable consumer that supports it, according to [transducer geometry and simulation reuse](../../../references/cad-drawing.md#transducer-geometry-and-simulation-reuse). `assembly_geometry` accepts closed mesh objects; `cavity_modes` FVM accepts the shared assembly air/solid mask; `exterior_bem` accepts a closed surface mesh or assembly object; whole-speaker sections can use `assembly_source`. Build each consumer's physical domain explicitly. An individual driver solid is not automatically a closed exterior cabinet boundary, and a printable cone is not a source-velocity condition. Keep the input-to-CAD revision mapping with the run records and rerun consumers when their geometry changes.
+
 ## Compare mechanisms without counting them twice
 
 For cavity sources, use the exported per-terminal-volt cone pressure, outlet pressure and loaded impedance together. A source blending study can retain lumped LF behavior and detailed cavity behavior higher up, with a continuous declared transition. Inspect complex pressure and impedance across that transition, not magnitude alone.

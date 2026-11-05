@@ -8,7 +8,7 @@ reference distance removed, so the sum reads like an SPL at 1 m equivalent.
 """
 import numpy as np
 
-from . import acoustics, cli, geometry
+from . import acoustics, cli, geometry, electrical_load
 from .acoustics import C
 
 
@@ -47,7 +47,14 @@ def load_sections(params, f, base_dir):
         if depth is None and source_doc:
             depth = source_doc.get("results", {}).get("acoustic_depth_mm")
         depth = float(depth or 0.0)
-        contract = (source_doc or {}).get("results", {}).get("source_contract", {})
+        source_parent = (source_doc or {}).get("results", {})
+        if source_doc and section.get("source", {}).get("pressure_path"):
+            source_parent = cli.dotted(source_doc, section["source"]["pressure_path"].rsplit(".",1)[0])
+        contract = source_parent.get("source_contract", {})
+        source_load_contract = None
+        if source_doc:
+            source_load_contract = electrical_load.from_document(source_doc,
+                section["source"].get("impedance_path", "results.z_ohm"), f)
         if contract.get("baffle") == "included" and section.get("baffle"):
             raise cli.InputError("source already includes the baffle correction")
         position = cli.require(section, "position", label=f"section {section.get('name')}")
@@ -74,7 +81,9 @@ def load_sections(params, f, base_dir):
                 if ref["path"].endswith(".combined_factor") and parent.get("recess_transfer"):
                     baffle = cli.curve_from_reference(dict(ref,path=parent_path+".recess_transfer"),base_dir,f)
         entry = dict(name=section.get("name"), pressure=pressure, directivity=directivity, centre=centre, transfer=transfer, baffle=baffle,
-                     acoustic_depth_mm=depth,
+                     acoustic_depth_mm=depth, source_contract=contract,
+                     load_contract=source_load_contract,
+                     transfer_load_contract=None,
                      rear=rear_prior(section.get("rear_radiation"), cabinet.get("baffle_width_mm")),
                      axis=section.get("normal"), tilt_rad=np.deg2rad(float(section.get("tilt_deg", 0.0))), outlets=[])
         for outlet in section.get("rear_outlets", []) or []:
@@ -97,6 +106,10 @@ def load_sections(params, f, base_dir):
                                              rear=rear_prior(outlet.get("rear_radiation"), cabinet.get("baffle_width_mm")),
                                              axis=outlet.get("normal", [0,-1,0] if face=="rear" else [0,1,0]),
                                              directivity=outlet.get("directivity") or {"kind": "omni"}))
+        transfer_ref = section.get("transfer") or {}
+        if "file" in transfer_ref:
+            transfer_doc = cli.load_json(cli.resolve_path(transfer_ref["file"], base_dir))
+            entry["transfer_load_contract"] = electrical_load.from_document(transfer_doc, transfer_ref["path"], f)
         sections.append(entry)
     return sections
 

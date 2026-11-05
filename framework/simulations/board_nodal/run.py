@@ -6,10 +6,10 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from _common import cli, acoustics  # noqa: E402
+from _common import electrical_load, cli, acoustics  # noqa: E402
 
 NAME = "board_nodal"
-VERSION = "1.1"
+VERSION = "1.2"
 NOTES = [
     "Complex nodal analysis with ideal voltage sources at the active input terminals; zero-ohm wires merge nodes, so their individual currents are indeterminate and finite wire resistances are needed for wire current figures.",
     "An inactive source leaves its terminals open. A floating sub-network without any fixed potential is referenced to 0 V at one node so the matrix stays solvable; it carries no current.",
@@ -43,12 +43,7 @@ def _component_z(component, f, scale=None):
 
 
 def _load_z(load, f, base_dir):
-    z = load.get("impedance")
-    if isinstance(z, dict) and "file" in z:
-        ref = dict(z)
-        ref.setdefault("frequency_path", "results.f_hz")
-        return cli.curve_from_reference(ref, base_dir, f)
-    return acoustics.impedance_model(z, f)
+    return electrical_load.resolve(load.get("impedance"), f, base_dir, load.get("electrical_load"))[0]
 
 
 def solve(f, components, wires, sources, loads, mode, load_z, scale=None, ideal_transformers=()):
@@ -267,7 +262,8 @@ def compute(params, base_dir):
     ids = [c["id"] for c in components] + [w["id"] for w in wires] + [l["id"] for l in loads]
     if len(set(ids)) != len(ids):
         raise cli.InputError("component, wire and load ids must be unique")
-    load_z = {load["id"]: _load_z(load, f, base_dir) for load in loads}
+    resolved_loads = {load["id"]: electrical_load.resolve(load["impedance"], f, base_dir, load.get("electrical_load")) for load in loads}
+    load_z = {key: value[0] for key, value in resolved_loads.items()}
     tol = params.get("tolerances") or {}
     draws = int(tol.get("draws", 0))
     rng = np.random.default_rng(int(tol.get("seed", 9919)))
@@ -290,6 +286,9 @@ def compute(params, base_dir):
                      sources=sol["sources"], loads=sol["loads"], components=comp_rows, wires=wire_rows,
                      ideal_transformers=sol["ideal_transformers"],
                      kcl_relative_residual=sol["kcl_relative_residual"], power_relative_residual=sol["power_relative_residual"])
+        for row in entry["loads"]:
+            row["load_z_ohm"] = load_z[row["id"]]
+            row["load_contract"] = resolved_loads[row["id"]][1]
         for src in entry["sources"]:
             if src.get("active"):
                 zmag = np.abs(src["input_z_ohm"])

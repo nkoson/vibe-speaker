@@ -25,15 +25,31 @@ Inputs: `project.json`, `reference/reference.json`, the selected `candidates/<cN
 
 Tools (one command each, `.speaker-venv/bin/python`):
 
+- Use the [shared-wire assembly tool](../../tools/wire-assembly.md) for a physical wiring map, restraint locations, conductor schedule and electrical netlist. Select the drawing representation to match the purchased construction: existing PCB copper, ordinary wire, or stock terminal hardware. Review geometry and replay the electrical dependencies before release.
+
 - Follow `cad-drawing` and [the CAD exporter contract](../../tools/cad-drawings.md) for fabrication PDF sheets, dimensioned millimetre DXFs and STEP parts/assembly. `framework/tools/cabinet_drawing.py` can still supply a preliminary elevation and cut list; use the required CAD workflow below for the final construction set.
 - `framework/tools/schematic.py --input candidates/<cNN>/sim/crossover_network.params.json --out final/ --name crossover` for the schematic PNG, the connection table and a board netlist. Labels show reference, part name and specification; make sure every leaf in that parameter file carries `part` and `rating` before you draw it. Then open the rendered image: a grouped block is not a construction drawing, and document 2 says what it has to become.
 - `framework/tools/build_pdf.py --out final/<slug>-design-package.pdf --title "<speaker name>" --subtitle "<one line>" --md final/README.md --md final/01-cabinet-construction.md ... --preview final/preview/` to assemble the PDF in reading order and render each page to a PNG for inspection. It supports headings, paragraphs, lists, tables, images and code blocks; images are referenced from the Markdown with relative paths.
 - `framework/tools/plot_curves.py` for every performance plot (system and per-section SPL, acoustic section phase around crossovers, off-axis maps, impedance, excursion and port speed at the stress drive, reference comparison). Where a plot needs phase and the helper does not expose it, take it from the complex responses in the result files rather than reconstructing it.
 - `framework/simulations/response_metrics/run.py` when a comparison statistic is missing.
 
+## Physical crossover layout
+
+Before finalizing board outlines or printed drilling templates, review the compactness comparison and the boards' installed relationship to acoustic lining. A useful review includes comparable total board areas, flat/upright options for large coils, coil separation, bottom-mounting alternatives and the absorption area obscured by the complete assembly. An accepted circuit or a shorter wire route alone does not establish a good carrier size or mounting location. Prefer drawings that make the lining boundaries and crossover service clearances visible together; [crossover assembly](../../references/crossover-assembly.md#board-size-and-cabinet-location) provides the detailed guidance.
+
+For a construction revision, identify the user's fixed constraints separately from the available placement choices. A retained board count, stock type or outline still allows component positions, orientations and node assignments to improve. When applying updated construction skills, complete that placement review and its comparison before regenerating the document; use a documentation-only workflow when the user explicitly freezes the placement.
+
+Build one serviceable assembly per driver. Start with the electrical connection graph: group parallel parts between shared node lines, place series-connected parts in sequence, and bring shunt branches close to their junctions. Component placement determines the wiring. Compare plausible placements using total connection length, straight wire runs, direction changes, crossings, joint count and access, while preserving body clearance, coil orientation and cooling. Select the arrangement that is simplest to assemble and inspect; record the comparison in the project.
+
+Choose a purchasable prototyping board with an existing copper pattern, or a plastic/wooden mounting board carrying ordinary insulated wire and suitable stock terminals. A common rail can be the wire connecting several component leads. Fit the design to the selected construction using normal cutting, drilling, lead forming, soldering or specified connectors. Read [crossover assembly](../../references/crossover-assembly.md) for the topology-led layout and build review. Include every conductor and joint in the wiring plan, verify actual lead reach, and replay changed connection losses and displaced volume through their dependent results.
+
+For a continuous factory-strip board, use [the stripboard layout tool](../../tools/stripboard-layout.md) to record complete three-dimensional native-lead routes, pad addresses, shared copper and component clearances. Review the physical drawing together with the reported quantities; a short jumper list alone does not describe the component placement.
+
 ## Required cabinet CAD workflow
 
 **Use [cad-drawing](../cad-drawing/SKILL.md) for every cabinet drawing set and revision.** It owns the cabinet assembly/elevation/section drawings, driver placement, screw-hole patterns, machining details and all other construction geometry. Read its [sourced drawing reference](../../references/cad-drawing.md), then include its verified PDF sheets, editable CAD files and matching feature schedules in this package. A prose cut list or an illustrative cabinet sketch does not replace this workflow. Keep the electrical circuit schematic and its physical wiring documentation in the crossover workflow below.
+
+The package must include models of every installed driver and passive radiator in the drawings and STEP set: individual named parts plus their installed positions in the cabinet assembly. Show the actual flange, rear body and mounting interface in dimensioned views and seating sections, including horns and compression drivers separately. Include the source geometry and fit audit in the project. Reconcile the drawings and STEP revision with the geometry consumed by supported simulations before release; a silhouette, unused STEP attachment or empty driver cutout is insufficient.
 
 ## Freeze the realization before writing
 
@@ -106,3 +122,7 @@ Then check the figures against each other rather than one at a time. Every line 
 ## Editorial release check
 
 Read the complete rendered PDF, including text embedded in plots and drawings. Remove every simulation-status disclaimer and generic non-certification statement. Replace bare result narration with useful interpretation. For each performance figure, identify its observed feature, consequence for the speaker and practical implication. Keep real operating constraints and machining instructions; rewrite them as actions rather than disclaimers. Confirm that captions, legends and headings follow the same rule as the prose.
+
+## Selected electrical realization
+
+Use the agent-selected load and actual stock circuit consistently for branch, sum, impedance and stress figures. The [electrical-load records](../../simulations/electrical-loads.md) provide internal traceability through source, network and replay. Keep evidence diagnostics and selection reasoning in the project; the builder package explains the resulting behavior and definite construction choices. No software validation label is needed to document the chosen realization.

@@ -97,3 +97,7 @@ actual driver Q. It is not an automatic alignment choice.
 Use [enclosure_network](../enclosure_network/README.md) for double-tuned reflex,
 PR bandpass, general chamber incidences, separate absorption/leakage or multiple
 individually driven motors.
+
+## Electrical-load evidence
+
+See the shared [electrical-load contract and scenario interface](../electrical-loads.md). Load identity, model, phase basis, coverage and transformations are reported for agent interpretation; missing evidence does not trigger a design-validation error.

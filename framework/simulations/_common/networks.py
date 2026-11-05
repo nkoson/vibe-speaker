@@ -14,26 +14,8 @@ COMPENSATION_TARGET_FRACTION = 0.10
 
 def section_load(section, f, base_dir):
     """Load impedance and free-field pressure per volt of a section from its source file or inline model."""
-    pressure = None
-    z = None
-    if section.get("source"):
-        ref = dict(section["source"])
-        ref.setdefault("frequency_path", "results.f_hz")
-        z = cli.curve_from_reference(dict(ref, path=ref.get("impedance_path", "results.z_ohm")), base_dir, f)
-        try:
-            pressure = cli.curve_from_reference(dict(ref, path=ref.get("pressure_path", "results.pressure_per_volt_pa")), base_dir, f)
-        except cli.InputError:
-            pressure = None
-    if section.get("load"):
-        load = section["load"]
-        if "file" in load:
-            ref = dict(load)
-            ref.setdefault("frequency_path", "results.f_hz")
-            z = cli.curve_from_reference(ref, base_dir, f)
-        else:
-            z = acoustics.impedance_model(load, f)
-    if z is None:
-        raise cli.InputError(f"section '{section.get('name')}' needs a source file or a load impedance")
+    from . import electrical_load
+    z, pressure, _ = electrical_load.section(section, f, base_dir)
     return z, pressure
 
 

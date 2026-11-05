@@ -10,6 +10,7 @@ framework/
     speaker-design/          orchestrator: project lifecycle, research, iteration, selection
     speaker-designer/        how to build and refine a candidate with the simulations
     speaker-evaluator/       how to score, compare and send candidates back for refinement
+    speaker-measurements/    measured speaker/crossover analysis and targeted diagnostic measurements
     speaker-documentation/   how to write the final construction and performance documents
     cad-drawing/             dimensioned cabinet fabrication drawings and native CAD exports
     speaker-learnings/       consult past learnings, write the postmortem, distill new learnings
@@ -22,6 +23,7 @@ framework/
     _common/                 shared physics and JSON plumbing
     examples/                a runnable example chain (outputs land in examples/out, ignored by git)
   tools/                     plotting, cabinet drawing and cut list, schematic and board netlist, PDF assembly
+  measurements/              offline REW MDAT/text import, windowing, branch comparison and plots
   templates/                 JSON and Markdown templates for project files
   tests/                     pytest suite that runs the example chain and checks invariants
   projects/                  design projects created by the skills (ignored by git)
@@ -40,9 +42,11 @@ framework/
 
 The skills point into `framework/references/` at the decisions the engineering governs, and into `framework/learnings/` at the decisions where earlier projects went wrong. A reference states what is true of loudspeakers and cites where it is written down; a learning states what happened in one project. Neither is enforced by code and neither supplies a project's objectives.
 
-Simulations report; the model decides. No Python code in this folder marks a result as blocked, failed or viable, and no learning is enforced by code.
+Simulations and tools report; the model decides. Curves, residuals, coverage, missing evidence and model assumptions inform the agent. They do not qualify evidence or mark a design as blocked, failed or viable, and no learning is enforced by code. Numerical objectives are caller inputs, not framework acceptance rules. Computation failures remain distinct from design judgements. See the [electrical-load interface](simulations/electrical-loads.md) for load evidence and alternative-model comparisons.
 
 ## Running
+
+Measured speakers use the [measurement-analysis skill](skills/speaker-measurements/SKILL.md) and [offline commands](measurements/README.md). `tools/analyze_measurements.py` automatically installs missing dependencies into the repository environment, reads multi-measurement MDAT files without REW or UI control, preserves absolute levels/timing, and exports crossover evidence and diagnostic plots. The engineering reference focuses on branch output, overlap, phase, load and practical crossover improvement.
 
 `python3 framework/bootstrap.py --tests` creates `.speaker-venv` in the repository root, installs the simulation, plotting, PDF, CAD and test dependencies in `requirements.txt`, runs the example chain and the tests. Then use `.speaker-venv/bin/python` for everything.
 
@@ -60,3 +64,7 @@ Simulation-only design is the default: the agent owns final stock values and con
 The advanced chain includes shared assembly geometry, exterior boundary acoustics, driven room modes, triangulated reflected-energy transport, coupled cabinet radiation, distributed loading, general-network fitting, nonlinear/electrothermal states and correlated scenario replay. See [simulation methods](references/simulation-methods.md) and the designer's [connection guide](skills/speaker-designer/references/advanced-simulation.md). [Generated benchmarks](benchmarks/catalog.json) report equation errors and residuals; design decisions stay with the agent.
 
 Cabinet fabrication drawings use the mandatory [CAD drawing skill](skills/cad-drawing/SKILL.md). The [CAD tool contract](tools/cad-drawings.md) documents reusable PDF/DXF/STEP export from project geometry, native dimensions and interchange checks.
+
+For a physical revision, `tools/replay_results.py --folder PROJECT/release/sim --changed cavity lf_box --manifest PROJECT/evaluations/replay.json` follows saved file references and replays the changed nodes and all dependent results in order. It uses the standalone apps, records input/dependency/implementation hashes, and supports `--resume` after an interrupted run. Design interpretation remains with the agent.
+
+Passive crossovers use one serviceable assembly per driver, laid out from the circuit connections so shared wires take short, simple routes. Choose available prototyping boards or insulating carriers with ordinary wire/stock terminals. The [assembly reference](references/crossover-assembly.md) guides placement comparison and practical build review; framework tools report geometry and electrical quantities for the agent to interpret.

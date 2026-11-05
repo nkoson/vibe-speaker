@@ -1,7 +1,7 @@
 {
  "frequencies": {"min_hz": 20, "max_hz": 20000, "points": 600},
  "input_voltage_rms": 2.83,
- "observer": {"distance_m": 3.0, "ear_height_m": 1.0},
+ "observer": {"distance_m": 1.0, "ear_height_m": 1.0},
  "cabinet": {"depth_mm": 500, "floor_offset_mm": 0, "baffle_width_mm": 600},
  "options": {"rear_wall": "standard", "double_90_degree_weight": false},
  "analysis": {"directivity_index_band_hz": [500, 10000]},

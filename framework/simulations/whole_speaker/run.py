@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _common import cli, acoustics, arrays, radiation  # noqa: E402
 
 NAME = "whole_speaker"
-VERSION = "1.2"
+VERSION = "1.3"
 NOTES = [
     "Point-source sum of the sections with analytical directivity, declared acoustic depths and the supplied electrical transfers; no BEM, no cabinet scattering beyond the supplied baffle factors, no room except the optional single floor image.",
     "SPL is normalized to the reference distance so that it reads like a 1 m figure; the common propagation delay is removed.",
@@ -132,7 +132,7 @@ def _arrays(spec, distance):
 def compute(params, base_dir):
     f = cli.frequency_grid(params.get("frequencies"), 20.0, 20000.0, 600)
     observer = params.get("observer") or {}
-    distance = float(observer.get("distance_m", 3.0))
+    distance = float(observer.get("distance_m", 1.0))
     ear = float(observer.get("ear_height_m", 1.0))
     voltage = float(params.get("input_voltage_rms", 2.83))
     sections = radiation.load_sections(params, f, base_dir)
@@ -148,6 +148,8 @@ def compute(params, base_dir):
                                 power_sum_db=10 * np.log10(np.sum(np.abs(parts[:, 0, :] * scale) ** 2, axis=0))),
                    geometry=[dict(name=w["name"], centre_m=w["centre"], distance_to_observer_m=float(np.linalg.norm(axis[0] - w["centre"])),
                                   directivity=w["directivity"], outlets=[dict(centre_m=o["centre"], face=o["face"]) for o in w["outlets"]]) for w in sections])
+    results["electrical_loads"] = [dict(name=w["name"], source_load=w.get("load_contract"),
+        transfer_load=w.get("transfer_load_contract")) for w in sections]
     distances = np.array([g["distance_to_observer_m"] for g in results["geometry"]])
     results["path_differences"] = [dict(sections=[sections[i]["name"], sections[j]["name"]], difference_mm=float((distances[i] - distances[j]) * 1000),
                                         delay_us=float((distances[i] - distances[j]) / acoustics.C * 1e6))

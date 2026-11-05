@@ -6,6 +6,7 @@ References are not learnings. A learning in `framework/learnings/` says what hap
 
 | Reference | Read it when |
 |---|---|
+| [measurement-analysis](measurement-analysis.md) | Diagnosing measured speaker/crossover behaviour, choosing corrective changes and targeted follow-up measurements |
 | [passive-analysis](passive-analysis.md) | Comparing independent exports, checking numerical evidence and preserving source conventions |
 | [measured-response-processing](measured-response-processing.md) | Importing angular data, preserving timing and normalizing or merging complex responses |
 | [driver-impedance-identification](driver-impedance-identification.md) | Modeling lossy inductance and creep or identifying driver parameters from impedance |

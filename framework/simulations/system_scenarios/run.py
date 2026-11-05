@@ -5,9 +5,9 @@ from pathlib import Path
 import numpy as np
 from scipy.special import ndtr
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from _common import cli,apps
+from _common import cli,apps,electrical_load
 NAME="system_scenarios"
-VERSION="1.1"
+VERSION = "1.2"
 
 def assign(record,path,value):
     parts=path.split('.');current=record
@@ -47,12 +47,13 @@ def compute(params,base_dir):
                 ts=cli.dotted(steps,record["path"]);ts["qts"]=1/(1/ts["qes"]+1/ts["qms"])
                 sd=ts["sd_cm2"]*1e-4;cms=ts["vas_l"]*.001/(cli.RHO*cli.C**2*sd*sd)
                 ts["mms_g"]=1000/((2*np.pi*ts["fs_hz"])**2*cms)
-            observations={};outputs={};documents={};error=None
+            observations={};outputs={};documents={};error=None;load_evidence={}
             with tempfile.TemporaryDirectory(prefix="speaker-scenarios-") as folder:
                 try:
                     for step in steps:
                         app=apps.module(step["app"]);p=references(step["parameters"],outputs)
                         result=app.compute(p,base_dir);validity=result.pop("validity",{});doc=dict(simulation=app.NAME,version=app.VERSION,status="computed",inputs=p,results=result,validity=validity)
+                        load_evidence[step["id"]]=electrical_load.inventory(result)
                         path=Path(folder)/(step["id"]+'.json');cli.write_document(path,doc);outputs[step["id"]]=path;documents[step["id"]]=doc
                     for obs in params.get("observables",[]):
                         value=cli.dotted(documents[obs["step"]],obs["path"])
@@ -68,7 +69,8 @@ def compute(params,base_dir):
                         observations[obs["name"]]=value
                 except (cli.InputError,ValueError,np.linalg.LinAlgError) as exc:error=str(exc)
             outcomes.append(dict(scenario=scenario["name"],draw=draw,variables=dict(zip([v["name"] for v in variables],values)),
-                                 observables=observations,input_error=error))
+                                 observables=observations,input_error=error,load_evidence=load_evidence,
+                                 step_results={k:d["results"] for k,d in documents.items()} if params.get("retain_results") else None))
     summaries=[]
     for scenario in params.get("model_scenarios",[{"name":"nominal"}]):
         rows=[r for r in outcomes if r["scenario"]==scenario["name"] and r["draw"]>0]

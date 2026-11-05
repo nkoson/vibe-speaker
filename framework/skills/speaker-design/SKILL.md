@@ -13,13 +13,25 @@ User-facing communication contains analysis and instructions. Connect each impor
 
 The apps continue to compute and report quantities only. Interpretation and design decisions belong to the agent, using the engineering references. Resolve invalid calculations before relying on them; canonical results do not make inconsistent inputs valid.
 
+## Physical crossover layout
+
+Aim for the smallest practical crossover footprint consistent with magnetic separation, cooling, mechanical support, wiring and service access. It is useful to benchmark total board area per speaker against comparable published constructions before settling on carrier dimensions. Consider bottom-of-cabinet mounting early, and reserve acoustic lining space, particularly behind the woofer. A compact layout and its installed location are best reviewed together before fabrication templates are finalized; [crossover assembly](../../references/crossover-assembly.md#board-size-and-cabinet-location) gives the comparison criteria.
+
+Build one serviceable assembly per driver. Start with the electrical connection graph: group parallel parts between shared node lines, place series-connected parts in sequence, and bring shunt branches close to their junctions. Component placement determines the wiring. Compare plausible placements using total connection length, straight wire runs, direction changes, crossings, joint count and access, while preserving body clearance, coil orientation and cooling. Select the arrangement that is simplest to assemble and inspect; record the comparison in the project.
+
+Choose a purchasable prototyping board with an existing copper pattern, or a plastic/wooden mounting board carrying ordinary insulated wire and suitable stock terminals. A common rail can be the wire connecting several component leads. Fit the design to the selected construction using normal cutting, drilling, lead forming, soldering or specified connectors. Read [crossover assembly](../../references/crossover-assembly.md) for the topology-led layout and build review. Include every conductor and joint in the wiring plan, verify actual lead reach, and replay changed connection losses and displaced volume through their dependent results.
+
 ## Working context
+
+For supplied measurements or requests to diagnose a built speaker, use [speaker-measurements](../speaker-measurements/SKILL.md). It reads REW files directly, preserves the acquisition basis, analyses branch overlap and summation, and connects measured findings to controlled crossover changes. Measurement interpretation is centred on improving the speaker; acquisition checks are a supporting step.
 
 Projects live in `framework/projects/<slug>/` and remain outside Git. `project.json` records the brief, objectives, listening geometry, iteration budget, candidate list and decisions. Inventory records, candidate parameter/result files, evaluations and final drawings preserve the evidence. A revision normally becomes a new candidate with a `parent`, leaving the released baseline available for comparison.
 
 Use `.speaker-venv/bin/python` and `framework/tools/run_simulation.py` for project runs. Read `framework/simulations/README.md` and each selected app's contract before its first use. Keep dependency execution in order and inspect command status and fresh result identity before using a result. One app per command makes failures and provenance easier to interpret.
 
 The companion skills cover candidate creation (`speaker-designer`), comparison (`speaker-evaluator`), builder documentation (`speaker-documentation`), accumulated experience (`speaker-learnings`) and fabrication CAD (`cad-drawing`, required by speaker-documentation). Their procedures are guidance to adapt to the brief. Engineering sources live in `framework/references/README.md`; consult the reference covering each physical decision.
+
+Driver and passive-radiator geometry is part of the design basis. Require sourced models of every installed unit in both the CAD drawings and individual/assembled STEP files. Use those same geometry definitions for fit validation and for every applicable simulation that accepts their geometry, following the CAD reference's [transducer geometry workflow](../../references/cad-drawing.md#transducer-geometry-and-simulation-reuse).
 
 ## Interpret the brief and establish a baseline
 
@@ -58,3 +70,7 @@ Make a definite recommendation using the user's central priorities, realized con
 For a selected construction design, use `speaker-documentation` to produce a complete PDF with source drawings and plots alongside it. Deliver final stock values, machining dimensions, wiring and useful placement guidance. If the available work does not approach the central brief, explain the closest option and alternatives honestly; respect the user's requested deliverable and budget.
 
 Finish with a project postmortem through `speaker-learnings`, recording transferable mechanisms and implementation defects. Source changes go through Git when authorized; project-specific evidence stays in the project folder.
+
+## Electrical-load evidence in the design loop
+
+Use the [electrical-load reports](../../simulations/electrical-loads.md) to connect source preparation, crossover fitting, evaluation and cold replay. Retain the selected load identity, model, phase/coverage evidence and relevant alternatives in the project record. Application diagnostics inform the agent; they do not impose validation gates, a universal load model or error thresholds. Adapt the depth of investigation to the effect on the user's objectives.

@@ -15,3 +15,7 @@ Results include loaded impedance, current and excursion per motor; cone and term
 Refine taper segmentation and compare the short-duct/lumped limit. The model retains longitudinal modes but not transverse duct modes, detailed bend scattering or nonlinear flow. Distributed porous attenuation and effective wave speed are supplied scenarios, rather than inferred from a material name. Use `nonlinear_driver` for the separate time-domain quadratic port-loss scenario.
 
 See [simulation methods](../../references/simulation-methods.md) for equations, sources and verification scope, and [advanced workflow guidance](../../skills/speaker-designer/references/advanced-simulation.md) for connecting the result to a design.
+
+## Electrical-load evidence
+
+See the shared [electrical-load contract and scenario interface](../electrical-loads.md). Load identity, model, phase basis, coverage and transformations are reported for agent interpretation; missing evidence does not trigger a design-validation error.

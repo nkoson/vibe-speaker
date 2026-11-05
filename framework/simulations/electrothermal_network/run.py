@@ -4,9 +4,9 @@ import sys
 from pathlib import Path
 import numpy as np
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from _common import cli,networks
+from _common import cli,networks,electrical_load
 NAME="electrothermal_network"
-VERSION="1.0"
+VERSION = "1.1"
 
 def compute(params,base_dir):
     network=params["network"];sections=network["sections"]
@@ -22,7 +22,8 @@ def compute(params,base_dir):
     temperatures=np.full(len(sections),ambient);records=[];iterations=int(params.get("iterations",40))
     if iterations<1:raise cli.InputError("iterations needs a positive count")
     thermal=params["thermal"]
-    cold=[networks.section_load(s,f,base_dir) for s in sections];elements=[networks.with_wire(s) for s in sections]
+    resolved=[electrical_load.section(s,f,base_dir) for s in sections]
+    cold=[(z,p) for z,p,_ in resolved];elements=[networks.with_wire(s) for s in sections]
     for iteration in range(iterations):
         powers=[];rows=[];network_power=np.zeros(len(f))
         for i,(section,(z,p),parts) in enumerate(zip(sections,cold,elements)):
@@ -33,6 +34,10 @@ def compute(params,base_dir):
             row=dict(name=section["name"],coil_temperature_c=float(temperatures[i]),coil_power_w=power,
                      z_ohm=hot_z,transfer=state["terminal"],pressure_per_volt_pa=None if p is None else p*z/hot_z,
                      source_contract=dict(phase_reference="intrinsic",baffle="external",normalization="driver_terminal_volt"))
+            contract=electrical_load.observe(resolved[i][2],f,hot_z)
+            contract["transformations"].append(dict(operation="thermal_resistance_shift",re_cold_ohm=re,re_hot_ohm=hot_re))
+            contract["model_identity"]=electrical_load.identity(dict(parent=contract["model_identity"],re_hot_ohm=hot_re))
+            row["source_contract"]["electrical_load"]=contract
             rows.append(row)
         target=ambient+np.array([powers[i]*float(thermal[s["name"]]["steady_resistance_k_w"]) for i,s in enumerate(sections)])
         records.append(dict(iteration=iteration,temperatures_c=temperatures.copy(),heat_balance_temperature_residual_k=target-temperatures))

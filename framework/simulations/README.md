@@ -137,3 +137,7 @@ evaluated circuits and analytical fields. They are separate from measurements.
 New raw-measurement workflows accept plain numeric files and WAV; proprietary
 acquisition containers require export to these formats. Active DSP synthesis and
 controller configuration are outside this passive framework.
+
+## Advisory electrical-load evidence
+
+The [shared electrical-load contract](electrical-loads.md) preserves impedance models and evidence through sources, networks, fitting and replay. Both fitters support explicit load alternatives. Identification reports held-out residuals and their circuit effects. These are data for the calling agent: no automatic load qualification, fit-quality verdict, evidence gate or design rejection is introduced. Unknown provenance and frequency support remain observations. Computation errors describe unreadable input or a calculation that could not be performed, not an engineering judgement.

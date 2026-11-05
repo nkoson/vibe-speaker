@@ -1,7 +1,7 @@
 {
  "frequencies": {"min_hz": 20, "max_hz": 30000, "points": 600},
  "input_voltage_rms": 2.83,
- "observer": {"distance_m": 3.0, "ear_height_m": 1.0,
+ "observer": {"distance_m": 1.0, "ear_height_m": 1.0,
               "horizontal_angles_deg": [-60, -45, -30, -15, 0, 15, 30, 45, 60],
               "vertical_angles_deg": [-15, -10, -5, 0, 5, 10, 15], "vertical_window_deg": 5},
  "cabinet": {"depth_mm": 500, "floor_offset_mm": 0},
@@ -19,7 +19,7 @@
    "transfer": {"file": "../examples/out/crossover_network.json", "path": "results.sections.2.transfer"},
    "position": {"x_mm": 0, "z_mm": 880}, "tilt_deg": 0}
  ],
- "floor": {"reflection": 0.7, "cases": [{"distance_m": 3, "ear_height_m": 1.0}, {"distance_m": 4, "ear_height_m": 1.2, "reflection": 0.3}]},
+ "floor": {"reflection": 0.7, "cases": [{"distance_m": 1, "ear_height_m": 1.0}, {"distance_m": 4, "ear_height_m": 1.2, "reflection": 0.3}]},
  "arrays": {"coherent_radiating_height_mm": 600,
             "groups": [{"name": "lf pair of a hypothetical MTM", "count": 2, "spacing_mm": 180, "upper_hz": 800,
                         "source": {"radiating_diameter_mm": 165}, "band_hz": [40, 800]}]},

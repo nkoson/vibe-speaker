@@ -11,11 +11,11 @@ from scipy.sparse.linalg import eigsh, splu
 from scipy.special import j1
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from _common import cli, acoustics, geometry  # noqa: E402
+from _common import electrical_load, cli, acoustics, geometry  # noqa: E402
 from _common.acoustics import C, RHO, P0  # noqa: E402
 
 NAME = "cavity_modes"
-VERSION = "1.4"
+VERSION = "1.7"
 NOTES = [
     "Rigid-wall modal model of the rectangular bass chamber: an analytical mode basis (fast) or a 3D finite-volume basis that masks brace windows and port tubes (slower). Lining enters as Miki surface admittance damping on the lined walls only.",
     "cone_deviation_db compares the cone velocity through the cavity model with the lumped box model of lf_box at the same drive; outlet_relative_db is the outlet pressure relative to the cone's mean level in 150 to 300 Hz.",
@@ -70,25 +70,60 @@ def _geometry(params):
         else:
             raise cli.InputError(f"unknown outlet.type '{kind}'")
     patch_radius = float((outlet or {}).get("inner_mouth_diameter_mm", o_radius * 2000)) / 2000
-    return dict(dims=dims, braces=braces, lining=lining, cone=cone, cone_radius=radius, patches=patches, outlet_radius=o_radius,
+    return dict(dims=dims, braces=braces, internal_panels=cav.get("internal_panels", []), lining=lining, cone=cone, cone_radius=radius, patches=patches, outlet_radius=o_radius,
                 outlet_patch_radius=patch_radius,
                 patch_axes=patch_axes, patch_signs=patch_signs,
                 outlet=outlet, wall_thickness=float(cav.get("wall_thickness_mm", 18.0)) / 1000)
 
 
+def aperture_mask(hole, X, Y):
+    """Analytic circle/rounded-rectangle containment, with millimetre inputs."""
+    kind = hole.get("shape", "circle")
+    x, y = float(hole["x_mm"])/1000, float(hole["y_mm"])/1000
+    if kind == "circle":
+        r = cli.positive(hole.get("diameter_mm"), "brace hole diameter_mm")/2000
+        return (X-x)**2+(Y-y)**2 < r*r, (x-r,y-r,x+r,y+r)
+    if kind != "rounded_rectangle":
+        raise cli.InputError("aperture shape must be circle or rounded_rectangle")
+    w = cli.positive(hole.get("width_mm"), "aperture width_mm")/1000
+    h = cli.positive(hole.get("height_mm"), "aperture height_mm")/1000
+    r = float(hole.get("corner_radius_mm", 0))/1000
+    if not 0 <= r <= min(w,h)/2:
+        raise cli.InputError("aperture corner radius exceeds its half-size")
+    dx = np.maximum(np.abs(X-(x+w/2))-(w/2-r), 0)
+    dy = np.maximum(np.abs(Y-(y+h/2))-(h/2-r), 0)
+    inside = (X>x)&(X<x+w)&(Y>y)&(Y<y+h) if r == 0 else dx*dx+dy*dy < r*r
+    return inside, (x,y,x+w,y+h)
+
+
+def panel_solid_mask(panel, X, Y, Z, dims):
+    """Oriented perforated flat panel; openings remain geometry, not verdicts."""
+    axis = {"x":0,"y":1,"z":2}[panel.get("normal_axis","z")]
+    tangents = [i for i in range(3) if i != axis]
+    xyz = [X,Y,Z];U,V=xyz[tangents[0]],xyz[tangents[1]]
+    start = float(panel.get("start_mm",panel.get("z_mm",0)))/1000
+    thickness = cli.positive(panel.get("thickness_mm",18),"panel thickness_mm")/1000
+    origin = np.asarray(panel.get("origin_uv_mm",[0,0]),float)/1000
+    size = np.asarray(panel.get("size_uv_mm",dims[tangents]*1000),float)/1000
+    if origin.shape!=(2,) or size.shape!=(2,) or np.any(size<=0):
+        raise cli.InputError("panel needs two positive in-plane sizes")
+    slab = (xyz[axis]>=start)&(xyz[axis]<start+thickness)
+    slab = slab & (U>=origin[0])&(U<=origin[0]+size[0])&(V>=origin[1])&(V<=origin[1]+size[1])
+    for kind in ["holes","reliefs"]:
+        for hole in panel.get(kind,[]):
+            opening, bounds = aperture_mask(hole,U,V)
+            if kind == "holes" and (bounds[0]<origin[0] or bounds[1]<origin[1] or bounds[2]>origin[0]+size[0] or bounds[3]>origin[1]+size[1]):
+                raise cli.InputError("brace hole extends beyond the cavity footprint")
+            slab &= ~opening
+    return slab
+
+
 def brace_solid_mask(brace, X, Y, Z, dims):
     """Solid slab minus the declared apertures; coordinates are cavity-local."""
+    if "holes" in brace:
+        return panel_solid_mask(brace,X,Y,Z,dims)
     z0 = float(brace["z_mm"]) / 1000
     slab = (Z >= z0) & (Z < z0 + float(brace.get("thickness_mm", 18)) / 1000)
-    if "holes" in brace:
-        opening = np.zeros(np.broadcast_shapes(X.shape, Y.shape, Z.shape), bool)
-        for hole in brace["holes"]:
-            r = cli.positive(hole.get("diameter_mm"), "brace hole diameter_mm") / 2000
-            x, y = float(hole["x_mm"]) / 1000, float(hole["y_mm"]) / 1000
-            if x-r < 0 or x+r > dims[0] or y-r < 0 or y+r > dims[1]:
-                raise cli.InputError("brace hole extends beyond the cavity footprint")
-            opening |= (X-x)**2 + (Y-y)**2 < r*r
-        return slab & ~opening
     rim = float(brace.get("rim_mm", 60)) / 1000
     return slab & ((X < rim) | (X > dims[0]-rim) | (Y < rim) | (Y > dims[1]-rim))
 
@@ -119,6 +154,53 @@ def rectangular_modes(g, max_hz):
                 mode_norm=norm)
 
 
+def lining_boundary_area(edges, fluid, lining):
+    """Integrate rectangular lining coverage on external fluid-cell faces.
+
+    Patches use ascending tangential axes, in mm. Fractional cell-face overlap
+    preserves patch area when an edge lies between mesh lines. Overlapping
+    rectangles are rejected rather than counting the same absorber twice.
+    """
+    faces = {'left': (0, 0), 'right': (0, -1), 'front': (1, 0),
+             'rear': (1, -1), 'bottom': (2, 0), 'top': (2, -1)}
+    shape = fluid.shape
+    patches = lining.get('patches')
+    if patches is None:
+        patches = [dict(face=name, bounds_mm=[[0, float(edges[j][-1])*1000]
+                    for j in range(3) if j != axis])
+                   for name, (axis, side) in faces.items() if name != 'front']
+    normalized = []
+    for patch in patches:
+        if patch.get('face') not in faces:
+            raise cli.InputError('lining patch face is not a cabinet face')
+        axis, side = faces[patch['face']]
+        tangents = [j for j in range(3) if j != axis]
+        bounds = np.asarray(patch.get('bounds_mm'), float)/1000
+        if bounds.shape != (2, 2) or not np.all(np.isfinite(bounds)):
+            raise cli.InputError('lining patch bounds_mm needs two finite intervals')
+        if any(lo < 0 or hi <= lo or hi > edges[j][-1]+1e-9
+               for (lo, hi), j in zip(bounds, tangents)):
+            raise cli.InputError('lining patch lies outside the cabinet face')
+        for name, other in normalized:
+            if name == patch['face'] and all(min(a[1], b[1])-max(a[0], b[0]) > 1e-10
+                                             for a,b in zip(bounds, other)):
+                raise cli.InputError('lining patches overlap on the same face')
+        normalized.append((patch['face'], bounds))
+    boundary = np.zeros(shape)
+    areas = {name: 0.0 for name in faces}
+    for name, bounds in normalized:
+        axis, side = faces[name]
+        tangents = [j for j in range(3) if j != axis]
+        lengths = [np.maximum(0, np.minimum(edges[j][1:],hi)-np.maximum(edges[j][:-1],lo))
+                   for (lo,hi),j in zip(bounds,tangents)]
+        area = lengths[0][:,None]*lengths[1][None,:]
+        selection = [slice(None)]*3; selection[axis] = side; selection = tuple(selection)
+        area = area*fluid[selection]
+        boundary[selection] += area
+        areas[name] += float(area.sum())
+    return boundary[fluid], areas
+
+
 def finite_volume_modes(g, mesh_mm, max_hz, include_braces=True, include_tubes=True):
     dims = g["dims"]
     edges = []
@@ -132,6 +214,15 @@ def finite_volume_modes(g, mesh_mm, max_hz, include_braces=True, include_tubes=T
                 elif axis == 2:
                     z0 = float(brace["z_mm"]) / 1000
                     v += [z0, z0 + float(brace.get("thickness_mm", 18.0)) / 1000]
+            for panel in g.get("internal_panels",[]):
+                normal={"x":0,"y":1,"z":2}[panel.get("normal_axis","z")]
+                if axis==normal:
+                    start=float(panel["start_mm"])/1000
+                    v += [start,start+float(panel["thickness_mm"])/1000]
+                else:
+                    uv=[i for i in range(3) if i!=normal].index(axis)
+                    start=float(panel["origin_uv_mm"][uv])/1000
+                    v += [start,start+float(panel["size_uv_mm"][uv])/1000]
         edges.append(np.array(sorted(set(round(x, 9) for x in v if 0 <= x <= L))))
     widths = [np.diff(x) for x in edges]
     centers = [(x[1:] + x[:-1]) / 2 for x in edges]
@@ -143,6 +234,8 @@ def finite_volume_modes(g, mesh_mm, max_hz, include_braces=True, include_tubes=T
     if include_braces:
         for brace in g["braces"]:
             fluid &= ~brace_solid_mask(brace, X, Y, Z, dims)
+        for panel in g.get("internal_panels",[]):
+            fluid &= ~panel_solid_mask(panel,X,Y,Z,dims)
     outlet = g["outlet"] or {}
     if include_tubes and outlet.get("type") == "port":
         od = float(outlet.get("outer_diameter_mm", outlet["inner_diameter_mm"] * 1.06)) / 2000
@@ -247,23 +340,11 @@ def finite_volume_modes(g, mesh_mm, max_hz, include_braces=True, include_tubes=T
     potential -= volume @ potential / volume.sum()
     static_fields = volume.sum() / C ** 2 * potential
     static_matrix = patches.T @ static_fields
-    boundary = np.zeros(n)
-    for axis, side in [(0, 0), (0, -1), (1, -1), (2, 0), (2, -1)]:
-        selection = [slice(None)] * 3
-        selection[axis] = side
-        selection = tuple(selection)
-        area = np.ones(shape)
-        for other in range(3):
-            if other != axis:
-                sh = [1, 1, 1]
-                sh[other] = len(widths[other])
-                area *= widths[other].reshape(sh)
-        valid = fluid[selection].copy()
-        np.add.at(boundary, ids[selection][valid], area[selection][valid])
+    boundary, lined_areas = lining_boundary_area(edges, fluid, g['lining'])
     ratio = boundary @ (psi * psi) / volume.sum()
     return dict(frequency_hz=fn, cone=e0, outlet=ep, boundary_ratio_m_inv=ratio, method="3D finite-volume modes", cells=n, mesh_mm=mesh_mm,
                 modeled_air_volume_l=float(volume.sum() * 1000), static_matrix=static_matrix, static_fields=static_fields, coords=coords, psi=psi,
-                volume=volume, outlet_count=len(g["patches"]))
+                volume=volume, outlet_count=len(g["patches"]), lined_area_by_face_m2=lined_areas)
 
 
 def port_transfer(outlet, f, count, fb, qp):
@@ -463,6 +544,8 @@ def compute(params, base_dir):
     f = cli.frequency_grid(params.get("frequencies"), 20, max_hz, 631) if params.get("frequencies") else default_f
     bases = []
     if kind == "rectangular":
+        if 'patches' in g['lining']:
+            raise cli.InputError('Explicit lining patches use method.kind fvm')
         bases.append(rectangular_modes(g, max_hz))
     elif kind == "fvm":
         meshes = method.get("mesh_mm", [35.0])
@@ -489,6 +572,9 @@ def compute(params, base_dir):
                    outlet_pressure_per_volt_pa=terminal["outlet_pressure_pa"], z_ohm=terminal["driver_z_ohm"],
                    source_contract=dict(phase_reference="intrinsic", pressure_reference_m=1.,
                                         baffle="external", normalization="driver_terminal_volt", radiation_space="half"))
+    if 'lined_area_by_face_m2' in fine_basis:
+        results['lining_coverage'] = dict(lined_area_by_face_m2=fine_basis['lined_area_by_face_m2'],
+            patches=g['lining'].get('patches'), basis='Boundary modal damping weighted by covered cell-face area')
     if params.get("export_complex_field") and "psi" in fine_basis:
         results["complex_field"] = dict(coordinates_m=fine_basis["coords"], pressure_pa=pressure_field(fine_basis, fine, np.arange(len(f))).T)
     if "radiator_excursion_peak_mm" in fine:
@@ -505,6 +591,9 @@ def compute(params, base_dir):
                                            first_modes_max_relative_change_percent=float(np.max(np.abs(first_f[:n] - first_c[:n]) / first_f[:n]) * 100) if n else None,
                                            cone_deviation_max_change_db=float(np.max(np.abs(fine_r["cone_deviation_db"] - coarse["cone_deviation_db"]))),
                                            outlet_leakage_max_change_db=float(np.max(np.abs(fine_r["outlet_relative_db"][leak] - coarse["outlet_relative_db"][leak]))) if fine_r["has_outlet"] else None)
+    load_contract=electrical_load.describe(dict(kind="cavity_modes",ts=params["driver"]["ts"],parameters=terminal_params),f,
+                                           params["driver"].get("electrical_load"))
+    results["source_contract"]["electrical_load"]=electrical_load.observe(load_contract,f,results["z_ohm"])
     results["validity"] = dict(statements=list(VALIDITY), method=kind, max_mode_hz=max_hz,
                                evaluated_band_hz=[float(f[0]), float(f[-1])])
     if kind == "fvm":

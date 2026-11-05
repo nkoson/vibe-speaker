@@ -194,8 +194,8 @@ the tweeter — a sub-baffle, a faceplate edge, a surround step — still matter
 
 **The step depends on measurement distance.** A 250 mm baffle shows only about 5 dB of step at a
 0.25 m microphone distance against 6 dB in the far field. A correction derived from a close
-measurement therefore under-compensates what a listener at 3 m hears, and a quoted step magnitude
-without its distance is incomplete.
+measurement therefore under-compensates the far-field step, and a quoted step magnitude
+without its distance is incomplete. The framework evaluates baffle diffraction and the system response at 1 m unless a project states another distance.
 
 **What the framework does, and what is not known about it.** `baffle_diffraction` computes a finite-
 baffle shelf and an edge-diffraction factor per source position. No source consulted gives a measured

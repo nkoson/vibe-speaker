@@ -34,3 +34,9 @@ Make a definite recommendation in the user's priority order, explaining the bene
 For each useful refinement, name the physical variable, expected mechanism, observable and controlled comparison. Request a change in drivers, geometry, loading or network according to the evidence rather than applying the same remedy to every response error. Explain whether another iteration could plausibly change the recommendation within the authorized budget.
 
 When construction documentation is appropriate, verify that the selected realization includes exact stock, source contracts, dimensions, bank leaves and shared-phase plots. Confirm that triggered inventory expansions were performed and their affected fits replayed, or that a specific user scope/budget limit is recorded. Describe unresolved findings in terms a builder can act on, without handing routine acoustic design choices back to the user.
+
+## Interpret electrical-load evidence
+
+The [electrical-load reports](../../simulations/electrical-loads.md) expose the impedance model, source identity, support and phase assumptions alongside each branch. Compare those records across the source, realized network and cold replay. Read identification residuals by band, held-out data and circuit effect, then compare nominal and alternative branch transfers, overlap, leakage, sum and stress. Distinguish an electrical-only probe from a recomputed physical source.
+
+An advantage that changes under supported alternatives deserves investigation in relation to the brief; an insensitive design need not change merely because alternatives exist. Missing metadata, a margin sign or an optimizer minimum is information for your judgement, not an automatic rejection or approval. Record the reason for changing or retaining the recommendation with the relevant result paths.

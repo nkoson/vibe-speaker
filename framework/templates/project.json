@@ -137,7 +137,7 @@
  },
  "inventory_review_file": "inventory/search-review.md",
  "listening": {
-  "distance_m": 3.0,
+  "distance_m": 1.0,
   "ear_height_m": 1.0,
   "floor_reflection": 0.7
  },

@@ -48,3 +48,9 @@ volume and effective piston area are independently supplied inputs.
   [time-domain notes](https://speakerbench.com/doc/time_theory.html), equation 44.
 - Klippel GmbH, [SIM-AUR reference](https://docs.klippel.de/db-lab/latest/simulation-auralisation/simaur/simaur.html):
   LR-2 equivalent circuit and separation of small-signal and nonlinear parameters.
+
+## Load sensitivity in a passive network
+
+For a series impedance Zs feeding a terminal load Zd, H = Zd / (Zs + Zd). A shunt branch first changes the downstream equivalent impedance; the same divider relation then applies. Thus a numerically exact network can still produce a misleading response feature when the assumed Zd lacks support in the handover band. Compare the same circuit under supported load alternatives before interpreting a recovery or shelf as an advantage. Leach's source above discusses inductance losses and frequency response; the existing equivalent-circuit equations supply the complex load.
+
+The framework's [electrical-load interface](../simulations/electrical-loads.md) carries this evidence without a model-selection verdict. Complex impedance magnitude and phase constrain different aspects of the load. A fit residual alone does not identify an admissible uncertainty family, and held-out performance is distinct from fitting error. Choose alternative parameters and their relevance from source evidence; decide whether their circuit effect matters using the current objectives.

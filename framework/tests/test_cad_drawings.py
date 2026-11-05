@@ -114,3 +114,39 @@ def test_native_section_hatch_fills_islands_and_leaves_voids(tmp_path):
     for a,b in segments:
         mid=(a+b)*.5
         assert not (20+1e-6 < mid.x < 80-1e-6 and 20+1e-6 < mid.y < 80-1e-6)
+
+
+def test_rounded_rectangle_aperture_edge_roundover():
+    feature=dict(id='window',kind='rect',xy=[20,20],size=[60,40],radius=8,depth='through')
+    plain=cad.make_part(block(features=[feature]))
+    rounded=cad.make_part(block(features=[dict(feature,edge_radius=3)]))
+    assert rounded.isValid() and rounded.Volume()<plain.Volume()
+    assert rounded.isInside(cq.Vector(19,40,-10))
+    assert not rounded.isInside(cq.Vector(19,40,-.1))
+
+
+def test_aperture_report_preserves_geometric_ligaments():
+    part=block(features=[dict(id='a',kind='circle',center=[25,40],diameter=20,depth='through',role='air_aperture'),dict(id='b',kind='circle',center=[75,40],diameter=20,depth='through',role='air_aperture')])
+    r=cad.aperture_metrics(part)
+    assert r['total_area_mm2']==pytest.approx(2*math.pi*10**2)
+    assert r['pair_ligaments'][0]['distance_mm']==pytest.approx(30)
+    assert [x['distance_mm'] for x in r['rim_ligaments']]==pytest.approx([15,15])
+
+
+def test_flared_duct_sections_preserve_cut_lengths_and_sleeve_overlap():
+    p=dict(bore_mm=100,mouth_mm=150,piece_lengths_mm=[50,32,50],wall_mm=2,flange_mm=184,flange_thickness_mm=3,sleeve_mm=26,sleeve_wall_mm=2)
+    a=cad.flared_duct_entities(p);b=cad.flared_duct_entities(dict(p,explode_gap_mm=18))
+    ax=[q[0] for e in a if e['kind']=='hatch' for loop in e['loops'] for q in loop]
+    bx=[q[0] for e in b if e['kind']=='hatch' for loop in e['loops'] for q in loop]
+    assert (min(ax),max(ax))==(0,132)
+    assert (min(bx),max(bx))==(0,168)
+    sleeves=[e for e in a if e['kind']=='rect' and e['size']==[26,2]]
+    assert sorted(e['xy'][0] for e in sleeves)==[37,37,69,69]
+
+
+def test_custom_assembly_filename(tmp_path):
+    manifest=dict(meta=dict(drawing_prefix='driver',assembly_filename='driver-assembled.step'),
+                  parts=[block(placements=[dict(origin=[0,0,0])])])
+    cad.export_solids(manifest,tmp_path)
+    assert (tmp_path/'step/driver-assembled.step').exists()
+    assert not (tmp_path/'step/cabinet-assembly.step').exists()

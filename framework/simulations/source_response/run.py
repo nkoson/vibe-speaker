@@ -6,10 +6,10 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from _common import cli, acoustics  # noqa: E402
+from _common import electrical_load, cli, acoustics  # noqa: E402
 
 NAME = "source_response"
-VERSION = "1.6"
+VERSION = "1.7"
 NOTES = [
     "Pressure per volt is the on-axis free-field figure at 1 m for the source alone; directivity, baffle and position are applied later by whole_speaker.",
     "A published curve is turned into a minimum-phase response; the phase is a reconstruction, not a measurement. A bandwidth prior is a flat level with declared roll-offs.",
@@ -169,28 +169,23 @@ def _pressure(params, f, base_dir):
 
 
 def _impedance(params, f, base_dir):
-    model = cli.require(params, "impedance")
-    kind = cli.require(model, "kind", label="impedance")
-    if kind == "reference":
-        ref = dict(model["reference"])
-        ref.setdefault("frequency_path", "results.f_hz")
-        return cli.curve_from_reference(ref, base_dir, f), "impedance curve read from another result file"
-    if kind == "zma_file":
-        table = np.loadtxt(cli.resolve_path(model["file"], base_dir), comments=["#", "*", ";"])
-        z = table[:, 1] * np.exp(1j * np.deg2rad(table[:, 2] if table.shape[1] > 2 else 0.0))
-        return cli.interp_complex(f, table[:, 0], z), "ZMA file interpolated onto the grid"
-    return acoustics.impedance_model(model, f), f"{kind} impedance model"
+    z, contract = electrical_load.resolve(cli.require(params, "impedance"), f, base_dir, params.get("electrical_load"))
+    return z, contract
 
 
 def compute(params, base_dir):
     f = cli.frequency_grid(params.get("frequencies"), 10.0, 40000.0, 800)
     p, p_basis = _pressure(params, f, base_dir)
-    z, z_basis = _impedance(params, f, base_dir)
+    z, load_contract = _impedance(params, f, base_dir)
+    z_basis = load_contract.get("phase_basis")
     model = params.get("acoustic") or {}
     inherited_contract = {}
     inherited_directivity = None
     if model.get("kind") == "simulation":
         upstream = cli.load_json(cli.resolve_path(model["reference"]["file"],base_dir)).get("results",{})
+        parent_path = model["reference"].get("path", "results.pressure_per_volt_pa").rsplit(".",1)[0]
+        if parent_path != "results":
+            upstream = cli.dotted({"results":upstream},parent_path)
         inherited_contract = upstream.get("source_contract",{})
         inherited_directivity = upstream.get("directivity")
     contract = dict(inherited_contract, **(model.get("contract") or {}))
@@ -213,6 +208,7 @@ def compute(params, base_dir):
     contract.update(phase_reference=phase_reference, pressure_reference_m=1.,
                     baffle=contract.get("baffle", "external"), phase_basis=contract.get("phase_basis",p_basis),
                     normalization=contract.get("normalization", "driver_terminal_volt" if model.get("voltage_basis") == "driver_terminal" else "declared_volt"))
+    contract["electrical_load"] = load_contract
     calibration = model.get("level_calibration")
     gain = 1.0
     if calibration is not None:
@@ -222,7 +218,7 @@ def compute(params, base_dir):
         if isinstance(gain_db, bool) or not isinstance(gain_db, (int, float)) or not np.isfinite(gain_db):
             raise cli.InputError("acoustic.level_calibration.gain_db must be finite")
         if not isinstance(calibration.get("basis"), str) or not calibration["basis"].strip():
-            raise cli.InputError("acoustic.level_calibration.basis must explain the source and derivation")
+            calibration = dict(calibration, basis="unspecified")
         try:
             gain = 10.0 ** (gain_db / 20.0)
         except OverflowError as exc:

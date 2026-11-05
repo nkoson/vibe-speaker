@@ -2,6 +2,8 @@
 
 This repository is a loudspeaker design framework in which the agent designs, evaluates and documents while standalone Python applications compute the physics. For any request to design, continue, compare or document a loudspeaker, read and follow `framework/skills/speaker-design/SKILL.md`; it names the companion skills (`speaker-designer`, `speaker-evaluator`, `speaker-documentation`, `speaker-learnings`, `cad-drawing`) and when to use them.
 
+For analysis of supplied measurements or debugging a built speaker/crossover, use `framework/skills/speaker-measurements/SKILL.md`. It reads measurement files directly and centres the work on interpreting and improving speaker performance.
+
 The same skill folders are linked from `.agents/skills/` and `.claude/skills/` so that hosts which discover skills in either location find them. Each skill is a folder with a `SKILL.md` whose frontmatter carries `name` and `description`.
 
 Setup: `python3 framework/bootstrap.py --tests` creates `.speaker-venv` inside the repository and verifies the simulation apps. Use `.speaker-venv/bin/python` for every command afterwards. See `README.md` and `framework/README.md` for the layout, and `framework/simulations/README.md` for the simulation inventory and JSON conventions.

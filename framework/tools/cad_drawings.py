@@ -7,6 +7,7 @@ Project-specific geometry and sheet layout are data. This tool performs geometry
 annotation, export and geometric checks; it does not choose an acoustic design.
 """
 import argparse, json, math, hashlib, re
+import copy
 from pathlib import Path
 import ezdxf
 from reportlab.pdfgen import canvas
@@ -30,6 +31,32 @@ def hatch_boundary_flags(loops):
         return inside
     return [1 if sum(contains(loop[0],other) for j,other in enumerate(loops) if j!=i)%2==0 else 0
             for i,loop in enumerate(loops)]
+
+def flared_duct_entities(spec):
+    """Longitudinal section of purchased flare/tube pieces and joint sleeves."""
+    bore=spec['bore_mm']/2;mouth=spec['mouth_mm']/2;r=mouth-bore
+    outer,centre,inner=spec['piece_lengths_mm'];wall=spec['wall_mm']
+    gap=spec.get('explode_gap_mm',0);sleeve=spec['sleeve_mm']
+    if min(outer,inner)<r or centre<=0 or wall<=0 or r<=0:
+        raise ValueError('flared duct lengths must contain their end profiles')
+    starts=[0,outer+gap,outer+centre+2*gap];entities=[]
+    curve=[(r-r*math.cos(a),mouth-r*math.sin(a)) for a in [i*math.pi/96 for i in range(49)]]
+    for index,(start,length) in enumerate(zip(starts,[outer,centre,inner])):
+        inside=curve+[(length,bore)] if index==0 else [(0,bore),(length,bore)] if index==1 else [(0,bore)]+[(length-x,y) for x,y in reversed(curve)]
+        outside=[(x,y+wall) for x,y in inside]
+        for sign in [-1,1]:
+            loop=[[start+x,sign*y] for x,y in inside]+[[start+x,sign*y] for x,y in reversed(outside)]
+            entities.append(dict(kind='hatch',loops=[loop],angle=45 if index!=1 else -45))
+    flange=spec['flange_mm']/2;thickness=spec['flange_thickness_mm']
+    for sign in [-1,1]:
+        entities.append(dict(kind='rect',xy=[0,mouth if sign>0 else -flange],size=[thickness,flange-mouth]))
+    if not gap:
+        for joint in [outer,outer+centre]:
+            for sign in [-1,1]:
+                y=bore+wall if sign>0 else -bore-wall-spec['sleeve_wall_mm']
+                entities.append(dict(kind='rect',xy=[joint-sleeve/2,y],size=[sleeve,spec['sleeve_wall_mm']]))
+    entities.append(dict(kind='line',points=[[-12,0],[starts[-1]+inner+12,0]],layer='CENTER'))
+    return entities
 
 
 def rounded_points(x,y,w,h,r):
@@ -57,13 +84,22 @@ def part_entities(part,face='outside',features=None,outline=True):
             e['kind']='circle';e['radius']=e.pop('diameter')/2
         entities.append(e)
         if feature.get('edge_radius'):
-            entities.append(dict(kind='circle',center=feature['center'],
-                                 radius=feature['diameter']/2+feature['edge_radius'],layer='OUTLINE'))
+            r=feature['edge_radius']
+            if feature['kind']=='circle':
+                entities.append(dict(kind='circle',center=feature['center'],
+                                     radius=feature['diameter']/2+r,layer='OUTLINE'))
+            elif feature['kind']=='rect':
+                x,y=feature['xy'];w,h=feature['size']
+                entities.append(dict(kind='rect',xy=[x-r,y-r],size=[w+2*r,h+2*r],
+                                     radius=feature.get('radius',0)+r,layer='OUTLINE'))
     return entities
 
 
 def make_part(part):
     import cadquery as cq
+    if 'solid_model' in part:
+        from cad_components import make_component
+        return make_component(part['solid_model'])
     t=float(part['thickness'])
     if t<=0:raise ValueError('part thickness must be positive')
     if part.get('outline')=='circle':
@@ -96,14 +132,23 @@ def make_part(part):
         shape=shape.cut(cutter)
     for feature in part.get('features',[]):
         if not feature.get('edge_radius'):continue
-        if feature['kind']!='circle' or feature['depth']!='through':
-            raise ValueError('edge roundover requires a through circular aperture')
-        x,y=feature['center'];radius=feature['diameter']/2
-        edges=[e for e in shape.Edges() if e.geomType()=='CIRCLE'
-               and abs(e.radius()-radius)<1e-6
-               and abs(e.arcCenter().x-x)<1e-6 and abs(e.arcCenter().y-y)<1e-6
-               and min(abs(e.arcCenter().z),abs(e.arcCenter().z+t))<1e-6]
-        if len(edges)!=2:raise ValueError('roundover requires two complete aperture rims')
+        if feature['depth']!='through':
+            raise ValueError('edge roundover requires a through aperture')
+        if feature['kind']=='circle':
+            x,y=feature['center'];radius=feature['diameter']/2
+            edges=[e for e in shape.Edges() if e.geomType()=='CIRCLE'
+                   and abs(e.radius()-radius)<1e-6
+                   and abs(e.arcCenter().x-x)<1e-6 and abs(e.arcCenter().y-y)<1e-6
+                   and min(abs(e.arcCenter().z),abs(e.arcCenter().z+t))<1e-6]
+            if len(edges)!=2:raise ValueError('roundover requires two complete aperture rims')
+        elif feature['kind']=='rect':
+            x,y=feature['xy'];w,h=feature['size'];edges=[]
+            for e in shape.Edges():
+                b=e.BoundingBox()
+                if b.zlen<1e-5 and min(abs(b.zmin),abs(b.zmin+t))<1e-5 and b.xmin>=x-1e-5 and b.xmax<=x+w+1e-5 and b.ymin>=y-1e-5 and b.ymax<=y+h+1e-5:
+                    edges.append(e)
+            if len(edges)<8:raise ValueError('roundover requires two complete rectangular rims')
+        else:raise ValueError('unsupported rounded aperture kind')
         shape=shape.fillet(feature['edge_radius'],edges)
     if not shape.isValid() or shape.Volume()<=0:raise ValueError('invalid solid '+part['id'])
     return shape
@@ -114,21 +159,64 @@ def place_part(shape,placement):
     plane=cq.Plane(origin=placement['origin'],xDir=placement.get('x_dir',[1,0,0]),normal=placement.get('normal',[0,0,1]))
     return shape.located(plane.location)
 
+def aperture_metrics(part):
+    """Root-contour area and material ligaments; interpretation stays external."""
+    import cadquery as cq
+    features=[f for f in part.get('features',[]) if f.get('role')=='air_aperture']
+    if not features:return None
+    wires=[];areas=[]
+    for f in features:
+        if f['kind']=='circle':
+            face=cq.Face.makeFromWires(cq.Workplane('XY').center(*f['center']).circle(f['diameter']/2).val())
+        elif f['kind']=='rect':
+            x,y=f['xy'];w,h=f['size']
+            block=cq.Workplane('XY').box(w,h,1,centered=False)
+            if f.get('radius'):block=block.edges('|Z').fillet(f['radius'])
+            face=block.faces('<Z').val().translate((x,y,0))
+        else:raise ValueError('unsupported air aperture')
+        wires.append(face.outerWire());areas.append(face.Area())
+    boundary=copy.deepcopy(part)
+    boundary['features']=[f for f in boundary.get('features',[]) if f.get('role')!='air_aperture']
+    section=cq.Workplane('XY',origin=(0,0,-part['thickness']/2)).add(make_part(boundary)).section()
+    contours=section.wires().vals()
+    outline=max(contours,key=lambda w:w.Length()).translate((0,0,part['thickness']/2))
+    pairs=[dict(a=features[i]['id'],b=features[j]['id'],distance_mm=a.distance(b))
+           for i,a in enumerate(wires) for j,b in enumerate(wires) if i<j]
+    rims=[dict(id=f['id'],distance_mm=w.distance(outline)) for f,w in zip(features,wires)]
+    return dict(apertures=len(features),areas_mm2=areas,total_area_mm2=sum(areas),
+                pair_ligaments=pairs,rim_ligaments=rims)
+
 
 def export_solids(spec,out):
     import cadquery as cq
     folder=out/'step';folder.mkdir(exist_ok=True)
     shapes={};report=[];assembly=cq.Assembly(name=spec['meta']['drawing_prefix'])
+    domain=spec.get('air_domain')
+    air=cq.Workplane('XY').box(*domain['size_mm'],centered=False).translate(tuple(domain['origin_mm'])).val() if domain else None
     for part in spec.get('parts',[]):
         shape=make_part(part);shapes[part['id']]=shape
         cq.exporters.export(shape,str(folder/(part['id']+'.step')))
         reopened=cq.importers.importStep(str(folder/(part['id']+'.step'))).val()
-        if abs(reopened.Volume()-shape.Volume())>max(1e-5,shape.Volume()*1e-8):raise ValueError('STEP volume mismatch')
-        bb=shape.BoundingBox();report.append(dict(id=part['id'],volume_mm3=shape.Volume(),bounds_mm=[bb.xlen,bb.ylen,bb.zlen],features=len(part.get('features',[]))))
+        # Adaptive integration is necessary for trimmed B-spline lofts. Default
+        # mass integration can change appreciably after STEP seam normalization.
+        integration_tol=1e-5 if 'solid_model' in part else None
+        original_volume=shape.Volume(integration_tol);exported_volume=reopened.Volume(integration_tol)
+        relative_tolerance=1e-6 if integration_tol else 1e-8
+        if abs(exported_volume-original_volume)>max(1e-5,original_volume*relative_tolerance):raise ValueError('STEP volume mismatch: '+part['id'])
+        if not reopened.isValid() or len(reopened.Solids())!=len(shape.Solids()):raise ValueError('STEP topology mismatch')
+        # Draw and assemble the reopened exchange solid, including normalized
+        # seams/tolerances on complex revolved and boolean purchased parts.
+        shape=reopened;shapes[part['id']]=shape
+        bb=shape.BoundingBox();entry=dict(id=part['id'],volume_mm3=exported_volume,bounds_mm=[bb.xlen,bb.ylen,bb.zlen],features=len(part.get('features',[])),solid_count=len(shape.Solids()),step_volume_difference_mm3=exported_volume-original_volume,volume_integration_tolerance=integration_tol)
+        report.append(entry)
+        metrics=aperture_metrics(part)
+        if metrics:entry['aperture_geometry']=metrics
+        if air is not None:entry['air_intrusions_mm3']=[]
         for j,pose in enumerate(part.get('placements',[])):
             placed=place_part(shape,pose);shapes[f"{part['id']}@{j}"]=placed
-            assembly.add(placed,name=part['id']+'_'+str(j),color=cq.Color(.77,.68,.52))
-    assembly.export(str(folder/'cabinet-assembly.step'))
+            assembly.add(placed,name=part['id']+'_'+str(j),color=cq.Color(*part.get('color',[.77,.68,.52])))
+            if air is not None:entry['air_intrusions_mm3'].append(placed.intersect(air).Volume())
+    assembly.export(str(folder/spec['meta'].get('assembly_filename','cabinet-assembly.step')))
     return shapes,report
 
 
@@ -291,6 +379,10 @@ def build(spec,out,pdf_path):
             view=View(sheet,v)
             entities=part_entities(parts[v['part']],v.get('face','outside'),v.get('features'),v.get('outline',True)) if 'part' in v else []
             if 'section' in v:entities+=section_entities(shapes,v['section'])
+            if 'projection' in v:
+                from cad_components import projection_entities
+                entities+=projection_entities(shapes,v['projection'])
+            if 'flared_duct' in v:entities+=flared_duct_entities(v['flared_duct'])
             entities+=v.get('entities',[])
             for e in entities:view.entity(e)
             for d in v.get('dimensions',[]):view.dimension(d)
@@ -302,6 +394,14 @@ def build(spec,out,pdf_path):
         for note in record.get('notes',[]):sheet.text(*note['at'],note['text'],note.get('height',2.5),max_width=note.get('width'))
         sheet.finish();print(record['id'],'rendered',flush=True)
     c.save();report=dict(solids=solids,views=records,sheets=len(spec['sheets']),manifest_sha256=hashlib.sha256(json.dumps(spec,sort_keys=True).encode()).hexdigest())
+    if spec.get('inspect_intersections'):
+        installed=[(name,shape) for name,shape in shapes.items() if '@' in name]
+        report['installed_parts']=len(installed);report['pairs_inspected']=len(installed)*(len(installed)-1)//2
+        report['intersections']=[]
+        for i,(a,sa) in enumerate(installed):
+            for b,sb in installed[i+1:]:
+                volume=sa.intersect(sb).Volume()
+                if volume>1e-3:report['intersections'].append(dict(a=a,b=b,volume_mm3=volume))
     (out/'cad-audit.json').write_text(json.dumps(report,indent=2));return report
 
 
