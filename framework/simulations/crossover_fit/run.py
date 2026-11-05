@@ -137,7 +137,7 @@ def compute(params, base_dir):
     fit_f = cli.frequency_grid(params.get("fit_frequencies"), band[0] / 1.5, band[1] * 1.5, 240)
     full_f = cli.frequency_grid(params.get("frequencies"), 10.0, 40000.0, 800)
     observer = system.get("observer") or {}
-    distance = float(observer.get("distance_m", 3.0))
+    distance = float(observer.get("distance_m", 1.0))
     ear = float(observer.get("ear_height_m", 1.0))
     voltage = float(params.get("input_voltage_rms", 2.83))
     angles = target.get("vertical_angles_deg", [0.0])

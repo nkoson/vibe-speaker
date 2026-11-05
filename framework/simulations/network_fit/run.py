@@ -32,7 +32,7 @@ def compute(params,base_dir):
         acoustic_weights[(f>=weight["band_hz"][0])&(f<=weight["band_hz"][1])]=float(weight["weight"])
     system=params.get("system");sources=radiation.load_sections(system,f,base_dir) if system else None
     angles=target.get("vertical_angles_deg",[0.]);observer=(system or {}).get("observer",{})
-    distance=float(observer.get("distance_m",3));ear=float(observer.get("ear_height_m",1))
+    distance=float(observer.get("distance_m",1));ear=float(observer.get("ear_height_m",1))
     spatial_specs=params.get("spatial_targets",[])
     preference_weight=float(params.get("preference_objective_weight",0))
     if preference_weight<0:raise cli.InputError("preference_objective_weight must be nonnegative")

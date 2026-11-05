@@ -132,7 +132,7 @@ def _arrays(spec, distance):
 def compute(params, base_dir):
     f = cli.frequency_grid(params.get("frequencies"), 20.0, 20000.0, 600)
     observer = params.get("observer") or {}
-    distance = float(observer.get("distance_m", 3.0))
+    distance = float(observer.get("distance_m", 1.0))
     ear = float(observer.get("ear_height_m", 1.0))
     voltage = float(params.get("input_voltage_rms", 2.83))
     sections = radiation.load_sections(params, f, base_dir)

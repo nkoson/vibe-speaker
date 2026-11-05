@@ -14,7 +14,7 @@ python framework/simulations/baffle_diffraction/run.py --input params.json --out
 |---|---|
 | `frequencies` | Grid, default 20 to 20000 Hz, 400 log points |
 | `baffle.width_mm`, `baffle.height_mm` | Front panel outside dimensions |
-| `observer_distance_m` | Observer on the source axis, default 3 m |
+| `observer_distance_m` | Observer on the source axis, default 1 m |
 | `segments` | Perimeter segments for the edge sum, default 96 |
 | `baffle.edge_radius_mm` | Roundover radius of the panel edges, default 0. A per-source `edge_radius_mm` overrides it |
 | `sources[]` | `name`, `model` (`edge_diffraction`, `shelf` or `none`), `x_mm` and `z_mm` of the source centre measured from the baffle's left and bottom edge, `radius_mm` or `sd_cm2` for the piston beaming toward the edges, optional `edge_radius_mm`, optional `recess {setback_mm, opening_width_mm, opening_height_mm}` |

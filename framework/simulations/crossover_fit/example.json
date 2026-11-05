@@ -7,7 +7,7 @@
  "target": {"spl_db": "auto", "band_hz": [150, 16000], "min_input_impedance_ohm": 5.0, "impedance_weight": 1.0,
             "weights": [{"band_hz": [300, 8000], "weight": 2.0}], "vertical_angles_deg": [0]},
  "system": {
-  "observer": {"distance_m": 3.0, "ear_height_m": 1.0},
+  "observer": {"distance_m": 1.0, "ear_height_m": 1.0},
   "cabinet": {"depth_mm": 500, "floor_offset_mm": 0},
   "sections": [
    {"name": "lf", "source": {"file": "../examples/out/section_lf.json"},

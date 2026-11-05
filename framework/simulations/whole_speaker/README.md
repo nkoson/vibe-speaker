@@ -18,7 +18,7 @@ x lateral in mm from the cabinet centre line, z height in mm above the floor (ca
 |---|---|
 | `frequencies` | Grid, default 20 to 20000 Hz, 600 log points; keep it inside the source grids |
 | `input_voltage_rms` | Drive for SPL figures, default 2.83 |
-| `observer` | `distance_m` (3), `ear_height_m` (1), `horizontal_angles_deg` (-90..90 step 5), `vertical_angles_deg` (-30..30 step 5), optional `horizontal_window_deg` / `vertical_window_deg` for window statistics |
+| `observer` | `distance_m` (1), `ear_height_m` (1), `horizontal_angles_deg` (-90..90 step 5), `vertical_angles_deg` (-30..30 step 5), optional `horizontal_window_deg` / `vertical_window_deg` for window statistics |
 | `cabinet` | `depth_mm` (for rear outlets), `floor_offset_mm` (plinth or feet) |
 | `sections[]` | One entry per section, see below |
 | `floor` | `{reflection, cases: [{distance_m, ear_height_m, reflection}]}` single coherent floor image |

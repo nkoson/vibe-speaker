@@ -31,7 +31,7 @@ def compute(params, base_dir):
     vertices = baffle.get("vertices_mm")
     width = cli.positive(baffle.get("width_mm", float(np.ptp(np.asarray(vertices)[:,0])) if vertices else None), "baffle.width_mm")
     height = cli.positive(baffle.get("height_mm", float(np.ptp(np.asarray(vertices)[:,1])) if vertices else None), "baffle.height_mm")
-    observer = float(params.get("observer_distance_m", 3.0))
+    observer = float(params.get("observer_distance_m", 1.0))
     segments = int(params.get("segments", 96))
     default_edge_radius = float(baffle.get("edge_radius_mm", 0.0)) / 1000
     rows = []
